@@ -332,7 +332,6 @@ char *do_resolve(struct in_addr *addr) {
                 return NULL;
 
             default:
-fprintf(stderr, "New child is %d, we have fd %d, he has fd %d\n", workerinfo->child, p[0], p[1]);
                 close(p[1]);
         }
     }
@@ -341,7 +340,6 @@ fprintf(stderr, "New child is %d, we have fd %d, he has fd %d\n", workerinfo->ch
     if (write(workerinfo->fd, addr, sizeof *addr) != sizeof *addr
         || read(workerinfo->fd, name, NAMESIZE) != NAMESIZE) {
         /* Something went wrong. Just kill the child and get on with it. */
-fprintf(stderr, "Protocol error (%s) talking to child %d\n", strerror(errno), workerinfo->child);
         kill(workerinfo->child, SIGKILL);
         wait();
         close(workerinfo->fd);
