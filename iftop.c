@@ -175,7 +175,7 @@ void packet_loop(void* ptr) {
 
     /* First, get the address of the interface. If it isn't an ethernet
      * interface whose address we can obtain, there's not a lot we can do. */
-    s = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP); /* any sort of IP socket will do */
+    s = socket(PF_INET, SOCK_DGRAM, 0); /* any sort of IP socket will do */
     if (s == -1) {
         perror("socket");
         foad = 1;
@@ -190,9 +190,9 @@ void packet_loop(void* ptr) {
     }
     close(s);
     memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
-    fprintf(stderr, "MAC address is: ");
+    fprintf(stderr, "MAC address is:");
     for (s = 0; s < 6; ++s)
-        fprintf(stderr, "%02x", (unsigned int)if_hw_addr[s]);
+        fprintf(stderr, "%c%02x", s ? ':' : ' ', (unsigned int)if_hw_addr[s]);
     fprintf(stderr, "\n");
     
     resolver_initialise();
