@@ -24,7 +24,7 @@ void *worker_thread(void *v) {
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&mtx);
     while (1)
-        pause();
+        pthread_testcancel();
 }
 
 /* Start a thread, and have it set a variable to some other value, then signal

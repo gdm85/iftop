@@ -40,6 +40,8 @@ char optstr[] = "+i:f:nN:hpbBP";
 static char *bad_interface_names[] = {
             "lo:",
 	    "lo",
+	    "stf",     /* pseudo-device 6to4 tunnel interface */
+	    "gif",     /* psuedo-device generic tunnel interface */
             "dummy",
             "vmnet",
             NULL        /* last entry must be NULL */
@@ -144,7 +146,7 @@ static void set_net_filter(char* arg) {
               options.netfiltermask.s_addr = htonl(0xffffffffl);
             }
             else {
-              uint32_t mm = 0xffffffffl;
+              u_int32_t mm = 0xffffffffl;
               mm >>= n;
               options.netfiltermask.s_addr = htonl(~mm);
             }

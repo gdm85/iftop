@@ -1,6 +1,16 @@
 Change log for iftop
 $Id$
 
+Attributions apply to all preceding items up to the next blank line.
+Unattributed items are by Paul Warren and Chris Lightfoot.
+
+0.14
+
+* Configure/compilation fixes for Mac OS X 
+
+* MacOS interfaces to avoid by default
+    Siri Dhyan Singh <sirid@positivemind.com>
+
 0.13 11/06/03
 
 * Fixed configure.in to properly specify libraries without the leading -l
