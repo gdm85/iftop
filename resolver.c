@@ -19,6 +19,7 @@
 
 #include "threadprof.h"
 
+#include "options.h"
 
 
 #define RESOLVE_QUEUE_LENGTH 20
@@ -32,6 +33,8 @@ hash_type* ns_hash;
 
 int head;
 int tail;
+
+extern options_t options;
 
 
 /* 
@@ -335,32 +338,35 @@ void resolve(struct in_addr* addr, char* result, int buflen) {
     char* hostname;
     int added = 0;
 
-    pthread_mutex_lock(&resolver_queue_mutex);
+    if(options.dnsresolution == 1) {
 
-    if(hash_find(ns_hash, addr, (void**)&hostname) == HASH_STATUS_OK) {
-        /* Found => already resolved, or on the queue */
-    }
-    else {
-        hostname = strdup(inet_ntoa(*addr));
-        hash_insert(ns_hash, addr, hostname);
+        pthread_mutex_lock(&resolver_queue_mutex);
 
-        if(((head + 1) % RESOLVE_QUEUE_LENGTH) == tail) {
-            /* queue full */
+        if(hash_find(ns_hash, addr, (void**)&hostname) == HASH_STATUS_OK) {
+            /* Found => already resolved, or on the queue */
         }
         else {
-            resolve_queue[head] = *addr;
-            head = (head + 1) % RESOLVE_QUEUE_LENGTH;
-            added = 1;
+            hostname = strdup(inet_ntoa(*addr));
+            hash_insert(ns_hash, addr, hostname);
+
+            if(((head + 1) % RESOLVE_QUEUE_LENGTH) == tail) {
+                /* queue full */
+            }
+            else {
+                resolve_queue[head] = *addr;
+                head = (head + 1) % RESOLVE_QUEUE_LENGTH;
+                added = 1;
+            }
         }
-    }
-    pthread_mutex_unlock(&resolver_queue_mutex);
+        pthread_mutex_unlock(&resolver_queue_mutex);
 
-    if(added == 1) {
-        pthread_cond_signal(&resolver_queue_cond);
-    }
+        if(added == 1) {
+            pthread_cond_signal(&resolver_queue_cond);
+        }
 
-    if(result != NULL && buflen > 1) {
-        strncpy(result, hostname, buflen - 1);
-        result[buflen - 1] = '\0';
+        if(result != NULL && buflen > 1) {
+            strncpy(result, hostname, buflen - 1);
+            result[buflen - 1] = '\0';
+        }
     }
 }

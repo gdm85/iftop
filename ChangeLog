@@ -5,7 +5,8 @@ Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
 0.14
-
+* Fixed DNS resolution so that no lookups are done if options.dns_resolution ==
+  0
 * Configure/compilation fixes for Mac OS X 
 
 * MacOS interfaces to avoid by default
