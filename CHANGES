@@ -6,6 +6,7 @@ $Id$
 Added 1-line display options ("t")
 Added display scrolling ("j", "k")
 Fixed code for obtaining hardware address (on Linux at least)
+Added IP-based direction assignment
 
 0.11 08/01/03
 

@@ -4,8 +4,6 @@ $Id$
 BUG: 20s/40s averages are wrong when freeze_order is on.
 BUG: MAC address is broken.
 
-* Attempt to assign direction based on IP of selected interface for DLT_RAW.
-
 * Search for BSD interface names - need to know what to look for.
 
 * IP types other than v4?
