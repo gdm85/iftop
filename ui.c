@@ -47,7 +47,7 @@
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 #define UNIT_DIVISIONS 4
-char* unit_bits[UNIT_DIVISIONS] =  { "b", "K", "M", "G"};
+char* unit_bits[UNIT_DIVISIONS] =  { "b", "Kb", "Mb", "Gb"};
 char* unit_bytes[UNIT_DIVISIONS] =  { "B", "KB", "MB", "GB"};
 
 typedef struct host_pair_line_tag {
@@ -88,6 +88,11 @@ void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
 
     int i = 0;
     float size = 1;
+
+    /* Convert to bits? */
+    if(bytes == 0) { 
+      n *= 8;
+    }
 
     while(1) {
       if(n < size * 1000 || i >= UNIT_DIVISIONS - 1) {
@@ -140,7 +145,7 @@ static void draw_bar_scale(int* y) {
         for (i = 1; i <= scale[rateidx].max; i *= scale[rateidx].interval) {
             char s[40], *p;
             int x;
-            readable_size(i, s, sizeof s, 1000, 0);
+            readable_size(i / 8, s, sizeof s, 1000, 0);
             p = s + strspn(s, " ");
             x = get_bar_length(i);
             mvaddch(*y + 1, x, ACS_BTEE);
@@ -171,10 +176,10 @@ void draw_line_totals(int y, host_pair_line* line) {
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
         t = history_length(j);
-        readable_size(8 * line->sent[j] / t, buf, 10, 1024, 0);
+        readable_size(line->sent[j] / t, buf, 10, 1024, options.bandwidth_in_bytes);
         mvaddstr(y, x, buf);
 
-        readable_size(8 * line->recv[j] / t, buf, 10, 1024, 0);
+        readable_size(line->recv[j] / t, buf, 10, 1024, options.bandwidth_in_bytes);
         mvaddstr(y+1, x, buf);
         x += 8;
     }
@@ -462,13 +467,13 @@ void ui_print() {
     mvaddstr(y, 0, "total: ");
     mvaddstr(y+1, 0, " peak: ");
 
-    readable_size((totals.recv[0] + totals.sent[0]) * 8 / RESOLUTION, line, 10, 1024, 0);
+    readable_size((totals.recv[0] + totals.sent[0]) / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
     mvaddstr(y, 8, line);
 
-    readable_size(peaktotal * 8 / RESOLUTION, line, 10, 1024, 0);
+    readable_size(peaktotal / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
     mvaddstr(y+1, 8, line);
 
-    readable_size((peakrecv + peaksent) * 8 / RESOLUTION, line, 10, 1024, 0);
+    readable_size((peakrecv + peaksent) / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
     mvaddstr(y+1, 8, line);
 
     mvaddstr(y, 18, "TX: ");
@@ -484,10 +489,10 @@ void ui_print() {
     /* Peak traffic */
     mvaddstr(y, 33, "peaks: ");
 
-    readable_size(peaksent * 8 / RESOLUTION, line, 10, 1024, 0);
+    readable_size(peaksent / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
     mvaddstr(y, 39, line);
 
-    readable_size(peakrecv * 8 / RESOLUTION, line, 10, 1024, 0);
+    readable_size(peakrecv / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
     mvaddstr(y+1, 39, line);
 
     mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 8, "totals:");

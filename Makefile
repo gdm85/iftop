@@ -59,7 +59,7 @@ uninstall:
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f *~ *.o core iftop
+	rm -f *~ *.o core iftop iftop.spec
 
 tarball: depend $(SRCS) $(HDRS) $(TXTS) $(SPECFILE)
 	mkdir iftop-$(VERSION)
@@ -75,5 +75,9 @@ depend: $(SRCS)
 
 nodepend:
 	rm -f depend
+
+iftop.spec: iftop.spec.in Makefile
+	sed 's/__VERSION__/$(VERSION)/' < iftop.spec.in > iftop.spec
+  
         
 include depend

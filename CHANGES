@@ -8,6 +8,7 @@ Added service resolution toggle ("R")
 Added on-line help ("h")
 More fixes to rate display
 Improved interface selection (excludes lo:* and vmnet*)
+Added bandwidth-in-bytes option.
 
 0.8
 

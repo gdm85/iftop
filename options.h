@@ -10,11 +10,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-typedef enum {
-  OPTION_AGGREGATE_OFF,
-  OPTION_AGGREGATE_SRC,
-  OPTION_AGGREGATE_DEST
-} option_aggregate_t;
 
 typedef enum {
   OPTION_PORTS_OFF,
@@ -43,6 +38,7 @@ typedef struct {
     int aggregate_dest;
     int paused;
     int showhelp;
+    int bandwidth_in_bytes;
 
 } options_t;
 
