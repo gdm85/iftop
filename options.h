@@ -47,6 +47,7 @@ typedef struct {
     int dnsresolution;
     int portresolution;
     int promiscuous;
+    int promiscuous_but_choosy;
     int showbars;
     option_port_t showports;
     int aggregate_src;

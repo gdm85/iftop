@@ -4,6 +4,8 @@
  *
  */
 
+#include "config.h"
+
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -37,6 +39,7 @@ char optstr[] = "+i:f:nN:hpbBP";
  * likely to want to listen. We also compare candidate interfaces to lo. */
 static char *bad_interface_names[] = {
             "lo:",
+	    "lo",
             "dummy",
             "vmnet",
             NULL        /* last entry must be NULL */
@@ -87,7 +90,13 @@ static void set_defaults() {
     inet_aton("255.255.255.0", &options.netfiltermask);
     options.dnsresolution = 1;
     options.portresolution = 1;
+#ifdef NEED_PROMISCUOUS_FOR_OUTGOING
+    options.promiscuous = 1;
+    options.promiscuous_but_choosy = 1;
+#else
     options.promiscuous = 0;
+    options.promiscuous_but_choosy = 0;
+#endif
     options.showbars = 1;
     options.showports = OPTION_PORTS_OFF;
     options.aggregate_src = 0;
@@ -200,6 +209,7 @@ void options_read(int argc, char **argv) {
 
             case 'p':
                 options.promiscuous = 1;
+		options.promiscuous_but_choosy = 0;
                 break;
 
             case 'P':

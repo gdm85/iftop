@@ -26,10 +26,17 @@ option to configure.
 
 Solaris:
 
-On Solaris, libpcap does not capture outgoing packets unless it is run on an
-interface in promiscuous mode. Therefore, you will need to use the -p option
-to iftop to get sensible results. Cf.
-  http://www.tcpdump.org/lists/workers/2002/02/msg00010.html
+On Solaris, iftop has to run in promiscuous mode in order to capture
+outgoing packets.  iftop autoconfigures to run in promiscuous mode on
+Solaris, but will filter out non-broadcast packets which are not
+addressed to or from localhost.  On Solaris, the -p option merely
+disables that filter.
+
+If you have some other sort of system that behaves like Solaris in
+needing promiscuous mode, you can pass --enable-default-promiscuous to
+configure to enable this behavior.
+
+Cf. http://www.tcpdump.org/lists/workers/2002/02/msg00010.html
 
 The version of curses distributed with Solaris may not be sufficient for
 iftop's needs. You will probably need ncurses or similar.

@@ -222,6 +222,9 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
          * source and dest arbitrarily (by numerical value) and account as 
          * incoming.
          */
+	else if (options.promiscuous_but_choosy) {
+	    return;		/* junk it */
+	}
         else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
             assign_addr_pair(&ap, iptr, 1);
             direction = 0;
@@ -384,10 +387,13 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
         if(have_hw_addr && memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
             /* packet leaving this i/f */
             dir = 1;
-        } 
-        else if((have_hw_addr && memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0) 
-              || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
-            /* packet entering this i/f (include broadcast packets here */
+        }
+        else if(have_hw_addr && memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 ) {
+	    /* packet entering this i/f */
+	    dir = 0;
+	}
+	else if (memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
+	  /* broadcast packet, count as incoming */
             dir = 0;
         }
 
@@ -430,59 +436,34 @@ void packet_init() {
     char *m;
     int s;
     int i;
-    struct ifreq ifr = {};
     int dlt;
+    int result;
 
-    /* First, get the address of the interface. If it isn't an ethernet
-     * interface whose address we can obtain, there's not a lot we can do. */
-    s = socket(PF_INET, SOCK_DGRAM, 0); /* any sort of IP socket will do */
-    if (s == -1) {
-        perror("socket");
-        exit(1);
-    }
-    fprintf(stderr,"if: %s\n", options.interface);
-    memset(if_hw_addr, 0, 6);
-    strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
-#ifdef SIOCGIFHWADDR
-    if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
-        fprintf(stderr, "Error getting hardware address for interface: %s\n", options.interface); 
-        perror("ioctl(SIOCGIFHWADDR)");
-    }
-    else {
-        memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
-        have_hw_addr = 1;
-    }
+#ifdef HAVE_DLPI
+    result = get_addrs_dlpi(options.interface, if_hw_addr, &if_ip_addr);
 #else
-    fprintf(stderr, "Cannot obtain hardware address on this platform\n");
+    result = get_addrs_ioctl(options.interface, if_hw_addr, &if_ip_addr);
 #endif
+
+    if (result < 0) {
+      exit(1);
+    }
+
+    have_hw_addr = result & 1;
+    have_ip_addr = result & 2;
+    
+    if(have_ip_addr) {
+      fprintf(stderr, "IP address is: %s\n", inet_ntoa(if_ip_addr));
+    }
 
     if(have_hw_addr) {
-        fprintf(stderr, "MAC address is:");
-        for (i = 0; i < 6; ++i)
-            fprintf(stderr, "%c%02x", i ? ':' : ' ', (unsigned int)if_hw_addr[i]);
-        fprintf(stderr, "\n");
+      fprintf(stderr, "MAC address is:");
+      for (i = 0; i < 6; ++i)
+	fprintf(stderr, "%c%02x", i ? ':' : ' ', (unsigned int)if_hw_addr[i]);
+      fprintf(stderr, "\n");
     }
-
-    /* Get the IP address of the interface */
-#ifdef SIOCGIFADDR
-    (*(struct sockaddr_in *) &ifr.ifr_addr).sin_family = AF_INET;
-    if (ioctl(s, SIOCGIFADDR, &ifr) < 0) {
-        fprintf(stderr, "Error getting IP address for interface: %s\n", options.interface); 
-        perror("ioctl(SIOCGIFADDR)");
-    }
-    else {
-        have_ip_addr = 1;
-        memcpy(&if_ip_addr, &((*(struct sockaddr_in *) &ifr.ifr_addr).sin_addr), sizeof(struct sockaddr_in));
-    }
-#else
-    fprintf(stderr, "Cannot obtain IP address on this platform\n");
-#endif
-
-    close(s);
-
-    if(have_ip_addr) 
-        fprintf(stderr, "IP address is: %s\n", inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
     
+    //    exit(0);
     resolver_initialise();
 
     pd = pcap_open_live(options.interface, CAPTURE_LENGTH, options.promiscuous, 1000, errbuf);

@@ -1,0 +1,10 @@
+2003-06-04 Jonathan Abbey <jonabbey@ganymeta.org>
+	* Fixed configure.in to properly specify libraries without the leading -l
+	* Separated the IP/ethernet identifying routine from iftop.c into addrs_ioctl.c
+	* Added addrs_dlpi.c, dlcommon.c, dlcommon.h to support the STREAMS DataLink Programming Interface on Solaris
+	* Hacked options.h, options.c, iftop.c to enable promiscuous_but_choosy mode which runs 
+	the interface in promiscuous mode but filters out non-broadcast packets not addressed to or from the interface
+	* Added NEWS, AUTHORS, ChangeLog
+	* Improved interface auto-detect logic in iftop.c
+	* Fixed configure.in to not overload prefix in the pcap test section
+	
