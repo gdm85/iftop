@@ -38,12 +38,12 @@
 " r - toggle DNS host resolution         P - pause display\n"\
 " s - toggle show source host            h - toggle this help display\n"\
 " d - toggle show destination host       b - toggle bar graph display\n"\
-" t - cycle line display mode            j/k - scroll display\n"\
-"                                        f - edit filter code\n"\
-"Port display:                           l - set screen filter\n"\
-" R - toggle service resolution          ! - shell command\n"\
-" S - toggle show source port            q - quit\n"\
-" D - toggle show destination port\n"\
+" t - cycle line display mode            T - toggle cummulative line totals\n"\
+"                                        j/k - scroll display\n"\
+"Port display:                           f - edit filter code\n"\
+" R - toggle service resolution          l - set screen filter\n"\
+" S - toggle show source port            ! - shell command\n"\
+" D - toggle show destination port       q - quit\n"\
 " p - toggle port display\n"\
 "\n"\
 "Sorting:\n"\
