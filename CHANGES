@@ -1,7 +1,7 @@
 Change log for iftop
 $Id$
 
-0.10 
+0.10 29/10/02
 
 User selectable sort criteria
 On-the-fly filter code changes
@@ -9,6 +9,8 @@ Shell escape
 Alternative resolver back-ends
 Improved totals display
 Added regexp based screen filtering 
+Fixed pause functionality
+Change option names to be more like tcpdump
 
 0.9 22/10/02
 

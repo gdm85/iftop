@@ -228,6 +228,10 @@ void options_read(int argc, char **argv) {
         }
     }
 
-    if (optind != argc)
-        fprintf(stderr, "iftop: warning: ignored arguments following options\n");
+    if (optind != argc) {
+        fprintf(stderr, "iftop: found arguments following options\n");
+        fprintf(stderr, "*** some options have changed names since v0.9 ***\n");
+        usage(stderr);
+        exit(1);
+    }
 }
