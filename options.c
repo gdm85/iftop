@@ -113,7 +113,8 @@ static void set_defaults() {
     options.screen_offset = 0;
     options.show_totals = 0;
     options.max_bandwidth = 0; /* auto */
-    options.log_scale = 1; /* auto */
+    options.log_scale = 0;
+    options.bar_interval = 1;
 }
 
 static void die(char *msg) {

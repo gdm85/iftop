@@ -29,7 +29,6 @@
 #define HOSTNAME_LENGTH 256
 
 #define HISTORY_DIVISIONS   3
-#define BARGRAPH_INTERVAL   1   /* which division used for bars. */
 
 #define HELP_TIME 2
 
@@ -38,14 +37,14 @@
 " r - toggle DNS host resolution         P - pause display\n"\
 " s - toggle show source host            h - toggle this help display\n"\
 " d - toggle show destination host       b - toggle bar graph display\n"\
-" t - cycle line display mode            T - toggle cummulative line totals\n"\
-"                                        j/k - scroll display\n"\
-"Port display:                           f - edit filter code\n"\
-" R - toggle service resolution          l - set screen filter\n"\
-" S - toggle show source port            ! - shell command\n"\
-" D - toggle show destination port       q - quit\n"\
-" p - toggle port display\n"\
-"\n"\
+" t - cycle line display mode            B - cycle bar graph average\n"\
+"                                        T - toggle cummulative line totals\n"\
+"Port display:                           j/k - scroll display\n"\
+" R - toggle service resolution          f - edit filter code\n"\
+" S - toggle show source port            l - set screen filter\n"\
+" D - toggle show destination port       L - lin/log scales\n"\
+" p - toggle port display                ! - shell command\n"\
+"                                        q - quit\n"\
 "Sorting:\n"\
 " 1/2/3 - sort by 1st/2nd/3rd column\n"\
 " < - sort by source name\n"\
@@ -55,7 +54,7 @@
 "iftop, version " IFTOP_VERSION 
 
 
-/* 1, 15 and 60 seconds */
+/* 2, 10 and 40 seconds */
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 #define UNIT_DIVISIONS 4
@@ -339,17 +338,17 @@ void draw_line_totals(int y, host_pair_line* line, option_linedisplay_t linedisp
     if(options.showbars) {
       switch(linedisplay) {
         case OPTION_LINEDISPLAY_TWO_LINE:
-          draw_bar(line->sent[BARGRAPH_INTERVAL],y);
-          draw_bar(line->recv[BARGRAPH_INTERVAL],y+1);
+          draw_bar(line->sent[options.bar_interval],y);
+          draw_bar(line->recv[options.bar_interval],y+1);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_SENT:
-          draw_bar(line->sent[BARGRAPH_INTERVAL],y);
+          draw_bar(line->sent[options.bar_interval],y);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_RECV:
-          draw_bar(line->recv[BARGRAPH_INTERVAL],y);
+          draw_bar(line->recv[options.bar_interval],y);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
-          draw_bar(line->recv[BARGRAPH_INTERVAL] + line->sent[BARGRAPH_INTERVAL],y);
+          draw_bar(line->recv[options.bar_interval] + line->sent[options.bar_interval],y);
           break;
       }
     }
@@ -838,7 +837,7 @@ void ui_loop() {
                 tick(1);
                 break;
 
-	          case 'b':
+            case 'b':
                 if(options.showbars) {
                     options.showbars = 0;
                     showhelp("Bars off");
@@ -850,6 +849,19 @@ void ui_loop() {
                 tick(1);
                 break;
 
+            case 'B':
+                options.bar_interval = (options.bar_interval + 1) % 3;
+                if(options.bar_interval == 0) {
+                    showhelp("Bars show 2s average");
+                }
+                else if(options.bar_interval == 1) { 
+                    showhelp("Bars show 10s average");
+                }
+                else {
+                    showhelp("Bars show 40s average");
+                }
+                ui_print();
+                break;
             case 's':
                 if(options.aggregate_src) {
                     options.aggregate_src = 0;
@@ -1062,6 +1074,11 @@ void ui_loop() {
                 else {
                     showhelp("Hide cummulative totals");
                 }
+                ui_print();
+                break;
+            case 'L':
+                options.log_scale = !options.log_scale;
+                showhelp(options.log_scale ? "Logarithmic scale" : "Linear scale");
                 ui_print();
                 break;
             case KEY_CLEAR:

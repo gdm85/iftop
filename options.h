@@ -57,6 +57,8 @@ typedef struct {
     int bandwidth_in_bytes;
     option_sort_t sort;
 
+    int bar_interval;
+
     char* screenfilter;
     int freezeorder;
 
