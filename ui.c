@@ -581,8 +581,7 @@ void ui_print() {
 
     if(showhelphint) {
       mvaddstr(0, 0, helpmsg);
-      clrtoeol();
-      mvchgat(0, 0, -1, A_REVERSE, 0, NULL);
+      mvchgat(0, 0, strlen(helpmsg), A_REVERSE, 0, NULL);
     }
     move(LINES - 1, COLS - 1);
     
@@ -836,6 +835,7 @@ void ui_loop() {
                     }
                 }
                 dontshowdisplay = 0;
+                ui_print();
                 break;
             }
             case 'l': {
@@ -847,6 +847,7 @@ void ui_loop() {
                     }
                 }
                 dontshowdisplay = 0;
+                ui_print();
                 break;
             }
             case '!': {
