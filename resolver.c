@@ -392,7 +392,11 @@ void resolver_worker(void* ptr) {
 
             if(hostname != NULL) {
                 char* old;
-                if(hash_find(ns_hash, &addr, (void**)&old) == HASH_STATUS_OK) {
+		union {
+		    char **ch_pp;
+		    void **void_pp;
+		} u_old = { &old };
+                if(hash_find(ns_hash, &addr, u_old.void_pp) == HASH_STATUS_OK) {
                     hash_delete(ns_hash, &addr);
                     xfree(old);
                 }
@@ -424,13 +428,17 @@ void resolver_initialise() {
 
 void resolve(struct in_addr* addr, char* result, int buflen) {
     char* hostname;
+    union {
+	char **ch_pp;
+	void **void_pp;
+    } u_hostname = { &hostname };
     int added = 0;
 
     if(options.dnsresolution == 1) {
 
         pthread_mutex_lock(&resolver_queue_mutex);
 
-        if(hash_find(ns_hash, addr, (void**)&hostname) == HASH_STATUS_OK) {
+        if(hash_find(ns_hash, addr, u_hostname.void_pp) == HASH_STATUS_OK) {
             /* Found => already resolved, or on the queue */
         }
         else {

@@ -472,6 +472,10 @@ void analyse_data() {
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
         host_pair_line* screen_line;
+	union {
+	    host_pair_line **h_p_l_pp;
+	    void **void_pp;
+	} u_screen_line = { &screen_line };
         addr_pair ap;
         int i;
         int tsent, trecv;
@@ -500,7 +504,7 @@ void analyse_data() {
         }
 
 	
-        if(hash_find(screen_hash, &ap, (void**)&screen_line) == HASH_STATUS_KEY_NOT_FOUND) {
+        if(hash_find(screen_hash, &ap, u_screen_line.void_pp) == HASH_STATUS_KEY_NOT_FOUND) {
             screen_line = xcalloc(1, sizeof *screen_line);
             hash_insert(screen_hash, &ap, screen_line);
             screen_line->ap = ap;
@@ -534,6 +538,11 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
     char hostname[HOSTNAME_LENGTH];
     char service[HOSTNAME_LENGTH];
     char* s_name;
+    union {
+        char **ch_pp;
+        void **void_pp;
+    } u_s_name = { &s_name };
+
     ip_service skey;
     int left;
     if(addr->s_addr == 0) {
@@ -550,7 +559,7 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
     if(port != 0) {
       skey.port = port;
       skey.protocol = protocol;
-      if(options.portresolution && hash_find(service_hash, &skey, (void**)&s_name) == HASH_STATUS_OK) {
+      if(options.portresolution && hash_find(service_hash, &skey, u_s_name.void_pp) == HASH_STATUS_OK) {
         snprintf(service, HOSTNAME_LENGTH, ":%s", s_name);
       }
       else {
