@@ -340,7 +340,7 @@ void packet_init() {
     char errbuf[PCAP_ERRBUF_SIZE];
     char *m;
     int s;
-    struct ifreq ifr = {0};
+    struct ifreq ifr = {};
     int dlt;
 
     /* First, get the address of the interface. If it isn't an ethernet
@@ -411,7 +411,7 @@ void packet_loop(void* ptr) {
  * Entry point. See usage(). */
 int main(int argc, char **argv) {
     pthread_t thread;
-    struct sigaction sa = {0};
+    struct sigaction sa = {};
 
     options_read(argc, argv);
     
