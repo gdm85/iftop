@@ -26,4 +26,11 @@ void *xrealloc(void *w, size_t n);
 char *xstrdup(const char *s);
 void xfree(void *v);
 
+/* ui.c */
+void analyse_data(void);
+void ui_init(void);
+
+/* options.c */
+void options_read(int argc, char **argv);
+
 #endif /* __IFTOP_H_ */

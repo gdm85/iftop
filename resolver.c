@@ -58,7 +58,7 @@ void resolver_worker(void* ptr) {
             /* Allocate buffer, remember to free it to avoid memory leakage.  */            
             tmphstbuf = xmalloc (hstbuflen);
 
-            while ((res = gethostbyaddr_r (&addr, sizeof(addr), AF_INET,
+            while ((res = gethostbyaddr_r ((char*)&addr, sizeof(addr), AF_INET,
                                            &hostbuf, tmphstbuf, hstbuflen,
                                            &hp, &herr)) == ERANGE) {
                 /* Enlarge the buffer.  */

@@ -17,7 +17,7 @@ char optstr[] = "+i:f:n:dhp";
 
 /* Global options. */
 
-void set_defaults() {
+static void set_defaults() {
     options.interface = "eth0";
     options.filtercode = NULL;
     options.netfilter = 0;
@@ -28,12 +28,12 @@ void set_defaults() {
     options.showbars = 1;
 }
 
-void die(char *msg) {
+static void die(char *msg) {
     fprintf(stderr, msg);
     exit(1);
 }
 
-void set_net_filter(char* arg) {
+static void set_net_filter(char* arg) {
     char* mask;
 
     mask = strchr(arg, '/');
@@ -64,7 +64,7 @@ void set_net_filter(char* arg) {
 
 /* usage:
  * Print usage information. */
-void usage(FILE *fp) {
+static void usage(FILE *fp) {
     fprintf(fp,
 "iftop: display bandwidth usage on an interface by host\n"
 "\n"
