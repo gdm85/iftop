@@ -134,7 +134,7 @@ void assign_addr_pair(addr_pair* ap, struct ip* iptr, int flip) {
   unsigned short int dst_port = 0;
 
   /* Does this protocol use ports? */
-  if(iptr->ip_p == IPPROTO_TCP || IP_HL(iptr) == IPPROTO_UDP) {
+  if(iptr->ip_p == IPPROTO_TCP || iptr->ip_p == IPPROTO_UDP) {
     /* We take a slight liberty here by treating UDP the same as TCP */
 
     /* Find the TCP/UDP header */

@@ -35,7 +35,7 @@ void options_read(int argc, char **argv);
 
 
 /* Make use of SIOCGIFHWADDR work on FreeBSD */
-#ifdef __BSD__
+#ifndef SIOCGIFHWADDR
 #define SIOCGIFHWADDR SIOCGIFADDR
 #define ifr_hwaddr ifr_addr
 #endif
