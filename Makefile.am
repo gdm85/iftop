@@ -22,7 +22,7 @@ noinst_HEADERS = addr_hash.h ether.h ethertype.h extract.h hash.h iftop.h \
                  integers.h ip.h llc.h ns_hash.h options.h resolver.h \
                  screenfilter.h serv_hash.h sll.h sorted_list.h tcp.h \
                  threadprof.h token.h ui.h dlcommon.h stringmap.h \
-		 vector.h cfgfile.h
+		 vector.h cfgfile.h util.h
 
 man_MANS = iftop.8
 

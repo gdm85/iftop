@@ -37,9 +37,9 @@ AC_ARG_WITH(resolver,
     [  --with-resolver=TYPE    Technique iftop should use for name resolution. Valid
                           options are netdb, netdb_1thread (for systems without
                           working gethostbyaddr_r), ares for the MIT ARES
-                          asynchronous resolver library, forking for the REALLY SUCKY
-                          forking resolver, or none if you don't need any name
-                          resolution.
+                          asynchronous resolver library, forking for the REALLY
+                          SUCKY forking resolver, or none if you don't need any
+                          name resolution.
                           [default=netdb]],
     [resolver=$withval],
     [resolver=netdb])

@@ -320,7 +320,7 @@ char *do_resolve(struct in_addr *addr) {
         workerinfo = xmalloc(sizeof *workerinfo);
         pthread_setspecific(worker_key, workerinfo);
         workerinfo->fd = p[0];
-
+        
         switch (workerinfo->child = fork()) {
             case 0:
                 close(p[0]);
@@ -332,6 +332,7 @@ char *do_resolve(struct in_addr *addr) {
                 return NULL;
 
             default:
+fprintf(stderr, "New child is %d, we have fd %d, he has fd %d\n", workerinfo->child, p[0], p[1]);
                 close(p[1]);
         }
     }
@@ -340,11 +341,13 @@ char *do_resolve(struct in_addr *addr) {
     if (write(workerinfo->fd, addr, sizeof *addr) != sizeof *addr
         || read(workerinfo->fd, name, NAMESIZE) != NAMESIZE) {
         /* Something went wrong. Just kill the child and get on with it. */
+fprintf(stderr, "Protocol error (%s) talking to child %d\n", strerror(errno), workerinfo->child);
         kill(workerinfo->child, SIGKILL);
         wait();
         close(workerinfo->fd);
         xfree(workerinfo);
         pthread_setspecific(worker_key, NULL);
+        *name = 0;
     }
     if (!*name)
         return NULL;
