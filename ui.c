@@ -94,6 +94,13 @@ static void draw_bar_scale(void) {
     mvaddch(y + 1, 0, ACS_LLCORNER);
 }
 
+int history_length(const int d) {
+    if (history_len < history_divs[d])
+        return history_len * RESOLUTION;
+    else
+        return history_divs[d] * RESOLUTION;
+}
+
 void draw_line_totals(int y, host_pair_line* line) {
     int j;
     char buf[10];
@@ -101,11 +108,7 @@ void draw_line_totals(int y, host_pair_line* line) {
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
         int t;
-        if(history_len < history_divs[j]) {
-            t = history_len * RESOLUTION; 
-        } else {
-            t = history_divs[j] * RESOLUTION;
-        }
+        t = history_length(j);
         readable_size(8 * line->sent[j] / t, buf, 10, 1024);
         mvaddstr(y, x, buf);
 
@@ -213,6 +216,8 @@ void ui_print() {
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
         if(y < LINES - 5) {
+            int t;
+            
             L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
             if(L > sizeof hostname) {
                 L = sizeof hostname;
@@ -240,15 +245,16 @@ void ui_print() {
             draw_line_totals(y, screen_line);
 
             /* Do some sort of primitive bar graph thing. */
+            t = history_length(BARGRAPH_INTERVAL);
             mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-            L = get_bar_length(8 * screen_line->sent[BARGRAPH_INTERVAL] / history_divs[BARGRAPH_INTERVAL]);
+            L = get_bar_length(8 * screen_line->sent[BARGRAPH_INTERVAL] / t);
             if (L > 0)
-                mvchgat(y, 0, L, A_REVERSE, 0, NULL);
+                mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
 
             mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-            L = get_bar_length(8 * screen_line->recv[BARGRAPH_INTERVAL] / history_divs[BARGRAPH_INTERVAL]);
+            L = get_bar_length(8 * screen_line->recv[BARGRAPH_INTERVAL] / t);
             if (L > 0)
-                mvchgat(y+1, 0, L, A_REVERSE, 0, NULL);
+                mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
         }
         y += 2;
         free(screen_line);
