@@ -417,7 +417,7 @@ void packet_init() {
     }
     strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
     ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
-    if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
+    if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
         fprintf(stderr, "Error getting hardware address for interface: %s\n", options.interface); 
         perror("ioctl(SIOCGIFHWADDR)");
         exit(1);
@@ -428,6 +428,8 @@ void packet_init() {
     for (s = 0; s < 6; ++s)
         fprintf(stderr, "%c%02x", s ? ':' : ' ', (unsigned int)if_hw_addr[s]);
     fprintf(stderr, "\n");
+
+    fprintf(stderr, "IP address is: %s", inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
     
     resolver_initialise();
 

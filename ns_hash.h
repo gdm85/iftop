@@ -14,6 +14,6 @@
 #include <arpa/inet.h>
 #include "hash.h"
 
-hash_type* ns_hash_create();
+hash_type* ns_hash_create(void);
 
 #endif /* __NS_HASH_H_ */
