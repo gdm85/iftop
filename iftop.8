@@ -11,7 +11,7 @@ iftop - display bandwidth usage on an interface by host
 
 .SH SYNOPSIS
 \fBiftop\fP \fB-h\fP |
-[\fB-d\fP] [\fB-p\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP]
+[\fB-d\fP] [\fB-p\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-n\fP \fInet\fP/\fImask\fP]
 
 .SH DESCRIPTION
 \fBiftop\fP listens to network traffic on a named \fIinterface\fP, or \fBeth0\fP
@@ -68,7 +68,7 @@ Listen to packets on \fIinterface\fP.
 Use \fIfilter code\fP to select the packets to count. Only IP packets are ever
 counted, so the specified code is evaluated as \fB(\fP\fIfilter code\fP\fB) and ip\fP.
 .TP
-\fB-n\fP \fInet/mask\fP
+\fB-n\fP \fInet\fP/\fImask\fP
 Specifies a network for traffic analysis.  If specified, iftop will only
 include packets flowing in to or out of the given network, and packet direction
 is determined relative to the network boundary, rather than to the interface.

@@ -65,11 +65,9 @@ tags :
 	etags *.c *.h
 
 depend: $(SRCS)
-	$(CPP) -MM $(SRCS) > depend
+	$(CPP) $(CFLAGS)  -MM $(SRCS) > depend
 
 nodepend:
 	rm -f depend
-
+        
 include depend
- 
-

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include "options.h"
 
@@ -35,18 +36,27 @@ void die(char *msg) {
 void set_net_filter(char* arg) {
     char* mask;
 
-    mask = strstr(arg, "/");
-    if(mask == NULL) {
+    mask = strchr(arg, '/');
+    if (mask == NULL) {
         die("Could not parse net/mask\n");
     }
     *mask = '\0';
     mask++;
-    if(inet_aton(arg, &options.netfilternet) == 0) {
+    if (inet_aton(arg, &options.netfilternet) == 0)
         die("Invalid network address\n");
-    }
-    if(inet_aton(mask, &options.netfiltermask) == 0) {
-        die("Invalid network mask\n");
-    }
+    /* Accept a netmask like /24 or /255.255.255.0. */
+    if (!mask[strspn(mask, "0123456789")]) {
+        int n;
+        n = atoi(mask);
+        if (n > 32)
+            die("Invalid netmask");
+        else {
+            uint32_t mm = 0xffffffffl;
+            mm >>= n;
+            options.netfiltermask.s_addr = htonl(~mm);
+        }
+    } else if (inet_aton(mask, &options.netfiltermask) == 0)
+        die("Invalid netmask\n");
 
     options.netfilter = 1;
 
@@ -58,7 +68,7 @@ void usage(FILE *fp) {
     fprintf(fp,
 "iftop: display bandwidth usage on an interface by host\n"
 "\n"
-"Synopsis: iftop -h | [-d] [-p] [-i interface] [-f filter code]\n"
+"Synopsis: iftop -h | [-d] [-p] [-i interface] [-f filter code] [-n net/mask]\n"
 "\n"
 "   -h                  display this message\n"
 "   -d                  don't do hostname lookups\n"
@@ -69,7 +79,7 @@ void usage(FILE *fp) {
 "                       (default: none, but only IP packets are counted)\n"
 "   -n network/netmask  show traffic flows in/out of network\n"
 "\n"
-"iftop, version " IFTOP_VERSION "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com>\n"
+"iftop, version " IFTOP_VERSION " copyright (c) 2002 Paul Warren <pdw@ex-parrot.com>\n"
             );
 }
 

@@ -15,6 +15,7 @@
 #include <curses.h>
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "iftop.h"
 #include "addr_hash.h"
