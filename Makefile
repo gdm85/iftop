@@ -5,19 +5,29 @@
 # $Id$
 #
 
+VERSION = 0.10pre1
+
 # C compiler to use.
 #CC = gcc
 
 # Give the location of pcap.h here:
-CFLAGS += -I/usr/include/pcap
+CFLAGS += -I/usr/include/pcap 
 # CFLAGS += -I/usr/pkg/include
 # CFLAGS += -pg -a
 
 # Give the location of libpcap here if it's not in one of the standard
 # directories:
-#LDFLAGS += -L/usr/local/lib
+# LDFLAGS += -L/usr/local/lib
 # LDFLAGS += -pg -a
-LDFLAGS += -pthread
+
+#
+# Uncomment to use libresolv
+#
+#CFLAGS += -DUSELIBRESOLV 
+
+# This may be needed to use libresolv on Linux.
+#LDLIBS += /usr/lib/libresolv.a
+
 
 # PREFIX specifies the base directory for the installation.
 PREFIX = /usr/local
@@ -31,10 +41,10 @@ MANDIR = man
 #MANDIR = share/man     # FHS-ish
 
 # You shouldn't need to change anything below this point.
-VERSION = 0.9
 CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
-LDFLAGS += -g 
+LDFLAGS += -g -pthread
 LDLIBS += -lpcap -lcurses -lm
+
 
 SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c\
        options.c serv_hash.c threadprof.c

@@ -71,6 +71,8 @@ sorted_list_type screen_list;
 host_pair_line totals;
 int peaksent, peakrecv, peaktotal;
 
+int showhelphint = 0;
+
 int screen_line_compare(void* a, void* b) {
     int i;
     host_pair_line* aa = (host_pair_line*)a;
@@ -354,10 +356,6 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
     }
     left = strlen(hostname);
 
-    //TODO: Replace this with in-memory hash for speed.
-    //sent = getservbyport(port, "tcp");
-
-    
     if(port != 0) {
       skey.port = port;
       skey.protocol = protocol;
@@ -405,37 +403,11 @@ void ui_print() {
     }
 
 
-    clear();
-    /*
-    //erase();
-    move(0, 0);
-    attron(A_REVERSE);
-    addstr(" q ");
-    attroff(A_REVERSE);
-    addstr(" quit ");
-    attron(A_REVERSE);
-    addstr(" r ");
-    attroff(A_REVERSE);
-    addstr(options.dnsresolution ? " resolver off "
-                         : " resolver on  ");
-    attron(A_REVERSE);
-    addstr(" b ");
-    attroff(A_REVERSE);
-    addstr(options.showbars ? " bars off "
-                         : " bars on  ");
-
-    attron(A_REVERSE);
-    addstr(" s ");
-    attroff(A_REVERSE);
-    addstr(options.aggregate_src ? " show src "
-                         : " hide src ");
-
-    attron(A_REVERSE);
-    addstr(" d ");
-    attroff(A_REVERSE);
-    addstr(options.aggregate_dest ? " show dest "
-                         : " hide dest ");
-   */
+    /* 
+     * erase() is faster than clear().  Dunno why we switched to 
+     * clear() -pdw 24/10/02
+     */
+    erase();
 
     draw_bar_scale(&y);
 
@@ -461,7 +433,6 @@ void ui_print() {
 
               sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
 
-              //sprintf(line, "%-*s", L, hostname);
               mvaddstr(y, x, line);
               x += L;
 
@@ -483,9 +454,6 @@ void ui_print() {
 
 
     y = LINES - 3;
-
-    //mvaddstr(y, 0, "total: ");
-    //mvaddstr(y+1, 0, " peak: ");
     
     mvhline(y-1, 0, 0, COLS);
 
@@ -521,6 +489,12 @@ void ui_print() {
 
     draw_totals(&totals);
 
+
+    if(showhelphint > 0) {
+      mvaddstr(0, 0, "Press h for help ");
+      clrtoeol();
+      showhelphint--;
+    }
     
     refresh();
 
@@ -626,6 +600,12 @@ void ui_loop() {
                 break;
             case 'P':
                 options.paused = !options.paused;
+                break;
+            case ERR:
+                break;
+            default:
+                showhelphint = 2;
+                tick(1);
                 break;
         }
         tick(0);
