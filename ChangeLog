@@ -10,6 +10,7 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Choose which average bars display ("B")
 * Renamed some buttons and command line options
 * Added config file support
+* Added command line to turn of port resolution ("-N")
 
 * Fixed the search for libpcap in the configure script
     Thomas Schwinge <tschwinge@gmx.net>
