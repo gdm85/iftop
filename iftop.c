@@ -415,15 +415,21 @@ void packet_init() {
         perror("socket");
         exit(1);
     }
+    fprintf(stderr,"if: %s\n", options.interface);
+#ifdef SIOCGIFHWADDR
     strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
-    ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
-    if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
+    if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
         fprintf(stderr, "Error getting hardware address for interface: %s\n", options.interface); 
         perror("ioctl(SIOCGIFHWADDR)");
         exit(1);
     }
-    close(s);
     memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
+#else
+    fprintf(stderr, "Cannot obtain hardware address on this platform\n");
+    memset(if_hw_addr, 0, 6);
+#endif
+
+    close(s);
     fprintf(stderr, "MAC address is:");
     for (s = 0; s < 6; ++s)
         fprintf(stderr, "%c%02x", s ? ':' : ' ', (unsigned int)if_hw_addr[s]);
