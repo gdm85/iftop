@@ -43,6 +43,7 @@
 #include "extract.h"
 #include "ethertype.h"
 #include "cfgfile.h"
+#include "ppp.h"
 
 
 /* ethernet address of interface. */
@@ -353,6 +354,32 @@ static void handle_tokenring_packet(unsigned char* args, const struct pcap_pkthd
     }
 }
 
+static void handle_ppp_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
+{
+	register u_int length = pkthdr->len;
+	register u_int caplen = pkthdr->caplen;
+	u_int proto;
+
+	if (caplen < 2) 
+        return;
+
+	if(packet[0] == PPP_ADDRESS) {
+		if (caplen < 4) 
+            return;
+
+		packet += 2;
+		length -= 2;
+
+		proto = EXTRACT_16BITS(packet);
+		packet += 2;
+		length -= 2;
+
+        if(proto == PPP_IP || proto == ETHERTYPE_IP) {
+            handle_ip_packet((struct ip*)packet, -1);
+        }
+    }
+}
+
 #ifdef DLT_LINUX_SLL
 static void handle_cooked_packet(unsigned char *args, const struct pcap_pkthdr * thdr, const unsigned char * packet)
 {
@@ -486,6 +513,9 @@ void packet_init() {
     } 
     else if(dlt == DLT_IEEE802) {
         packet_handler = handle_tokenring_packet;
+    }
+    else if(dlt == DLT_PPP) {
+        packet_handler = handle_ppp_packet;
     }
 /* 
  * SLL support not available in older libpcaps
