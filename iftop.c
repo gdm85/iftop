@@ -65,6 +65,7 @@ void history_rotate() {
         if(d->last_write == history_pos) {
             addr_pair key = *(addr_pair*)(n->key);
             hash_delete(history, &key);
+	    free(d);
         }
         else {
             d->recv[history_pos] = 0;
