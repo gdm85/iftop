@@ -1,6 +1,12 @@
 Change log for iftop
 $Id$
 
+0.6 28/08/02
+
+Fixed segfault bug affecting some systems
+Added support for Linux cooked sockets
+    Michael Bergbauer <michael@noname.franken.de>
+
 0.5 26/08/02
 
 Added support for monitoring PPP interfaces

@@ -22,6 +22,7 @@
 #include "resolver.h"
 #include "ui.h"
 #include "options.h"
+#include "sll.h"
 
 
 unsigned char if_hw_addr[6];    /* ethernet address of interface. */
@@ -214,6 +215,26 @@ static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     handle_ip_packet((struct ip*)packet, -1);
 }
 
+static void handle_cooked_packet(unsigned char *args, const struct pcap_pkthdr * thdr, const unsigned char * packet)
+{
+    struct sll_header *sptr;
+    int dir = -1;
+    sptr = (struct sll_header *) packet;
+
+    switch (ntohs(sptr->sll_pkttype))
+    {
+    case LINUX_SLL_HOST:
+        /*entering this interface*/
+	dir = 0;
+	break;
+    case LINUX_SLL_OUTGOING:
+	/*leaving this interface */
+	dir=1;
+	break;
+    }
+    handle_ip_packet((struct ip*)(packet+SLL_HDR_LEN), dir);
+}
+
 static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     struct ether_header *eptr;
@@ -290,6 +311,9 @@ void packet_init() {
     else if(dlt == DLT_RAW) {
         packet_handler = handle_raw_packet;
     } 
+    else if(dlt == DLT_LINUX_SLL) {
+	packet_handler = handle_cooked_packet;
+    }
     else {
         fprintf(stderr, "Unsupported datalink type: %d\n"
                 "Please email pdw@ex-parrot.com, quoting the datalink type and what you were\n"
