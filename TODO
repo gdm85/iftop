@@ -17,3 +17,5 @@ $Id$
 * Configurable refresh rates.
 
 * Filtering of items included in diplay
+
+* Attempt to assign direction based on IP of selected interface for DLT_RAW.

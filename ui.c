@@ -624,7 +624,16 @@ void ui_curses_init() {
     halfdelay(2);
 }
 
+void showhelp(const char * s) {
+  strncpy(helpmsg, s, HELP_MSG_SIZE);
+  showhelphint = 1;
+  helptimer = time(NULL);
+  persistenthelp = 0;
+  tick(1);
+}
+
 void ui_init() {
+    char msg[20];
     ui_curses_init();
     
     erase();
@@ -635,16 +644,12 @@ void ui_init() {
     service_hash = serv_hash_create();
     serv_hash_initialise(service_hash);
 
+    snprintf(msg,20,"Listening on %s",options.interface);
+    showhelp(msg);
+
 
 }
 
-void showhelp(const char * s) {
-  strncpy(helpmsg, s, HELP_MSG_SIZE);
-  showhelphint = 1;
-  helptimer = time(NULL);
-  persistenthelp = 0;
-  tick(1);
-}
 
 void showportstatus() {
   if(options.showports == OPTION_PORTS_ON) {
