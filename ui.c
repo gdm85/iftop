@@ -63,11 +63,17 @@ int screen_line_compare(void* a, void* b) {
 }
 
 void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
-    if(n >= 10 * ksize * ksize) {
+    if(n >= 100 * ksize * ksize) {
+       snprintf(buf, bsize, " %4.0f%s", n / (ksize * ksize), bytes ? "MB" : "M"); 
+    }
+    else if(n >= 10 * ksize * ksize) {
        snprintf(buf, bsize, " %4.1f%s", n / (ksize * ksize), bytes ? "MB" : "M"); 
     }
     if(n >= ksize * ksize) {
        snprintf(buf, bsize, " %4.2f%s", n / (ksize * ksize), bytes ? "MB" : "M" ); 
+    }
+    else if(n >= 100 * ksize) {
+       snprintf(buf, bsize, " %4.0f%s", n / ksize, bytes ? "KB" : "K" ); 
     }
     else if(n >= 10 * ksize) {
        snprintf(buf, bsize, " %4.1f%s", n / ksize, bytes ? "KB" : "K" ); 
@@ -190,11 +196,46 @@ void screen_data_clear() {
     sorted_list_destroy(&screen_list);
 }
 
-void analyse_data() {
-    hash_node_type* n = NULL;
+void calculate_totals() {
     int i;
 
-    if(options.paused == 0) {
+    /**
+     * Calculate peaks and totals
+     */
+    for(i = 0; i < HISTORY_LENGTH; i++) {
+        int j;
+        int ii = (HISTORY_LENGTH + history_pos - i) % HISTORY_LENGTH;
+
+        for(j = 0; j < HISTORY_DIVISIONS; j++) {
+            if(i < history_divs[j]) {
+                totals.recv[j] += history_totals.recv[ii];
+                totals.sent[j] += history_totals.sent[ii];
+            }
+        }
+
+        if(history_totals.recv[i] > peakrecv) {
+            peakrecv = history_totals.recv[i];
+        }
+        if(history_totals.sent[i] > peaksent) {
+            peaksent = history_totals.sent[i];
+        }
+        if(history_totals.recv[i] + history_totals.sent[i] > peaktotal) {
+            peaktotal = history_totals.recv[i] + history_totals.sent[i];	
+        }
+    }
+}
+
+void make_screen_list() {
+    hash_node_type* n = NULL;
+    while(hash_next_item(screen_hash, &n) == HASH_STATUS_OK) {
+        sorted_list_insert(&screen_list, (host_pair_line*)n->rec);
+    }
+}
+
+void analyse_data() {
+    hash_node_type* n = NULL;
+
+    if(options.paused == 1) {
       return;
     }
 
@@ -253,36 +294,11 @@ void analyse_data() {
 
     }
 
-    n = NULL;
-    while(hash_next_item(screen_hash, &n) == HASH_STATUS_OK) {
-        sorted_list_insert(&screen_list, (host_pair_line*)n->rec);
-    }
+    make_screen_list();
+
     hash_delete_all(screen_hash);
     
-    /**
-     * Calculate peaks and totals
-     */
-    for(i = 0; i < HISTORY_LENGTH; i++) {
-        int j;
-        int ii = (HISTORY_LENGTH + history_pos - i) % HISTORY_LENGTH;
-
-        for(j = 0; j < HISTORY_DIVISIONS; j++) {
-            if(i < history_divs[j]) {
-                totals.recv[j] += history_totals.recv[ii];
-                totals.sent[j] += history_totals.sent[ii];
-            }
-        }
-
-        if(history_totals.recv[i] > peakrecv) {
-            peakrecv = history_totals.recv[i];
-        }
-        if(history_totals.sent[i] > peaksent) {
-            peaksent = history_totals.sent[i];
-        }
-        if(history_totals.recv[i] + history_totals.sent[i] > peaktotal) {
-            peaktotal = history_totals.recv[i] + history_totals.sent[i];	
-        }
-    }
+    calculate_totals();
 
 }
 

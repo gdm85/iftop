@@ -16,6 +16,8 @@
 #include "ns_hash.h"
 #include "iftop.h"
 
+#include "threadprof.h"
+
 #define RESOLVE_QUEUE_LENGTH 20
 
 struct in_addr resolve_queue[RESOLVE_QUEUE_LENGTH];

@@ -10,10 +10,12 @@
 
 # Give the location of pcap.h here:
 CFLAGS += -I/usr/include/pcap
+# CFLAGS += -pg -a
 
 # Give the location of libpcap here if it's not in one of the standard
 # directories:
 #LDFLAGS += -L/usr/local/lib
+# LDFLAGS += -pg -a
 
 # PREFIX specifies the base directory for the installation.
 PREFIX = /usr/local
@@ -33,9 +35,9 @@ LDFLAGS += -g
 LDLIBS += -lpcap -lpthread -lcurses -lm
 
 SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c\
-       options.c serv_hash.c
+       options.c serv_hash.c threadprof.c
 HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h options.h sll.h\
-       serv_hash.h
+       serv_hash.h threadprof.h
 TXTS = README CHANGES INSTALL TODO iftop.8 COPYING
 SPECFILE = iftop.spec
 

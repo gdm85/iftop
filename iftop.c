@@ -25,6 +25,7 @@
 #include "ui.h"
 #include "options.h"
 #include "sll.h"
+#include "threadprof.h"
 
 
 unsigned char if_hw_addr[6];    /* ethernet address of interface. */
@@ -226,21 +227,21 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     ht->last_write = history_pos;
     if(iptr->ip_src.s_addr == ap.src.s_addr) {
         ht->sent[history_pos] += len;
-    ht->total_sent += len;
+        ht->total_sent += len;
     }
     else {
         ht->recv[history_pos] += len;
-    ht->total_recv += len;
+        ht->total_recv += len;
     }
 
     if(direction == 0) {
         /* incoming */
         history_totals.recv[history_pos] += ntohs(iptr->ip_len);
-    history_totals.total_recv += len;
+        history_totals.total_recv += len;
     }
     else {
         history_totals.sent[history_pos] += ntohs(iptr->ip_len);
-    history_totals.total_sent += len;
+        history_totals.total_sent += len;
     }
     
 }
