@@ -18,9 +18,10 @@
 
 #define HOSTNAME_LENGTH 256
 
-#define HISTORY_DIVISIONS 3
+#define HISTORY_DIVISIONS   3
+#define BARGRAPH_INTERVAL   1   /* which division used for bars. */
 
-/* 3, 15 and 60 seconds */
+/* 1, 15 and 60 seconds */
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 
@@ -240,12 +241,12 @@ void ui_print() {
 
             /* Do some sort of primitive bar graph thing. */
             mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-            L = get_bar_length(8 * screen_line->sent[0] / history_divs[0]);
+            L = get_bar_length(8 * screen_line->sent[BARGRAPH_INTERVAL] / history_divs[BARGRAPH_INTERVAL]);
             if (L > 0)
                 mvchgat(y, 0, L, A_REVERSE, 0, NULL);
 
             mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-            L = get_bar_length(8 * screen_line->recv[0] / history_divs[0]);
+            L = get_bar_length(8 * screen_line->recv[BARGRAPH_INTERVAL] / history_divs[BARGRAPH_INTERVAL]);
             if (L > 0)
                 mvchgat(y+1, 0, L, A_REVERSE, 0, NULL);
         }

@@ -26,10 +26,11 @@ if none is specified, and displays a table of current bandwidth usage by pairs
 of hosts.
 
 When run, \fBiftop\fP displays, for each pair of hosts, the rate at which data
-is sent and received averaged over 3, 15 and 60 second intervals. The direction
+is sent and received averaged over 1, 5 and 20 second intervals. The direction
 of data flow is indicated by arrows, <= and =>. In addition, a simple bar graph
-shows the 15-second average. The pairs of hosts which consume the most bandwidth
-are displayed at the top of the screen.
+shows the 5-second average. The pairs of hosts which consume the most bandwidth
+are displayed at the top of the screen, and totals for all hosts are shown at
+the bottom of the screen.
 
 By default, \fBiftop\fP will look up the hostnames associated with addresses it
 finds in packets. This can cause substantial traffic of itself, and may result

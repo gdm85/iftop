@@ -55,8 +55,6 @@ void resolver_worker(void* ptr) {
 
             pthread_mutex_unlock(&resolver_queue_mutex);
 
-
-
             hstbuflen = 1024;
             /* Allocate buffer, remember to free it to avoid memory leakage.  */            
             tmphstbuf = xmalloc (hstbuflen);
@@ -68,7 +66,6 @@ void resolver_worker(void* ptr) {
                 hstbuflen *= 2;
                 tmphstbuf = realloc (tmphstbuf, hstbuflen);
               }
-
 
             /*
              * Store the result in ns_hash
