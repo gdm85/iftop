@@ -29,7 +29,8 @@ pthread_mutex_t tick_mutex;
 
 
 
-#define CAPTURE_LENGTH 512
+/* Only need ethernet and IP headers. */
+#define CAPTURE_LENGTH 48
 
 void init_history() {
     history = addr_hash_create();

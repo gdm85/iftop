@@ -15,7 +15,7 @@
 #include "resolver.h"
 #include "sorted_list.h"
 
-#define HOSTNAME_LENGTH 20
+#define HOSTNAME_LENGTH 256
 
 #define HISTORY_DIVISIONS 3
 
@@ -87,9 +87,15 @@ void ui_print() {
     hash_node_type* n = NULL;
     sorted_list_node* nn = NULL;
     char hostname[HOSTNAME_LENGTH];
-    char line[80]; // FIXME
+    static char *line;
+    static int lcols;
     int y = 2;
     sorted_list_type screen_list;
+
+    if (!line || lcols != COLS) {
+        xfree(line);
+        line = calloc(COLS + 1, 1);
+    }
 
     screen_list.compare = &screen_line_compare;
     sorted_list_initialise(&screen_list);
@@ -119,11 +125,12 @@ void ui_print() {
         sorted_list_insert(&screen_list, screen_line);
     }
 
+    /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
+     * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
+     * host names. */
+
     while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
-        int x = 0;
-        int j;
-        int L;
-        int t;
+        int x = 0, j, L, t;
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
         if(history_len < history_divs[j]) {
@@ -132,15 +139,17 @@ void ui_print() {
             t = history_divs[j] * RESOLUTION;
         }
 
+        L = COLS - 12 * HISTORY_DIVISIONS;
+
         resolve(&screen_line->ap->src, hostname, HOSTNAME_LENGTH);
-        sprintf(line, "%s ", hostname);
+        sprintf(line, "%s", hostname);
         mvaddstr(y, x, line);
-        x += 20;
+        x += L / 2 - 2;
 
         resolve(&screen_line->ap->dst, hostname, HOSTNAME_LENGTH);
-        sprintf(line ,"=> %10s ", hostname);
+        sprintf(line, " => %*s", L / 2 - 2, hostname);
         mvaddstr(y, x, line);
-        x += 24;
+        x = L;
 
         for(j = 0; j < HISTORY_DIVISIONS; j++) {
             readable_size(screen_line->sent[j] / t, line, 10);
