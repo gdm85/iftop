@@ -29,13 +29,16 @@ SUBDIRS = config
 iftop.cat: iftop.8
 	(echo -e ".pl 1100i" ; cat iftop.8 ; echo ".pl \n(nlu+10") | groff -Tascii -man > iftop.cat
 
+iftop.spec: iftop.spec.in
+	sed 's/__VERSION__/$(VERSION)/' < iftop.spec.in > iftop.spec
+
 ## These need to be distributed along with configure:
 
 EXTRA_DIST = bootstrap README ChangeLog AUTHORS COPYING INSTALL TODO \
-		Makefile.OLD $(man_MANS) iftop.cat
+		Makefile.OLD $(man_MANS) iftop.cat iftop.spec
              
 MAINTERCLEANFILES = Makefile.in aclocal.m4 configure configuration.h.in \
-                    stamp-h.in
+                    stamp-h.in iftop.spec
 
 ACLOCAL = aclocal -I @ac_aux_dir@
 
