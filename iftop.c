@@ -35,6 +35,9 @@ int history_pos = 0;
 int history_len = 1;
 pthread_mutex_t tick_mutex;
 
+pcap_t* pd; /* pcap descriptor */
+pcap_handler packet_handler;
+
 sig_atomic_t foad;
 
 static void finish(int sig) {
@@ -114,129 +117,157 @@ int in_filter_net(struct in_addr addr) {
     return ret;
 }
 
-static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const char* packet)
+static void handle_ip_packet(struct ip* iptr, int hw_dir)
+{
+    int direction = 0; /* incoming */
+    history_type* ht;
+    addr_pair ap;
+    int len;
+
+    if(options.netfilter == 0) { 
+        /*
+         * Net filter is off, so assign direction based on MAC address
+         */
+        if(hw_dir == 1) {
+            /* Packet leaving this interface. */
+            ap.src = iptr->ip_src;
+            ap.dst = iptr->ip_dst;
+            direction = 1;
+        }
+        else if(hw_dir == 0) {
+            /* Packet incoming */
+            ap.src = iptr->ip_dst;
+            ap.dst = iptr->ip_src;
+        }
+
+       /*
+        * This packet is not from or to this interface, or the h/ware 
+        * layer did not give the direction away.  Therefore assume
+        * it was picked up in promisc mode, and account it as incoming.
+        */
+        else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
+            ap.src = iptr->ip_src;
+            ap.dst = iptr->ip_dst;
+        }
+        else {
+            ap.src = iptr->ip_dst;
+            ap.dst = iptr->ip_src;
+        }
+    }
+    else {
+        /* 
+         * Net filter on, assign direction according to netmask 
+         */ 
+        if(in_filter_net(iptr->ip_src) & !in_filter_net(iptr->ip_dst)) {
+            /* out of network */
+            ap.src = iptr->ip_src;
+            ap.dst = iptr->ip_dst;
+            direction = 1;
+        }
+        else if(in_filter_net(iptr->ip_dst) & !in_filter_net(iptr->ip_src)) {
+            /* into network */
+            ap.src = iptr->ip_dst;
+            ap.dst = iptr->ip_src;
+        }
+        else {
+            /* drop packet */
+            return ;
+        }
+    }
+
+    /* Add the addresses to be resolved */
+    resolve(&iptr->ip_dst, NULL, 0);
+    resolve(&iptr->ip_src, NULL, 0);
+
+    if(hash_find(history, &ap, (void**)&ht) == HASH_STATUS_KEY_NOT_FOUND) {
+        ht = history_create();
+        hash_insert(history, &ap, ht);
+    }
+
+    len = ntohs(iptr->ip_len);
+
+    /* Update record */
+    ht->last_write = history_pos;
+    if(iptr->ip_src.s_addr == ap.src.s_addr) {
+        ht->sent[history_pos] += len;
+    ht->total_sent += len;
+    }
+    else {
+        ht->recv[history_pos] += len;
+    ht->total_recv += len;
+    }
+
+    if(direction == 0) {
+        /* incoming */
+        history_totals.recv[history_pos] += ntohs(iptr->ip_len);
+    history_totals.total_recv += len;
+    }
+    else {
+        history_totals.sent[history_pos] += ntohs(iptr->ip_len);
+    history_totals.total_sent += len;
+    }
+    
+}
+
+static void handle_raw_packet(char* args, const struct pcap_pkthdr* pkthdr,const char* packet)
+{
+    handle_ip_packet((struct ip*)packet, -1);
+}
+
+static void handle_eth_packet(char* args, const struct pcap_pkthdr* pkthdr,const char* packet)
 {
     struct ether_header *eptr;
-    int direction = 0; /* incoming */
     eptr = (struct ether_header*)packet;
        
     tick(0);
     
     if(ntohs(eptr->ether_type) == ETHERTYPE_IP) {
         struct ip* iptr;
-        history_type* ht;
-        addr_pair ap;
-	int len;
-
-        iptr = (struct ip*)(packet + sizeof(struct ether_header)); /* alignment? */
-        if(options.netfilter == 0) { 
-            /*
-             * Net filter is off, so assign direction based on MAC address
-             */
-
-            if(memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
-                /* Packet leaving this interface. */
-                ap.src = iptr->ip_src;
-                ap.dst = iptr->ip_dst;
-                direction = 1;
-            } 
-            else if(memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
-                ap.src = iptr->ip_dst;
-                ap.dst = iptr->ip_src;
-            }
-           /*
-            * This packet is not from or to this interface.  Therefore assume
-            * it was picked up in promisc mode, and account it as incoming.
-            */
-            else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
-                ap.src = iptr->ip_src;
-                ap.dst = iptr->ip_dst;
-            }
-            else {
-                ap.src = iptr->ip_dst;
-                ap.dst = iptr->ip_src;
-            }
-        }
-        else {
-            /* 
-             * Net filter on, assign direction according to netmask 
-             */ 
-            if(in_filter_net(iptr->ip_src) & !in_filter_net(iptr->ip_dst)) {
-                /* out of network */
-                ap.src = iptr->ip_src;
-                ap.dst = iptr->ip_dst;
-                direction = 1;
-            }
-            else if(in_filter_net(iptr->ip_dst) & !in_filter_net(iptr->ip_src)) {
-                /* into network */
-                ap.src = iptr->ip_dst;
-                ap.dst = iptr->ip_src;
-            }
-            else {
-                /* drop packet */
-                return ;
-            }
+        int dir = -1;
+        
+        /*
+         * Is a direction implied by the MAC addresses?
+         */
+        if(memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
+            /* packet leaving this i/f */
+            dir = 1;
+        } 
+        else if(memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
+            /* packet entering this i/f */
+            dir = 0;
         }
 
-        /* Add the addresses to be resolved */
-        resolve(&iptr->ip_dst, NULL, 0);
-        resolve(&iptr->ip_src, NULL, 0);
-
-        if(hash_find(history, &ap, (void**)&ht) == HASH_STATUS_KEY_NOT_FOUND) {
-            ht = history_create();
-            hash_insert(history, &ap, ht);
-        }
-
-        len = ntohs(iptr->ip_len);
-
-        /* Update record */
-        ht->last_write = history_pos;
-        if(iptr->ip_src.s_addr == ap.src.s_addr) {
-            ht->sent[history_pos] += len;
-	    ht->total_sent += len;
-        }
-        else {
-            ht->recv[history_pos] += len;
-	    ht->total_recv += len;
-        }
-
-        if(direction == 0) {
-            /* incoming */
-            history_totals.recv[history_pos] += ntohs(iptr->ip_len);
-	    history_totals.total_recv += len;
-        }
-        else {
-            history_totals.sent[history_pos] += ntohs(iptr->ip_len);
-	    history_totals.total_sent += len;
-        }
-
+        iptr = (struct ip*)(packet + sizeof(struct ether_header) ); /* alignment? */
+        handle_ip_packet(iptr, dir);
     }
 }
 
-/* packet_loop:
- * Worker function for packet capture thread. */
-void packet_loop(void* ptr) {
+
+/*
+ * packet_init:
+ *
+ * performs pcap initialisation, called before ui is initialised
+ */
+void packet_init() {
     char errbuf[PCAP_ERRBUF_SIZE];
     char* str = "ip";
-    pcap_t* pd;
     struct bpf_program F;
     int s;
     struct ifreq ifr = {0};
+    int dlt;
 
     /* First, get the address of the interface. If it isn't an ethernet
      * interface whose address we can obtain, there's not a lot we can do. */
     s = socket(PF_INET, SOCK_DGRAM, 0); /* any sort of IP socket will do */
     if (s == -1) {
         perror("socket");
-        foad = 1;
-        return;
+        exit;
     }
     strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
     ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
     if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
         perror("ioctl(SIOCGIFHWADDR)");
-        foad = 1;
-        return;
+        exit;
     }
     close(s);
     memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
@@ -250,28 +281,45 @@ void packet_loop(void* ptr) {
     pd = pcap_open_live(options.interface, CAPTURE_LENGTH, options.promiscuous, 1000, errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", options.interface, errbuf); 
-        foad = 1;
-        return;
+        exit;
     }
+    dlt = pcap_datalink(pd);
+    if(dlt == DLT_EN10MB) {
+        packet_handler = handle_eth_packet;
+    }
+    else if(dlt == DLT_RAW) {
+        packet_handler = handle_raw_packet;
+    } 
+    else {
+        fprintf(stderr, "Unsupported datalink type: %d\n"
+                "Please email pdw@ex-parrot.com, quoting the datalink type and what you were\n"
+                "trying to do at the time\n.", dlt);
+        exit(0);
+    }
+
     if (options.filtercode) {
         str = xmalloc(strlen(options.filtercode) + sizeof "() and ip");
         sprintf(str, "(%s) and ip", options.filtercode);
     }
     if (pcap_compile(pd, &F, str, 1, 0) == -1) {
         fprintf(stderr, "pcap_compile(%s): %s\n", str, pcap_geterr(pd));
-        foad = 1;
+        exit;
         return;
     }
     if (pcap_setfilter(pd, &F) == -1) {
         fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(pd));
-        foad = 1;
+        exit;
         return;
     }
     if (options.filtercode)
         xfree(str);
-    printf("Begin loop\n");
-    pcap_loop(pd,0,(pcap_handler)handle_packet,NULL);
-    printf("end loop\n");
+
+}
+
+/* packet_loop:
+ * Worker function for packet capture thread. */
+void packet_loop(void* ptr) {
+    pcap_loop(pd,0,(pcap_handler)packet_handler,NULL);
 }
 
 
@@ -287,6 +335,8 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &sa, NULL);
 
     pthread_mutex_init(&tick_mutex, NULL);
+
+    packet_init();
 
     init_history();
 
