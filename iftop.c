@@ -87,7 +87,7 @@ void history_rotate() {
 }
 
 
-void tick() {
+void tick(int print) {
     time_t t;
 
     pthread_mutex_lock(&tick_mutex);
@@ -95,9 +95,13 @@ void tick() {
     t = time(NULL);
     if(t - last_timestamp >= RESOLUTION) {
         //printf("TICKING\n");
+	analyse_data();
         ui_print();
         history_rotate();
         last_timestamp = t;
+    }
+    else if(print) {
+	ui_print();
     }
 
     pthread_mutex_unlock(&tick_mutex);
@@ -115,7 +119,7 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
     int direction = 0; /* incoming */
     eptr = (struct ether_header*)packet;
        
-    tick();
+    tick(0);
     
     if(ntohs(eptr->ether_type) == ETHERTYPE_IP) {
         struct ip* iptr;
@@ -284,6 +288,8 @@ int main(int argc, char **argv) {
     pthread_mutex_init(&tick_mutex, NULL);
 
     init_history();
+
+    ui_init();
 
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
 

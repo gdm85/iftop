@@ -41,6 +41,10 @@ extern options_t options ;
 
 void ui_finish();
 
+sorted_list_type screen_list;
+host_pair_line totals;
+int peaksent, peakrecv, peaktotal;
+
 int screen_line_compare(void* a, void* b) {
     int i;
     host_pair_line* aa = (host_pair_line*)a;
@@ -149,42 +153,27 @@ void draw_totals(host_pair_line* totals) {
 
 extern history_type history_totals;
 
-
-void ui_print() {
-    hash_node_type* n = NULL;
-    sorted_list_node* nn = NULL;
-    char hostname[HOSTNAME_LENGTH];
-    static char *line;
-    static int lcols;
-    int peaksent = 0, peakrecv = 0, peaktotal = 0;
-    int y = 1;
-    int i;
-    sorted_list_type screen_list;
-    host_pair_line totals;
-
-    if (!line || lcols != COLS) {
-        xfree(line);
-        line = calloc(COLS + 1, 1);
-    }
-
+void screen_list_init() {
     screen_list.compare = &screen_line_compare;
     sorted_list_initialise(&screen_list);
+}
 
-    clear();
-    //erase();
-    move(0, 0);
-    attron(A_REVERSE);
-    addstr(" Q ");
-    attroff(A_REVERSE);
-    addstr(" quit ");
-    attron(A_REVERSE);
-    addstr(" R ");
-    attroff(A_REVERSE);
-    addstr(options.dnsresolution ? " name resolution off "
-                         : " name resolution on  ");
-    draw_bar_scale(&y);
+void screen_data_clear() {
+    sorted_list_node* nn = NULL;
+    peaksent = peakrecv = peaktotal = 0;
+    while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
+        free(nn->data);
+    }
+    sorted_list_destroy(&screen_list);
+}
+
+void analyse_data() {
+    hash_node_type* n = NULL;
+    int i;
 
     memset(&totals, 0, sizeof totals);
+
+    screen_data_clear();
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
@@ -235,6 +224,36 @@ void ui_print() {
         }
     }
 
+}
+
+void ui_print() {
+    sorted_list_node* nn = NULL;
+    char hostname[HOSTNAME_LENGTH];
+    static char *line;
+    static int lcols;
+    int y = 1;
+
+    if (!line || lcols != COLS) {
+        xfree(line);
+        line = calloc(COLS + 1, 1);
+    }
+
+
+    clear();
+    //erase();
+    move(0, 0);
+    attron(A_REVERSE);
+    addstr(" Q ");
+    attroff(A_REVERSE);
+    addstr(" quit ");
+    attron(A_REVERSE);
+    addstr(" R ");
+    attroff(A_REVERSE);
+    addstr(options.dnsresolution ? " name resolution off "
+                         : " name resolution on  ");
+    draw_bar_scale(&y);
+
+
 
     /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
      * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
@@ -274,7 +293,6 @@ void ui_print() {
 
         }
         y += 2;
-        free(screen_line);
     }
 
 
@@ -316,14 +334,9 @@ void ui_print() {
     
     refresh();
 
-    sorted_list_destroy(&screen_list);
 }
 
-void ui_loop() {
-    pthread_mutex_t tick_wait_mutex;
-    pthread_cond_t tick_wait_cond;
-    extern sig_atomic_t foad;
-
+void ui_init() {
     (void) initscr();      /* initialize the curses library */
     keypad(stdscr, TRUE);  /* enable keyboard mapping */
     (void) nonl();         /* tell curses not to do NL->CR/NL on output */
@@ -332,9 +345,12 @@ void ui_loop() {
     halfdelay(2);
 
     erase();
-    
-    pthread_mutex_init(&tick_wait_mutex, NULL);
-    pthread_cond_init(&tick_wait_cond, NULL);
+
+    screen_list_init();
+}
+
+void ui_loop() {
+    extern sig_atomic_t foad;
     while(foad == 0) {
         int i;
         i = toupper(getch());
@@ -345,13 +361,15 @@ void ui_loop() {
 
             case 'R':
                 options.dnsresolution = !options.dnsresolution;
+                tick(1);
                 break;
 
 	        case 'B':
                 options.showbars = !options.showbars; 
+                tick(1);
                 break;
         }
-        tick();
+        tick(0);
     }
 }
 

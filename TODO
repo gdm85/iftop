@@ -12,10 +12,6 @@ $Id$
 
 * Aggregate traffic by source host / dest host rather than just by host pair.
 
-* Cummulative byte counters.
-
 * Configurable sort criteria.
 
 * Configurable refresh rates.
-
-* Ability to turn bar graphs on and off.
