@@ -15,3 +15,10 @@ $Id$
 * For promiscuous mode, give a way to define which packets are regarded as
   `inside' and which `outside' the network.
 
+* Cummulative byte counters.
+
+* Configurable sort criteria.
+
+* Configurable refresh rates.
+
+* Ability to turn bar graphs on and off.
