@@ -3,6 +3,7 @@
  *
  */
 
+#include <ctype.h>
 #include <curses.h>
 #include <string.h>
 #include <math.h>
@@ -75,20 +76,22 @@ static int get_bar_length(const int rate) {
 static void draw_bar_scale(void) {
     int i;
     /* Draw bar graph scale on top of the window. */
-    mvhline(1, 0, 0, COLS);
+    mvhline(2, 0, 0, COLS);
     for (i = min_rate; i <= max_rate; i *= 10) {
         char s[40], *p;
         int x;
         readable_size(i, s, sizeof s, 1000);
         p = s + strspn(s, " ");
         x = get_bar_length(i);
-        mvaddch(1, x, ACS_BTEE);
+        mvaddch(2, x, ACS_BTEE);
         if (x + strlen(p) >= COLS)
             x = COLS - strlen(p);
-        mvaddstr(0, x, p);
+        mvaddstr(1, x, p);
     }
-    mvaddch(1, 0, ACS_LLCORNER);
+    mvaddch(2, 0, ACS_LLCORNER);
 }
+
+static int dnsresolution = 1;
 
 void ui_print() {
     hash_node_type* n = NULL;
@@ -96,7 +99,7 @@ void ui_print() {
     char hostname[HOSTNAME_LENGTH];
     static char *line;
     static int lcols;
-    int y = 2;
+    int y = 3;
     sorted_list_type screen_list;
 
     if (!line || lcols != COLS) {
@@ -107,7 +110,18 @@ void ui_print() {
     screen_list.compare = &screen_line_compare;
     sorted_list_initialise(&screen_list);
 
-    erase();
+    clear();
+    //erase();
+    move(0, 0);
+    attron(A_REVERSE);
+    addstr(" Q ");
+    attroff(A_REVERSE);
+    addstr(" quit ");
+    attron(A_REVERSE);
+    addstr(" R ");
+    attroff(A_REVERSE);
+    addstr(dnsresolution ? " name resolution off "
+                         : " name resolution on  ");
     draw_bar_scale();
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
@@ -145,7 +159,10 @@ void ui_print() {
             L = sizeof hostname;
         }
 
-        resolve(&screen_line->ap->src, hostname, L);
+        if (dnsresolution)
+            resolve(&screen_line->ap->src, hostname, L);
+        else
+            strcpy(hostname, inet_ntoa(screen_line->ap->src));
         sprintf(line, "%-*s", L, hostname);
         mvaddstr(y, x, line);
         x += L;
@@ -154,7 +171,10 @@ void ui_print() {
         mvaddstr(y+1, x, " <= ");
 
         x += 4;
-        resolve(&screen_line->ap->dst, hostname, L);
+        if (dnsresolution)
+            resolve(&screen_line->ap->dst, hostname, L);
+        else
+            strcpy(hostname, inet_ntoa(screen_line->ap->dst));
         sprintf(line, "%-*s", L, hostname);
         mvaddstr(y, x, line);
         x += L;
@@ -210,9 +230,16 @@ void ui_loop() {
     pthread_mutex_init(&tick_wait_mutex, NULL);
     pthread_cond_init(&tick_wait_cond, NULL);
     while(foad == 0) {
-        if(getch() == 'q') {
-            foad = 1;
+        int i;
+        i = toupper(getch());
+        switch (i) {
+            case 'Q':
+                foad = 1;
+                break;
 
+            case 'R':
+                dnsresolution = !dnsresolution;
+                break;
         }
         tick();
     }

@@ -31,6 +31,12 @@ int history_pos = 0;
 int history_len = 1;
 pthread_mutex_t tick_mutex;
 
+sig_atomic_t foad;
+
+static void finish(int sig) {
+    foad = sig;
+}
+
 
 
 /* Only need ethernet and IP headers. */
@@ -129,9 +135,8 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
     }
 }
 
-/*
- * packet capture thread
- */
+/* packet_loop:
+ * Worker function for packet capture thread. */
 void packet_loop(void* ptr) {
     char errbuf[PCAP_ERRBUF_SIZE];
     char* str = "ip";
@@ -143,7 +148,8 @@ void packet_loop(void* ptr) {
     pd = pcap_open_live(interface, CAPTURE_LENGTH, 1, 1000, errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", interface, errbuf); 
-        exit(1); 
+        foad = 1;
+        return;
     }
     if (filtercode) {
         str = xmalloc(strlen(filtercode) + sizeof "() and ip");
@@ -151,11 +157,13 @@ void packet_loop(void* ptr) {
     }
     if (pcap_compile(pd, &F, str, 1, 0) == -1) {
         fprintf(stderr, "pcap_compile(%s): %s\n", str, pcap_geterr(pd));
-        exit(1);
+        foad = 1;
+        return;
     }
     if (pcap_setfilter(pd, &F) == -1) {
         fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(pd));
-        exit(1);
+        foad = 1;
+        return;
     }
     if (filtercode)
         xfree(str);
@@ -164,21 +172,15 @@ void packet_loop(void* ptr) {
     printf("end loop\n");
 }
 
-sig_atomic_t foad;
-
-static void finish(int sig)
-{
-    foad = sig;
-}
-
 /* usage:
  * Print usage information. */
 void usage(FILE *fp) {
     fprintf(fp,
+"iftop: display bandwidth usage on an interface by host\n"
 "Options:\n"
 "\n"
 "   -i interface        listen on named interface (default: eth0)\n"
-"   -f filtercode code      use filtercode code to select packets to count\n"
+"   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
 "   -h                  display this message\n"
 "\n"
