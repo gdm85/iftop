@@ -447,7 +447,6 @@ void packet_init() {
     if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
         fprintf(stderr, "Error getting hardware address for interface: %s\n", options.interface); 
         perror("ioctl(SIOCGIFHWADDR)");
-        exit(1);
     }
     else {
         memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
@@ -470,7 +469,6 @@ void packet_init() {
     if (ioctl(s, SIOCGIFADDR, &ifr) < 0) {
         fprintf(stderr, "Error getting IP address for interface: %s\n", options.interface); 
         perror("ioctl(SIOCGIFADDR)");
-        exit(1);
     }
     else {
         have_ip_addr = 1;
