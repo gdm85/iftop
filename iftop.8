@@ -122,6 +122,13 @@ transmitted traffic, and the remaining colums show the 2, 10 and 40 second
 averages. As with the per-host displays, the top line shows transmitted and the
 bottom line received traffic.
 
+.SH SOURCE / DEST AGGREGATION
+
+By pressing \fBs\fP or \fBd\fP while the \fBiftop\fP is running, all traffic
+for each source or destination will be aggregated together.  This is most
+useful when \fBiftop\fP is run in promiscuous mode, or is run on a gateway
+machine.
+
 .SH SEE ALSO
 .BR tcpdump (8),
 .BR pcap (3),
