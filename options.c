@@ -109,6 +109,7 @@ static void set_defaults() {
     options.freezeorder = 0;
     options.linedisplay = OPTION_LINEDISPLAY_TWO_LINE;
     options.screen_offset = 0;
+    options.show_totals = 0;
 }
 
 static void die(char *msg) {
