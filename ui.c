@@ -179,6 +179,8 @@ void ui_print() {
         history_type* d = (history_type*)n->rec;
         host_pair_line* screen_line;
         int i;
+        int tsent, trecv;
+        tsent = trecv = 0;
         
         screen_line = xcalloc(1, sizeof *screen_line);
         screen_line->ap = (addr_pair*)n->key;
@@ -186,19 +188,6 @@ void ui_print() {
         for(i = 0; i < HISTORY_LENGTH; i++) {
             int j;
             int ii = (HISTORY_LENGTH + history_pos - i) % HISTORY_LENGTH;
-            int tsent, trecv;
-            tsent = trecv = 0;
-
-            trecv += d->recv[ii];
-            if(d->promisc == 1) {
-                /* If this was picked up by promiscuous mode, it must
-                 * have been incoming
-                 */
-                trecv += d->recv[ii];
-            }
-            else {
-                tsent += d->sent[ii];
-            }
 
             for(j = 0; j < HISTORY_DIVISIONS; j++) {
                 if(i < history_divs[j]) {
@@ -206,14 +195,19 @@ void ui_print() {
                     totals.recv[j] += d->recv[ii];
 
                     screen_line->sent[j] += d->sent[ii];
-                    totals.sent[j] += d->sent[ii];
+                    if(d->promisc == 1) {
+                      totals.recv[j] += d->sent[ii];
+                    }
+                    else {
+                      totals.sent[j] += d->sent[ii];
+                    }
                 }
             }
 
-            if(trecv > peakrecv) 
-                peakrecv = trecv;
-            if(tsent > peaksent)
-                peaksent = tsent;
+            if(d->recv[ii] > peakrecv) 
+                peakrecv = d->recv[ii];
+            if(d->sent[ii] > peaksent)
+                peaksent = d->sent[ii];
         }
 
         sorted_list_insert(&screen_list, screen_line);
