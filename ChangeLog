@@ -6,6 +6,7 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 
 0.17
 * Fixed segfault bug in config file handling.
+* Added support for ppp interfaces
 
 0.16 28/02/04
 * Added support for DLT_NULL
