@@ -34,6 +34,8 @@ int history_pos = 0;
 int history_len = 1;
 pthread_mutex_t tick_mutex;
 
+int promiscuous = 0;
+
 sig_atomic_t foad;
 
 static void finish(int sig) {
@@ -112,22 +114,24 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
 
         iptr = (struct ip*)(packet + sizeof(struct ether_header)); /* alignment? */
 
-        if (memcmp(eptr->ether_shost, if_hw_addr, 6) == 0) {
+        if(memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
             /* Packet leaving this interface. */
             ap.src = iptr->ip_src;
             ap.dst = iptr->ip_dst;
-        } else {
-            /* Assume it's a packet arriving at this interface. This is OK,
-             * since packets which don't have this interface as their source or
-             * destination should all be broadcast packets, which are
-             * incoming.
-             * XXX this results in a confusing display:
-             * 10.1.2.255    =>   foo.bar.com           0b    0b    0b
-             *               <=                         1k    1k    1k
-             * FIXME? */
+        } 
+        else if(memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
             ap.src = iptr->ip_dst;
             ap.dst = iptr->ip_src;
         }
+        else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
+            ap.src = iptr->ip_src;
+            ap.dst = iptr->ip_dst;
+        }
+        else {
+            ap.src = iptr->ip_dst;
+            ap.dst = iptr->ip_src;
+        }
+
 
 	/* Add the address to be resolved */
         resolve(&iptr->ip_dst, NULL, 0);
@@ -184,7 +188,7 @@ void packet_loop(void* ptr) {
     resolver_initialise();
 
     /* Open non-promiscuous since this is intended to be run on a router. */
-    pd = pcap_open_live(interface, CAPTURE_LENGTH, 0, 1000, errbuf);
+    pd = pcap_open_live(interface, CAPTURE_LENGTH, promiscuous, 1000, errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", interface, errbuf); 
         foad = 1;
@@ -222,6 +226,8 @@ void usage(FILE *fp) {
 "   -i interface        listen on named interface (default: eth0)\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
+"   -p                  run in promiscuous mode (show traffic between other\n"
+"                       hosts on the same network segment)\n"
 "   -h                  display this message\n"
 "\n"
 "iftop, $Id$\n"
@@ -230,7 +236,7 @@ void usage(FILE *fp) {
 
 /* main:
  * Entry point. See usage(). */
-char optstr[] = "+i:f:dh";
+char optstr[] = "+i:f:dhp";
 int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {0};
@@ -254,6 +260,10 @@ int main(int argc, char **argv) {
 
             case 'f':
                 filtercode = optarg;
+                break;
+
+            case 'p':
+                promiscuous = 1;
                 break;
 
             case '?':
