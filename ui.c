@@ -78,23 +78,29 @@ static int get_bar_length(const int rate) {
     return (l * COLS);
 }
 
-static void draw_bar_scale(void) {
+static void draw_bar_scale(int* y) {
     int i;
-    int y = 1;
-    /* Draw bar graph scale on top of the window. */
-    mvhline(y + 1, 0, 0, COLS);
-    for (i = min_rate; i <= max_rate; i *= 10) {
-        char s[40], *p;
-        int x;
-        readable_size(i, s, sizeof s, 1000);
-        p = s + strspn(s, " ");
-        x = get_bar_length(i);
-        mvaddch(y + 1, x, ACS_BTEE);
-        if (x + strlen(p) >= COLS)
-            x = COLS - strlen(p);
-        mvaddstr(y, x, p);
+    if(options.showbars) {
+        /* Draw bar graph scale on top of the window. */
+        mvhline(*y + 1, 0, 0, COLS);
+        for (i = min_rate; i <= max_rate; i *= 10) {
+            char s[40], *p;
+            int x;
+            readable_size(i, s, sizeof s, 1000);
+            p = s + strspn(s, " ");
+            x = get_bar_length(i);
+            mvaddch(*y + 1, x, ACS_BTEE);
+            if (x + strlen(p) >= COLS)
+                x = COLS - strlen(p);
+            mvaddstr(*y, x, p);
+        }
+        mvaddch(*y + 1, 0, ACS_LLCORNER);
+        *y += 2;
     }
-    mvaddch(y + 1, 0, ACS_LLCORNER);
+    else {
+        mvhline(*y, 0, 0, COLS);
+        *y += 1;
+    }
 }
 
 int history_length(const int d) {
@@ -119,16 +125,18 @@ void draw_line_totals(int y, host_pair_line* line) {
         x += 8;
     }
     
-    t = history_length(BARGRAPH_INTERVAL);
-    mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-    L = get_bar_length(8 * line->sent[BARGRAPH_INTERVAL] / t);
-    if (L > 0)
-        mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
+    if(options.showbars) {
+        t = history_length(BARGRAPH_INTERVAL);
+        mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
+        L = get_bar_length(8 * line->sent[BARGRAPH_INTERVAL] / t);
+        if (L > 0)
+            mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
 
-    mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-    L = get_bar_length(8 * line->recv[BARGRAPH_INTERVAL] / t);
-    if (L > 0)
-        mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
+        mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
+        L = get_bar_length(8 * line->recv[BARGRAPH_INTERVAL] / t);
+        if (L > 0)
+            mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
+    }
 }
 
 void draw_totals(host_pair_line* totals) {
@@ -149,7 +157,7 @@ void ui_print() {
     static char *line;
     static int lcols;
     int peaksent = 0, peakrecv = 0, peaktotal = 0;
-    int y = 0;
+    int y = 1;
     int i;
     sorted_list_type screen_list;
     host_pair_line totals;
@@ -174,7 +182,7 @@ void ui_print() {
     attroff(A_REVERSE);
     addstr(options.dnsresolution ? " name resolution off "
                          : " name resolution on  ");
-    draw_bar_scale();
+    draw_bar_scale(&y);
 
     memset(&totals, 0, sizeof totals);
 
@@ -227,8 +235,6 @@ void ui_print() {
         }
     }
 
-    y = 3;
-    
 
     /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
      * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
@@ -239,7 +245,6 @@ void ui_print() {
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
         if(y < LINES - 4) {
-            int t;
             
             L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
             if(L > sizeof hostname) {
@@ -267,17 +272,6 @@ void ui_print() {
             
             draw_line_totals(y, screen_line);
 
-            /* Do some sort of primitive bar graph thing. */
-            t = history_length(BARGRAPH_INTERVAL);
-            mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-            L = get_bar_length(8 * screen_line->sent[BARGRAPH_INTERVAL] / t);
-            if (L > 0)
-                mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
-
-            mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-            L = get_bar_length(8 * screen_line->recv[BARGRAPH_INTERVAL] / t);
-            if (L > 0)
-                mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
         }
         y += 2;
         free(screen_line);
@@ -298,16 +292,25 @@ void ui_print() {
     readable_size((peakrecv + peaksent) * 8 / RESOLUTION, line, 10, 1024);
     mvaddstr(y+1, 8, line);
 
-    mvaddstr(y, 17, "sent:   peak: ");
-    mvaddstr(y+1, 17, "recv:       ");
+    mvaddstr(y, 18, "TX: ");
+    mvaddstr(y+1, 18, "RX: ");
+
+    readable_size(history_totals.total_sent / RESOLUTION, line, 10, 1024);
+    mvaddstr(y, 22, line);
+
+    readable_size(history_totals.total_recv / RESOLUTION, line, 10, 1024);
+    mvaddstr(y+1, 22, line);
+
+    mvaddstr(y, 33, "peaks: ");
+    /* mvaddstr(y+1, 24, "recv:       "); */
 
     readable_size(peaksent * 8 / RESOLUTION, line, 10, 1024);
-    mvaddstr(y, 30, line);
+    mvaddstr(y, 39, line);
 
     readable_size(peakrecv * 8 / RESOLUTION, line, 10, 1024);
-    mvaddstr(y+1, 30, line);
+    mvaddstr(y+1, 39, line);
 
-    mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 10, "totals:");
+    mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 8, "totals:");
 
     draw_totals(&totals);
     
@@ -342,6 +345,10 @@ void ui_loop() {
 
             case 'R':
                 options.dnsresolution = !options.dnsresolution;
+                break;
+
+	        case 'B':
+                options.showbars = !options.showbars; 
                 break;
         }
         tick();

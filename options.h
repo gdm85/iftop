@@ -23,6 +23,7 @@ typedef struct {
     struct in_addr netfiltermask;
     int dnsresolution;
     int promiscuous;
+    int showbars;
 
 } options_t;
 

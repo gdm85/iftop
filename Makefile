@@ -27,7 +27,7 @@ MANDIR = man
 #MANDIR = share/man     # FHS-ish
 
 # You shouldn't need to change anything below this point.
-VERSION = 0.1
+VERSION = 0.2
 CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
 LDFLAGS += -g 
 LDLIBS += -lpcap -lpthread -lcurses -lm
@@ -39,9 +39,7 @@ TXTS = README CHANGES INSTALL TODO iftop.8 COPYING
 
 OBJS = $(SRCS:.c=.o)
 
-# If you do not have makedepend, you will need to remove references to depend
-# and nodepend below.
-iftop: depend $(OBJS) Makefile
+iftop: $(OBJS) Makefile
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS) 
 
 install: iftop
@@ -57,23 +55,21 @@ uninstall:
 clean: nodepend
 	rm -f *~ *.o core iftop
 
-tarball: nodepend $(SRCS) $(HDRS) $(TXTS)
+tarball: depend $(SRCS) $(HDRS) $(TXTS)
 	mkdir iftop-$(VERSION)
-	set -e ; for i in Makefile $(SRCS) $(HDRS) $(TXTS) ; do cp $$i iftop-$(VERSION)/$$i ; done
+	set -e ; for i in Makefile depend $(SRCS) $(HDRS) $(TXTS) ; do cp $$i iftop-$(VERSION)/$$i ; done
 	tar cvf - iftop-$(VERSION) | gzip --best > iftop-$(VERSION).tar.gz
 	rm -rf iftop-$(VERSION)
 
 tags :
 	etags *.c *.h
 
-depend:
-	makedepend -- $(CFLAGS) -- $(SRCS)
-	touch depend
+depend: $(SRCS)
+	$(CPP) -MM $(SRCS) > depend
 
 nodepend:
-	makedepend -- --
 	rm -f depend
- 
-# DO NOT DELETE
 
+include depend
+ 
 

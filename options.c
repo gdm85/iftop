@@ -24,6 +24,7 @@ void set_defaults() {
     inet_aton("255.255.255.0", &options.netfiltermask);
     options.dnsresolution = 1;
     options.promiscuous = 0;
+    options.showbars = 1;
 }
 
 void die(char *msg) {

@@ -121,6 +121,7 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
         struct ip* iptr;
         history_type* ht;
         addr_pair ap;
+	int len;
 
         iptr = (struct ip*)(packet + sizeof(struct ether_header)); /* alignment? */
         if(options.netfilter == 0) { 
@@ -181,21 +182,27 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
             hash_insert(history, &ap, ht);
         }
 
+	len = ntohs(iptr->ip_len);
+
         /* Update record */
         ht->last_write = history_pos;
         if(iptr->ip_src.s_addr == ap.src.s_addr) {
-            ht->sent[history_pos] += ntohs(iptr->ip_len);
+            ht->sent[history_pos] += len;
+	    ht->total_sent += len;
         }
         else {
-            ht->recv[history_pos] += ntohs(iptr->ip_len);
+            ht->recv[history_pos] += len;
+	    ht->total_recv += len;
         }
 
         if(direction == 0) {
             /* incoming */
             history_totals.recv[history_pos] += ntohs(iptr->ip_len);
+	    history_totals.total_recv += len;
         }
         else {
             history_totals.sent[history_pos] += ntohs(iptr->ip_len);
+	    history_totals.total_sent += len;
         }
 
     }
