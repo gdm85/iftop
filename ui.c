@@ -63,11 +63,11 @@ int screen_line_compare(void* a, void* b) {
 }
 
 void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
-    if(n >= ksize * ksize) {
+    if(n >= 10 * ksize * ksize) {
        snprintf(buf, bsize, " %4.1f%s", n / (ksize * ksize), bytes ? "MB" : "M"); 
     }
-    if(n >= 100 * ksize) {
-       snprintf(buf, bsize, " %4.0f%s", n / ksize, bytes ? "KB" : "K" ); 
+    if(n >= ksize * ksize) {
+       snprintf(buf, bsize, " %4.2f%s", n / (ksize * ksize), bytes ? "MB" : "M" ); 
     }
     else if(n >= ksize) {
        snprintf(buf, bsize, " %4.1f%s", n / ksize, bytes ? "KB" : "K" ); 

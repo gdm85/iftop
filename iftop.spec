@@ -1,10 +1,10 @@
 Summary:	iftop - provides realtime bandwith usage on an interface
 Name:		iftop
-Version:	0.3
+Version:	0.8pre1
 Release:	1
 License:	GPL
 Group:		Applications/Internet
-Source0:	http://www.ex-parrot.com/~pdw/iftop/download/iftop-0.3.tar.gz
+Source0:	http://www.ex-parrot.com/~pdw/iftop/download/iftop-0.8pre1.tar.gz
 URL:		http://www.ex-parrot.com/~pdw/iftop/
 Buildroot:	%{_tmppath}/%{name}-%{version}-%(id -u -n)
 Packager:	Riku Meskanen <mesrik@cc.jyu.fi>
@@ -29,19 +29,21 @@ make
 make DESTDIR=$RPM_BUILD_ROOT iftop
 gzip -9 iftop.8
 mkdir -p ${RPM_BUILD_ROOT}%{_sbindir} ${RPM_BUILD_ROOT}%{_mandir}/man8
-install -o root -g root -m 755 iftop ${RPM_BUILD_ROOT}%{_sbindir}
-install -o root -g root -m 644 iftop.8.gz ${RPM_BUILD_ROOT}%{_mandir}/man8
+install -m 755 iftop ${RPM_BUILD_ROOT}%{_sbindir}
+install -m 644 iftop.8.gz ${RPM_BUILD_ROOT}%{_mandir}/man8
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
-%defattr(644,root,root,755)
+%defattr(-,root,root)
 %doc README CHANGES COPYING TODO INSTALL
 %attr(755,root,root) %{_sbindir}/iftop
 %{_mandir}/man8/*
 
 %changelog
+* Fri Aug 30 2002 Iain Lea <iain@bricbrac.de>
+- Updated build for Red Hat 7.3 version
 * Sat Apr 13 2002 Riku Meskanen <mesrik@cc.jyu.fi>
 - Initial build for Red Hat 7.2 version
 
