@@ -39,6 +39,15 @@ AC_ARG_WITH(resolver,
     [resolver=$withval],
     [resolver=netdb])
 
+AC_ARG_WITH(libpcap,
+    [  --with-libpcap=WHERE    Where the libpcap packet-capture library is found.
+                          The pcap library should be installed  in WHERE/lib,
+                          and the header file in either WHERE/include or
+                          WHERE/include/pcap.
+                          [default=look in standard locations]],
+    [libpcap_prefix=$withval],
+    [libpcap_prefix=""])
+
 dnl
 dnl Fairly generic checks.
 dnl
@@ -208,16 +217,49 @@ fi
 
 dnl Otherwise, no resolver at all. Boo hoo.
 
-
 dnl
-dnl Ensure that the machine even has libpcap. We do this late, because libpcap
-dnl calls netdb functions that might need libraries on some systems....
+dnl Find libpcap.
 dnl
 
-AC_CHECK_LIB(pcap, pcap_open_live, , [
-        AC_MSG_ERROR([can't find libpcap
+if test x$libpcap_prefix = x ; then
+    libpcap_prefix="/usr /usr/local /opt /software"
+fi
+
+AC_MSG_CHECKING([where to find pcap.h])
+foundpcaph=0
+oldCPPFLAGS=$CPPFLAGS
+for prefix in "" $libpcap_prefix ; do
+    for x in "" /pcap ; do
+        if test x$prefix != x ; then
+            CPPFLAGS="$oldCPPFLAGS -I$prefix/include$x"
+        fi
+        AC_TRY_CPP([
+#include <pcap.h>
+        ], [
+        AC_MSG_RESULT([$prefix/include$x])
+        foundpcaph=1
+        break
+        ])
+    done
+    if test $foundpcaph = 1 ; then
+        break
+    fi
+done
+
+if test $foundpcaph = 0 ; then
+    AC_MSG_RESULT([no idea])
+    AC_MSG_ERROR([can't find pcap.h
   You're not going to get very far without libpcap.])
-    ])
+else
+    dnl assume that -lpcap is under $prefix/lib
+    if test x$prefix != x ; then
+        LDFLAGS="$LDFLAGS -L$prefix"
+    fi
+    AC_CHECK_LIB(pcap, pcap_open_live, , [
+            AC_MSG_ERROR([can't find libpcap
+  You're not going to get very far without libpcap.])
+        ])
+fi
 
 foundpcap=0
 AC_CHECK_HEADERS([pcap.h pcap/pcap.h], [

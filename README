@@ -31,3 +31,6 @@ interface in promiscuous mode. Therefore, you will need to use the -p option
 to iftop to get sensible results. Cf.
   http://www.tcpdump.org/lists/workers/2002/02/msg00010.html
 
+The version of curses distributed with Solaris may not be sufficient for
+iftop's needs. You will probably need ncurses or similar.
+

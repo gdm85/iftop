@@ -877,7 +877,7 @@ void ui_loop() {
             case '!': {
                 char *s;
                 dontshowdisplay = 1;
-                if ((s = edline(0, "Command", ""))) {
+                if ((s = edline(0, "Command", "")) && s[strspn(s, " \t")]) {
                     int i, dowait = 0;
                     erase();
                     refresh();
