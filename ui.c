@@ -5,9 +5,11 @@
 
 #include <curses.h>
 #include <string.h>
+#include <math.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "addr_hash.h"
 #include "iftop.h"
@@ -52,6 +54,36 @@ void readable_size(float n, char* buf, int bsize) {
     }
 }
 
+/* Maximum and minimum rate which we plot on the bar chart. */
+static int min_rate = 1;                /* 1 byte/s */
+static int max_rate = (10000000 / 8);   /* 10 Mbit/s */
+
+static int get_bar_length(const int rate) {
+    float l;
+    if (rate <= 0)
+        return 0;
+    l = (log(rate) - log(min_rate)) / (log(max_rate) - log(min_rate));
+    return l * COLS;
+}
+
+static void draw_bar_scale(void) {
+    int i;
+    /* Draw bar graph scale on top of the window. */
+    mvhline(1, 0, 0, COLS);
+    for (i = min_rate; i <= max_rate; i *= 10) {
+        char s[40], *p;
+        int x;
+        readable_size(i, s, sizeof s);
+        p = s + strspn(s, " ");
+        x = get_bar_length(i);
+        mvaddch(1, x, ACS_BTEE);
+        if (x + strlen(p) >= COLS)
+            x = COLS - strlen(p);
+        mvaddstr(0, x, p);
+    }
+    mvaddch(1, 0, ACS_LLCORNER);
+}
+
 void ui_print() {
     hash_node_type* n = NULL;
     sorted_list_node* nn = NULL;
@@ -64,6 +96,7 @@ void ui_print() {
     sorted_list_initialise(&screen_list);
 
     erase();
+    draw_bar_scale();
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
@@ -90,7 +123,15 @@ void ui_print() {
     while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
         int x = 0;
         int j;
+        int L;
+        int t;
         host_pair_line* screen_line = (host_pair_line*)nn->data;
+
+        if(history_len < history_divs[j]) {
+            t = history_len * RESOLUTION; 
+        } else {
+            t = history_divs[j] * RESOLUTION;
+        }
 
         resolve(&screen_line->ap->src, hostname, HOSTNAME_LENGTH);
         sprintf(line, "%s ", hostname);
@@ -103,13 +144,6 @@ void ui_print() {
         x += 24;
 
         for(j = 0; j < HISTORY_DIVISIONS; j++) {
-            int t;
-            if(history_len < history_divs[j]) {
-                t = history_len * RESOLUTION; 
-            }
-            else {
-                t = history_divs[j] * RESOLUTION;
-            }
             readable_size(screen_line->sent[j] / t, line, 10);
             mvaddstr(y, x, line);
             x += strlen(line);
@@ -118,6 +152,13 @@ void ui_print() {
             mvaddstr(y, x, line);
             x += strlen(line);
         }
+
+        /* Do some sort of primitive bar graph thing. */
+        mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
+        L = get_bar_length(screen_line->recv[0] / t);
+        if (L > 0)
+            mvchgat(y, 0, L, A_REVERSE, 0, NULL);
+        
         y++;
         free(screen_line);
     }
@@ -137,13 +178,21 @@ void ui_loop() {
     (void) cbreak();       /* take input chars one at a time, no wait for \n */
     (void) noecho();       /* don't echo input */
 
+    erase();
+    
     pthread_mutex_init(&tick_wait_mutex, NULL);
     pthread_cond_init(&tick_wait_cond, NULL);
     while(foad == 0) {
+        struct timeval tv;
         struct timespec t;
-        int i;
-        t.tv_sec = time(NULL) + 1;
-        t.tv_nsec = 0;
+        gettimeofday(&tv, NULL);
+        tv.tv_usec += 250000;
+        if (tv.tv_usec > 999999) {
+            ++tv.tv_sec;
+            tv.tv_usec -= 1000000;
+        }
+        t.tv_sec = tv.tv_sec;
+        t.tv_nsec = 1000 * tv.tv_usec;
 
         pthread_cond_timedwait(&tick_wait_cond, &tick_wait_mutex, &t);
         //fprintf(stderr,"timeout tick\n");
