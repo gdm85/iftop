@@ -586,6 +586,7 @@ void ui_loop() {
                 break;
 
             case 'h':
+            case '?'
                 options.showhelp = !options.showhelp;
                 tick(1);
                 break;
@@ -668,7 +669,7 @@ void ui_loop() {
             case ERR:
                 break;
             default:
-                showhelp("Press h for help");
+                showhelp("Press H or ? for help");
                 break;
         }
         tick(0);
