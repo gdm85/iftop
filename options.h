@@ -66,6 +66,9 @@ typedef struct {
 
     int show_totals;
 
+    long long max_bandwidth;
+    int log_scale;
+
 } options_t;
 
 #endif /* __OPTIONS_H_ */

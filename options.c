@@ -28,7 +28,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:nN:hpbBP";
+char optstr[] = "+i:f:nN:hpbBPm:";
 
 /* Global options. */
 
@@ -112,11 +112,39 @@ static void set_defaults() {
     options.linedisplay = OPTION_LINEDISPLAY_TWO_LINE;
     options.screen_offset = 0;
     options.show_totals = 0;
+    options.max_bandwidth = 0; /* auto */
+    options.log_scale = 1; /* auto */
 }
 
 static void die(char *msg) {
     fprintf(stderr, msg);
     exit(1);
+}
+
+static void set_max_bandwidth(char* arg) {
+    char* units;
+    long long mult = 1;
+    long long value;
+    units = arg + strspn(arg, "0123456789");
+    if(strlen(units) > 1) {
+        die("Invalid units\n");
+    }
+    if(strlen(units) == 1) {
+        if(*units == 'k' || *units == 'K') {
+            mult = 1024;
+        }
+        else if(*units == 'm' || *units == 'M') {
+            mult = 1024 * 1024;
+        }
+        else if(*units == 'g' || *units == 'G') {
+            mult = 1024 * 1024 * 1024;
+        }
+    }
+    *units = '\0';
+    if(sscanf(arg, "%lld", &value) != 1) {
+        die("Error reading max bandwidth\n");
+    }
+    options.max_bandwidth = value * mult;
 }
 
 static void set_net_filter(char* arg) {
@@ -180,6 +208,7 @@ static void usage(FILE *fp) {
 "                       (default: none, but only IP packets are counted)\n"
 "   -N net/mask         show traffic flows in/out of network\n"
 "   -P                  show ports as well as hosts\n"
+"   -m limit            sets the upper limit for the bandwidth scale\n"
 "\n"
 "iftop, version " IFTOP_VERSION "\n"
 "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com> and contributors\n"
@@ -212,7 +241,7 @@ void options_read(int argc, char **argv) {
 
             case 'p':
                 options.promiscuous = 1;
-		options.promiscuous_but_choosy = 0;
+                options.promiscuous_but_choosy = 0;
                 break;
 
             case 'P':
@@ -222,6 +251,11 @@ void options_read(int argc, char **argv) {
             case 'N':
                 set_net_filter(optarg);
                 break;
+            
+            case 'm':
+                set_max_bandwidth(optarg);
+                break;
+
 
             case 'b':
                 options.showbars = 0;

@@ -8,7 +8,7 @@
 
 #include "config.h"
 
-/* 60 / 3  */
+/* 40 / 2  */
 #define HISTORY_LENGTH  20
 #define RESOLUTION 2
 

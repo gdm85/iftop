@@ -202,6 +202,25 @@ static struct {
     };
 static int rateidx = 0, wantbiggerrate;
 
+static int get_bar_interval(float bandwidth) {
+    int i = 10;
+    if(bandwidth > 100000000) {
+        i = 100;
+    }
+    return i;
+}
+
+static float get_max_bandwidth() {
+    float max;
+    if(options.max_bandwidth > 0) {
+        max = options.max_bandwidth;
+    }
+    else {
+        max = scale[rateidx].max;
+    }
+    return max;
+}
+
 /* rate in bits */
 static int get_bar_length(const int rate) {
     float l;
@@ -209,28 +228,56 @@ static int get_bar_length(const int rate) {
         return 0;
     if (rate > scale[rateidx].max)
         wantbiggerrate = 1;
-    l = log(rate) / log(scale[rateidx].max);
+    if(options.log_scale) {
+        l = log(rate) / log(get_max_bandwidth());
+    }
+    else {
+        l = rate / get_max_bandwidth();
+    }
     return (l * COLS);
 }
 
 static void draw_bar_scale(int* y) {
     float i;
+    float max,interval;
+    max = get_max_bandwidth();
+    interval = get_bar_interval(max);
     if(options.showbars) {
+        float stop;
         /* Draw bar graph scale on top of the window. */
         move(*y, 0);
         clrtoeol();
         mvhline(*y + 1, 0, 0, COLS);
         /* i in bytes */
-        for (i = 1.25; i * 8 <= scale[rateidx].max; i *= scale[rateidx].interval) {
+
+        if(options.log_scale) {
+            i = 1.25;
+            stop = max / 8;
+        }
+        else {
+            i = max / (5 * 8);
+            stop = max / 8;
+        }
+
+        /* for (i = 1.25; i * 8 <= max; i *= interval) { */
+        while(i <= stop) {
             char s[40], *p;
             int x;
-            readable_size(i, s, sizeof s, 1000, 0);
+            /* This 1024 vs 1000 stuff is just plain evil */
+            readable_size(i, s, sizeof s, options.log_scale ? 1000 : 1024, 0);
             p = s + strspn(s, " ");
             x = get_bar_length(i * 8);
             mvaddch(*y + 1, x, ACS_BTEE);
             if (x + strlen(p) >= COLS)
                 x = COLS - strlen(p);
             mvaddstr(*y, x, p);
+
+            if(options.log_scale) {
+                i *= interval;
+            }
+            else {
+                i += max / (5 * 8);
+            }
         }
         mvaddch(*y + 1, 0, ACS_LLCORNER);
         *y += 2;
@@ -273,11 +320,11 @@ void draw_line_total(float sent, float recv, int y, int x, option_linedisplay_t 
 }
 
 void draw_bar(float n, int y) {
-  int L;
-  mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-  L = get_bar_length(8 * n);
-  if (L > 0)
-      mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
+    int L;
+    mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
+    L = get_bar_length(8 * n);
+    if (L > 0)
+        mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
 }
 
 void draw_line_totals(int y, host_pair_line* line, option_linedisplay_t linedisplay) {
@@ -677,7 +724,7 @@ void ui_print() {
     refresh();
 
     /* Bar chart auto scale */
-    if (wantbiggerrate) {
+    if (wantbiggerrate && options.max_bandwidth == 0) {
         ++rateidx;
         wantbiggerrate = 0;
     }
