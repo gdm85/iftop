@@ -27,7 +27,7 @@ MANDIR = man
 #MANDIR = share/man     # FHS-ish
 
 # You shouldn't need to change anything below this point.
-VERSION = 0.3
+VERSION = 0.4
 CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
 LDFLAGS += -g 
 LDLIBS += -lpcap -lpthread -lcurses -lm
@@ -36,6 +36,7 @@ SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c
        options.c
 HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h options.h
 TXTS = README CHANGES INSTALL TODO iftop.8 COPYING
+SPECFILE = iftop.spec
 
 OBJS = $(SRCS:.c=.o)
 
@@ -55,9 +56,9 @@ uninstall:
 clean:
 	rm -f *~ *.o core iftop
 
-tarball: depend $(SRCS) $(HDRS) $(TXTS)
+tarball: depend $(SRCS) $(HDRS) $(TXTS) $(SPECFILE)
 	mkdir iftop-$(VERSION)
-	set -e ; for i in Makefile depend $(SRCS) $(HDRS) $(TXTS) ; do cp $$i iftop-$(VERSION)/$$i ; done
+	set -e ; for i in Makefile depend $(SRCS) $(HDRS) $(TXTS) $(SPECFILE) ; do cp $$i iftop-$(VERSION)/$$i ; done
 	tar cvf - iftop-$(VERSION) | gzip --best > iftop-$(VERSION).tar.gz
 	rm -rf iftop-$(VERSION)
 

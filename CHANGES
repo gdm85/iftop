@@ -1,7 +1,15 @@
 Change log for iftop
 $Id$
 
-0.3
+0.4 16/04/02
+
+No code changes
+Added RPM spec file
+    Riku Meskanen <mesrik@cc.jyu.fi>
+Fixes to "make install"
+    Steve Baker <sjb@ambrielconsulting.com>
+
+0.3 13/04/02
 
 Fixed segfault bug.
 Added src/dest aggregation.
