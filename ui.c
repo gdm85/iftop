@@ -200,15 +200,13 @@ void draw_line_totals(int y, host_pair_line* line) {
 
 void draw_totals(host_pair_line* totals) {
     /* Draw rule */
-    int y = LINES - 5;
+    int y = LINES - 4;
     int j, t;
     char buf[10];
     int x = (COLS - 8 * HISTORY_DIVISIONS);
     y++;
     draw_line_totals(y, totals);
     y += 2;
-    mvhline(y, 0, 0, COLS);
-    y++;
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
         t = history_length(j);
         readable_size((totals->sent[j] + totals->recv[j]) / t, buf, 10, 1024, options.bandwidth_in_bytes);
@@ -484,7 +482,7 @@ void ui_print() {
     }
 
 
-    y = LINES - 4;
+    y = LINES - 3;
 
     //mvaddstr(y, 0, "total: ");
     //mvaddstr(y+1, 0, " peak: ");
@@ -493,7 +491,7 @@ void ui_print() {
 
     mvaddstr(y, 0, "TX: ");
     mvaddstr(y+1, 0, "RX: ");
-    mvaddstr(y+3, 0, "TOTAL: ");
+    mvaddstr(y+2, 0, "TOTAL: ");
 
     /* Cummulative totals */
     mvaddstr(y, 16, "cumm: ");
@@ -505,7 +503,7 @@ void ui_print() {
     mvaddstr(y+1, 22, line);
 
     readable_size(history_totals.total_recv + history_totals.total_sent, line, 10, 1024, 1);
-    mvaddstr(y+3, 22, line);
+    mvaddstr(y+2, 22, line);
 
     /* peak traffic */
     mvaddstr(y, 32, "peak: ");
@@ -517,7 +515,7 @@ void ui_print() {
     mvaddstr(y+1, 39, line);
 
     readable_size(peaktotal / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
-    mvaddstr(y+3, 39, line);
+    mvaddstr(y+2, 39, line);
 
     mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 8, "rates:");
 
