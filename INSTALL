@@ -1,0 +1,13 @@
+Installation instructions for iftop
+$Id$
+
+1. Modify any settings at the top of the Makefile. Look in particular at PREFIX
+   and MANDIR.
+
+2. Compile by typing make.
+
+3. Install by typing make install. You will probably want to do this step as
+   root.
+
+You can also use make uninstall to remove iftop and its manual page.
+
