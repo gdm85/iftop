@@ -9,7 +9,9 @@ $Id$
 
 * Config file.
 
-* Which average to use for the bar graph? Show several and peaks? Colours?
+* Which average to use for the bar graph? - add option to choose
+
+* Show several and peaks? Colours?
 
 * Single keypress firewalling of troublesome connections, a la top(1)'s K
   to kill?
@@ -18,6 +20,7 @@ $Id$
 
 * Specify max link, then show %age capacity.
 
-* Turn off port resolution (optional)
+* Turn off port resolution => add to config file
 
 * Linear bar graphs.
+
