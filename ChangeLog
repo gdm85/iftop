@@ -4,7 +4,8 @@ $Id$
 Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
-0.16 
+0.16 28/02/04
+* Added support for DLT_NULL
 * Fix for pthread.c behaviour on Solaris.
 
 * Build fixes for gcc 3.4+

@@ -481,7 +481,7 @@ void packet_init() {
     if(dlt == DLT_EN10MB) {
         packet_handler = handle_eth_packet;
     }
-    else if(dlt == DLT_RAW) {
+    else if(dlt == DLT_RAW || dlt == DLT_NULL) {
         packet_handler = handle_raw_packet;
     } 
     else if(dlt == DLT_IEEE802) {
