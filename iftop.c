@@ -126,10 +126,10 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
         /* Update record */
         ht->last_write = history_pos;
         if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
-            ht->recv[history_pos] += ntohs(iptr->ip_len);
+            ht->sent[history_pos] += ntohs(iptr->ip_len);
         }
         else {
-            ht->sent[history_pos] += ntohs(iptr->ip_len);
+            ht->recv[history_pos] += ntohs(iptr->ip_len);
         }
 
     }

@@ -8,7 +8,7 @@
 
 /* 60 / 3  */
 #define HISTORY_LENGTH  20
-#define RESOLUTION 1
+#define RESOLUTION 2
 
 typedef struct {
     long recv[HISTORY_LENGTH];

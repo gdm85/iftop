@@ -41,7 +41,8 @@ int screen_line_compare(void* a, void* b) {
     int i;
     host_pair_line* aa = (host_pair_line*)a;
     host_pair_line* bb = (host_pair_line*)b;
-    for(i = 0; i < HISTORY_DIVISIONS; i++) {
+    /* Ignore the first division so that stuff doesn't jump around too much */
+    for(i = 1; i < HISTORY_DIVISIONS; i++) {
         if(aa->recv[i] + aa->sent[i] != bb->recv[i] + bb->sent[i]) {
             return(aa->recv[i] + aa->sent[i] < bb->recv[i] + bb->sent[i]);
         }
@@ -75,23 +76,55 @@ static int get_bar_length(const int rate) {
 
 static void draw_bar_scale(void) {
     int i;
+    int y = 1;
     /* Draw bar graph scale on top of the window. */
-    mvhline(2, 0, 0, COLS);
+    mvhline(y + 1, 0, 0, COLS);
     for (i = min_rate; i <= max_rate; i *= 10) {
         char s[40], *p;
         int x;
         readable_size(i, s, sizeof s, 1000);
         p = s + strspn(s, " ");
         x = get_bar_length(i);
-        mvaddch(2, x, ACS_BTEE);
+        mvaddch(y + 1, x, ACS_BTEE);
         if (x + strlen(p) >= COLS)
             x = COLS - strlen(p);
-        mvaddstr(1, x, p);
+        mvaddstr(y, x, p);
     }
-    mvaddch(2, 0, ACS_LLCORNER);
+    mvaddch(y + 1, 0, ACS_LLCORNER);
 }
 
-static int dnsresolution = 1;
+void draw_line_totals(int y, host_pair_line* line) {
+    int j;
+    char buf[10];
+    int x = (COLS - 8 * HISTORY_DIVISIONS);
+
+    for(j = 0; j < HISTORY_DIVISIONS; j++) {
+        int t;
+        if(history_len < history_divs[j]) {
+            t = history_len * RESOLUTION; 
+        } else {
+            t = history_divs[j] * RESOLUTION;
+        }
+        readable_size(8 * line->sent[j] / t, buf, 10, 1024);
+        mvaddstr(y, x, buf);
+
+        readable_size(8 * line->recv[j] / t, buf, 10, 1024);
+        mvaddstr(y+1, x, buf);
+        x += 8;
+    }
+
+}
+
+void draw_totals(host_pair_line* totals) {
+    /* Draw rule */
+    int y = LINES - 3;
+    mvhline(y, 0, 0, COLS);
+    y++;
+    draw_line_totals(y, totals);
+}
+
+
+int dnsresolution = 1;
 
 void ui_print() {
     hash_node_type* n = NULL;
@@ -99,8 +132,11 @@ void ui_print() {
     char hostname[HOSTNAME_LENGTH];
     static char *line;
     static int lcols;
-    int y = 3;
+    int peaksent = 0;
+    int peakrecv = 0;
+    int y = 0;
     sorted_list_type screen_list;
+    host_pair_line totals;
 
     if (!line || lcols != COLS) {
         xfree(line);
@@ -124,6 +160,8 @@ void ui_print() {
                          : " name resolution on  ");
     draw_bar_scale();
 
+    memset(&totals, 0, sizeof totals);
+
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
         host_pair_line* screen_line;
@@ -135,79 +173,100 @@ void ui_print() {
         for(i = 0; i < HISTORY_LENGTH; i++) {
             int j;
             int ii = (HISTORY_LENGTH + history_pos - i) % HISTORY_LENGTH;
+            int tsent, trecv;
+            tsent = trecv = 0;
+
+            trecv += d->recv[ii];
+            tsent += d->sent[ii];
+
             for(j = 0; j < HISTORY_DIVISIONS; j++) {
                 if(i < history_divs[j]) {
                     screen_line->recv[j] += d->recv[ii];
+                    totals.recv[j] += d->recv[ii];
+
                     screen_line->sent[j] += d->sent[ii];
+                    totals.sent[j] += d->sent[ii];
                 }
             }
+
+            if(trecv > peakrecv) 
+                peakrecv = trecv;
+            if(tsent > peaksent)
+                peaksent = tsent;
         }
 
         sorted_list_insert(&screen_list, screen_line);
     }
+    
+
+
+    y = 3;
+    
 
     /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
      * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
      * host names. */
 
     while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
-        int x = 0, j, L, t;
+        int x = 0, L;
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
-        L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
-        if(L > sizeof hostname) {
-            L = sizeof hostname;
-        }
-
-        if (dnsresolution)
-            resolve(&screen_line->ap->src, hostname, L);
-        else
-            strcpy(hostname, inet_ntoa(screen_line->ap->src));
-        sprintf(line, "%-*s", L, hostname);
-        mvaddstr(y, x, line);
-        x += L;
-
-        mvaddstr(y, x, " => ");
-        mvaddstr(y+1, x, " <= ");
-
-        x += 4;
-        if (dnsresolution)
-            resolve(&screen_line->ap->dst, hostname, L);
-        else
-            strcpy(hostname, inet_ntoa(screen_line->ap->dst));
-        sprintf(line, "%-*s", L, hostname);
-        mvaddstr(y, x, line);
-        x += L;
-
-        for(j = 0; j < HISTORY_DIVISIONS; j++) {
-            if(history_len < history_divs[j]) {
-                t = history_len * RESOLUTION; 
-            } else {
-                t = history_divs[j] * RESOLUTION;
+        if(y < LINES - 5) {
+            L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
+            if(L > sizeof hostname) {
+                L = sizeof hostname;
             }
-            readable_size(8 * screen_line->sent[j] / t, line, 10, 1024);
+
+            if (dnsresolution)
+                resolve(&screen_line->ap->src, hostname, L);
+            else
+                strcpy(hostname, inet_ntoa(screen_line->ap->src));
+            sprintf(line, "%-*s", L, hostname);
             mvaddstr(y, x, line);
+            x += L;
 
-            readable_size(8 * screen_line->recv[j] / t, line, 10, 1024);
-            mvaddstr(y+1, x, line);
-            x += 8;
+            mvaddstr(y, x, " => ");
+            mvaddstr(y+1, x, " <= ");
 
+            x += 4;
+            if (dnsresolution)
+                resolve(&screen_line->ap->dst, hostname, L);
+            else
+                strcpy(hostname, inet_ntoa(screen_line->ap->dst));
+            sprintf(line, "%-*s", L, hostname);
+            mvaddstr(y, x, line);
+            
+            draw_line_totals(y, screen_line);
+
+            /* Do some sort of primitive bar graph thing. */
+            mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
+            L = get_bar_length(8 * screen_line->sent[0] / history_divs[0]);
+            if (L > 0)
+                mvchgat(y, 0, L, A_REVERSE, 0, NULL);
+
+            mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
+            L = get_bar_length(8 * screen_line->recv[0] / history_divs[0]);
+            if (L > 0)
+                mvchgat(y+1, 0, L, A_REVERSE, 0, NULL);
         }
-
-        /* Do some sort of primitive bar graph thing. */
-        mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-        L = get_bar_length(8 * screen_line->sent[0] / history_divs[0]);
-        if (L > 0)
-            mvchgat(y, 0, L, A_REVERSE, 0, NULL);
-
-        mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-        L = get_bar_length(8 * screen_line->recv[0] / history_divs[0]);
-        if (L > 0)
-            mvchgat(y+1, 0, L, A_REVERSE, 0, NULL);
-        
-        y+=2;
+        y += 2;
         free(screen_line);
     }
+
+    draw_totals(&totals);
+
+    y = LINES - 2;
+    mvaddstr(y, 0, "sent   peak: ");
+    mvaddstr(y+1, 0, "recv       ");
+
+    readable_size(peaksent * 8 / RESOLUTION, line, 10, 1024);
+    mvaddstr(y, 15, line);
+
+    readable_size(peakrecv * 8 / RESOLUTION, line, 10, 1024);
+    mvaddstr(y+1, 15, line);
+
+    mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 10, "totals:");
+
     refresh();
 
     sorted_list_destroy(&screen_list);
