@@ -13,6 +13,7 @@
 #include <netdb.h>
 
 #include "addr_hash.h"
+#include "serv_hash.h"
 #include "iftop.h"
 #include "resolver.h"
 #include "sorted_list.h"
@@ -43,6 +44,7 @@ extern options_t options ;
 void ui_finish();
 
 hash_type* screen_hash;
+hash_type* service_hash;
 sorted_list_type screen_list;
 host_pair_line totals;
 int peaksent, peakrecv, peaktotal;
@@ -274,10 +276,11 @@ void analyse_data() {
 
 }
 
-void sprint_host(char * line, struct in_addr* addr, unsigned int port, int L) {
+void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned int protocol, int L) {
     char hostname[HOSTNAME_LENGTH];
-    char service[10];
-    struct servent* sent;
+    char service[HOSTNAME_LENGTH];
+    char* s_name;
+    ip_service skey;
     int left;
     if(addr->s_addr == 0) {
         sprintf(hostname, " * ");
@@ -292,13 +295,16 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, int L) {
 
     //TODO: Replace this with in-memory hash for speed.
     //sent = getservbyport(port, "tcp");
+
+    
     if(port != 0) {
-      sent = NULL;
-      if(sent == NULL) {
-        snprintf(service, 10, ":%d", port);
+      skey.port = port;
+      skey.protocol = protocol;
+      if(hash_find(service_hash, &skey, (void**)&s_name) == HASH_STATUS_OK) {
+        snprintf(service, HOSTNAME_LENGTH, ":%s", s_name);
       }
       else {
-        snprintf(service, 10, ":%s", sent->s_name);
+        snprintf(service, HOSTNAME_LENGTH, ":%d", port);
       }
     }
     else {
@@ -372,14 +378,12 @@ void ui_print() {
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
         if(y < LINES - 4) {
-            fprintf(stderr, "Drawing at %d \r\n", y);
-            
             L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
             if(L > sizeof hostname) {
                 L = sizeof hostname;
             }
 
-            sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, L);
+            sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
 
             //sprintf(line, "%-*s", L, hostname);
             mvaddstr(y, x, line);
@@ -390,7 +394,7 @@ void ui_print() {
 
             x += 4;
 
-            sprint_host(line, &(screen_line->ap.dst), screen_line->ap.dst_port, L);
+            sprint_host(line, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
 
             mvaddstr(y, x, line);
             
@@ -459,6 +463,10 @@ void ui_init() {
 
     screen_list_init();
     screen_hash = addr_hash_create();
+
+    service_hash = serv_hash_create();
+    serv_hash_initialise(service_hash);
+
 
 }
 

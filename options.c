@@ -87,18 +87,31 @@ static void set_net_filter(char* arg) {
     if (inet_aton(arg, &options.netfilternet) == 0)
         die("Invalid network address\n");
     /* Accept a netmask like /24 or /255.255.255.0. */
-    if (!mask[strspn(mask, "0123456789")]) {
+    if (mask[strspn(mask, "0123456789")] == '\0') {
+        /* Whole string is numeric */
         int n;
         n = atoi(mask);
-        if (n > 32)
+        if (n > 32) {
             die("Invalid netmask");
-        else {
-            uint32_t mm = 0xffffffffl;
-            mm >>= n;
-            options.netfiltermask.s_addr = htonl(~mm);
         }
-    } else if (inet_aton(mask, &options.netfiltermask) == 0)
+        else {
+            if(n == 32) {
+              /* This needs to be special cased, although I don't fully 
+               * understand why -pdw 
+               */
+              options.netfiltermask.s_addr = htonl(0xffffffffl);
+            }
+            else {
+              uint32_t mm = 0xffffffffl;
+              mm >>= n;
+              options.netfiltermask.s_addr = htonl(~mm);
+            }
+        }
+    } 
+    else if (inet_aton(mask, &options.netfiltermask) == 0) {
         die("Invalid netmask\n");
+    }
+    options.netfilternet.s_addr = options.netfilternet.s_addr & options.netfiltermask.s_addr;
 
     options.netfilter = 1;
 

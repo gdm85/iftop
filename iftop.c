@@ -193,12 +193,12 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
         /* 
          * Net filter on, assign direction according to netmask 
          */ 
-        if(in_filter_net(iptr->ip_src) & !in_filter_net(iptr->ip_dst)) {
+        if(in_filter_net(iptr->ip_src) && !in_filter_net(iptr->ip_dst)) {
             /* out of network */
             assign_addr_pair(&ap, iptr, 0);
             direction = 1;
         }
-        else if(in_filter_net(iptr->ip_dst) & !in_filter_net(iptr->ip_src)) {
+        else if(in_filter_net(iptr->ip_dst) && !in_filter_net(iptr->ip_src)) {
             /* into network */
             assign_addr_pair(&ap, iptr, 1);
             direction = 0;
@@ -208,6 +208,8 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
             return ;
         }
     }
+
+    ap.protocol = iptr->ip_p;
 
     /* Add the addresses to be resolved */
     resolve(&iptr->ip_dst, NULL, 0);

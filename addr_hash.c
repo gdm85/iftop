@@ -14,7 +14,8 @@ int compare(void* a, void* b) {
     return (aa->src.s_addr == bb->src.s_addr 
             && aa->src_port == bb->src_port
             && aa->dst.s_addr == bb->dst.s_addr
-            && aa->dst_port == bb->dst_port);
+            && aa->dst_port == bb->dst_port
+            && aa->protocol == bb->protocol);
 }
 
 int hash(void* key) {
