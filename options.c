@@ -45,32 +45,24 @@ static int is_bad_interface_name(char *i) {
 /* This finds the first interface which is up and is not the loopback
  * interface or one of the interface types listed in bad_interface_names. */
 static char *get_first_interface(void) {
-    int s, size = 1;
-    struct ifreq *ifr;
-    struct ifconf ifc = {0};
+    struct if_nameindex * nameindex;
     char *i = NULL;
+    int j = 0;
     /* Use if_nameindex(3) instead? */
-    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-        return NULL;
-    ifc.ifc_len = sizeof *ifr;
-    do {
-        ++size;
-        ifc.ifc_req = xrealloc(ifc.ifc_req, size * sizeof *ifc.ifc_req);
-        ifc.ifc_len = size * sizeof *ifc.ifc_req;
-        if (ioctl(s, SIOCGIFCONF, &ifc) == -1) {
-            perror("SIOCGIFCONF");
-            return NULL;
-        }
-    } while (size * sizeof *ifc.ifc_req <= ifc.ifc_len);
-    /* Ugly. */
-    for (ifr = ifc.ifc_req; (char*)ifr < (char*)ifc.ifc_req + ifc.ifc_len; ++ifr) {
-        if (strcmp(ifr->ifr_name, "lo") != 0 && !is_bad_interface_name(ifr->ifr_name)
-            && ioctl(s, SIOCGIFFLAGS, ifr) == 0 && ifr->ifr_flags & IFF_UP) {
-            i = xstrdup(ifr->ifr_name);
+
+    nameindex = if_nameindex();
+    if(nameindex == NULL) {
+      return NULL;
+    }
+
+    while(nameindex[j].if_index != 0) {
+        if (strcmp(nameindex[j].if_name, "lo") != 0 && !is_bad_interface_name(nameindex[j].if_name)) {
+            i = xstrdup(nameindex[j].if_name);
             break;
         }
+        j++;
     }
-    xfree(ifc.ifc_req);
+    if_freenameindex(nameindex);
     return i;
 }
 
