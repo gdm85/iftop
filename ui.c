@@ -27,6 +27,9 @@
 /* 1, 15 and 60 seconds */
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
+#define UNIT_DIVISIONS 4
+char* unit_bits[UNIT_DIVISIONS] =  { "b", "K", "M", "G"};
+char* unit_bytes[UNIT_DIVISIONS] =  { "B", "KB", "MB", "GB"};
 
 typedef struct host_pair_line_tag {
     addr_pair ap;
@@ -63,27 +66,26 @@ int screen_line_compare(void* a, void* b) {
 }
 
 void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
-    if(n >= 100 * ksize * ksize) {
-       snprintf(buf, bsize, " %4.0f%s", n / (ksize * ksize), bytes ? "MB" : "M"); 
-    }
-    else if(n >= 10 * ksize * ksize) {
-       snprintf(buf, bsize, " %4.1f%s", n / (ksize * ksize), bytes ? "MB" : "M"); 
-    }
-    if(n >= ksize * ksize) {
-       snprintf(buf, bsize, " %4.2f%s", n / (ksize * ksize), bytes ? "MB" : "M" ); 
-    }
-    else if(n >= 100 * ksize) {
-       snprintf(buf, bsize, " %4.0f%s", n / ksize, bytes ? "KB" : "K" ); 
-    }
-    else if(n >= 10 * ksize) {
-       snprintf(buf, bsize, " %4.1f%s", n / ksize, bytes ? "KB" : "K" ); 
-    }
-    else if(n >= ksize) {
-       snprintf(buf, bsize, " %4.2f%s", n / ksize, bytes ? "KB" : "K" ); 
-    }
-    else {
-       snprintf(buf, bsize, " %4.0f%s", n, bytes ? "B" : "b"); 
-    }
+
+    int i = 0;
+    int size = 1;
+
+    while(1) {
+      if(n < size * ksize || i >= UNIT_DIVISIONS - 1) {
+        snprintf(buf, bsize, " %4.0f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
+        break;
+      }
+      i++;
+      size *= ksize;
+      if(n < size * 10) {
+        snprintf(buf, bsize, " %4.2f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
+        break;
+      }
+      else if(n < size * 100) {
+        snprintf(buf, bsize, " %4.1f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
+        break;
+      }
+  }
 }
 
 
