@@ -21,6 +21,7 @@
 
 #include "iftop.h"
 #include "options.h"
+#include "cfgfile.h"
 
 #if !defined(HAVE_INET_ATON) && defined(HAVE_INET_PTON)
 #   define inet_aton(a, b)  inet_pton(AF_INET, (a), (b))
@@ -39,13 +40,38 @@ char optstr[] = "+i:f:nN:hpbBPm:";
  * likely to want to listen. We also compare candidate interfaces to lo. */
 static char *bad_interface_names[] = {
             "lo:",
-	    "lo",
-	    "stf",     /* pseudo-device 6to4 tunnel interface */
-	    "gif",     /* psuedo-device generic tunnel interface */
+            "lo",
+            "stf",     /* pseudo-device 6to4 tunnel interface */
+            "gif",     /* psuedo-device generic tunnel interface */
             "dummy",
             "vmnet",
             NULL        /* last entry must be NULL */
         };
+
+config_enumeration_type sort_enumeration[] = {
+	{ "2s", OPTION_SORT_DIV1 },
+	{ "10", OPTION_SORT_DIV2 },
+	{ "40", OPTION_SORT_DIV3 },
+	{ "source", OPTION_SORT_SRC },
+	{ "destination", OPTION_SORT_SRC },
+	{ NULL, -1 }
+};
+
+config_enumeration_type linedisplay_enumeration[] = {
+	{ "two-line", OPTION_LINEDISPLAY_TWO_LINE },
+	{ "one-line-both", OPTION_LINEDISPLAY_ONE_LINE_BOTH },
+	{ "one-line-sent", OPTION_LINEDISPLAY_ONE_LINE_SENT },
+	{ "one-line-received", OPTION_LINEDISPLAY_ONE_LINE_RECV },
+	{ NULL, -1 }
+};
+
+config_enumeration_type showports_enumeration[] = {
+	{ "off", OPTION_PORTS_OFF },
+	{ "source-only", OPTION_PORTS_SRC },
+	{ "destination-only", OPTION_PORTS_DEST },
+	{ "on", OPTION_PORTS_ON },
+	{ NULL, -1 }
+};
 
 static int is_bad_interface_name(char *i) {
     char **p;
@@ -65,7 +91,7 @@ static char *get_first_interface(void) {
 
     nameindex = if_nameindex();
     if(nameindex == NULL) {
-      return NULL;
+        return NULL;
     }
 
     while(nameindex[j].if_index != 0) {
@@ -79,7 +105,8 @@ static char *get_first_interface(void) {
     return i;
 }
 
-static void set_defaults() {
+void options_set_defaults() {
+    char *s;
     /* Should go through the list of interfaces, and find the first one which
      * is up and is not lo or dummy*. */
     options.interface = get_first_interface();
@@ -115,6 +142,18 @@ static void set_defaults() {
     options.max_bandwidth = 0; /* auto */
     options.log_scale = 0;
     options.bar_interval = 1;
+
+    s = getenv("HOME");
+    if(s != NULL) {
+        int i = strlen(s) + 9 + 1;
+        options.config_file = xmalloc(i);
+        snprintf(options.config_file,i,"%s/.iftoprc",s);
+        fprintf(stderr,options.config_file);
+    }
+    else {
+        options.config_file = xstrdup("iftoprc");
+    }
+    
 }
 
 static void die(char *msg) {
@@ -216,10 +255,8 @@ static void usage(FILE *fp) {
             );
 }
 
-void options_read(int argc, char **argv) {
+void options_read_args(int argc, char **argv) {
     int opt;
-
-    set_defaults();
 
     opterr = 0;
     while ((opt = getopt(argc, argv, optstr)) != -1) {
@@ -229,41 +266,39 @@ void options_read(int argc, char **argv) {
                 exit(0);
 
             case 'n':
-                options.dnsresolution = 0;
+		config_set_string("dns-resolution","true");
                 break;
 
             case 'i':
-                options.interface = optarg;
+		config_set_string("interface", optarg);
                 break;
 
             case 'f':
-                options.filtercode = xstrdup(optarg);
+		config_set_string("filter-code", optarg);
                 break;
 
             case 'p':
-                options.promiscuous = 1;
-                options.promiscuous_but_choosy = 0;
+		config_set_string("promiscuous", "true");
                 break;
 
             case 'P':
-                options.showports = OPTION_PORTS_ON;
+		config_set_string("port-display", "on");
                 break;
 
             case 'N':
-                set_net_filter(optarg);
+		config_set_string("net-filter", optarg);
                 break;
             
             case 'm':
-                set_max_bandwidth(optarg);
+		config_set_string("max-bandwidth", optarg);
                 break;
 
-
             case 'b':
-                options.showbars = 0;
+		config_set_string("show-bars", "true");
                 break;
 
             case 'B':
-                options.bandwidth_in_bytes = 1;
+		config_set_string("use-bytes", "true");
                 break;
 
             case '?':
@@ -285,3 +320,168 @@ void options_read(int argc, char **argv) {
         exit(1);
     }
 }
+
+/* options_config_get_string:
+ * Gets a value from the config, sets *value to a copy of the value, if
+ * found.  Leaves the option unchanged otherwise. */
+int options_config_get_string(const char *name, char** value) {
+    char *s;
+    s = config_get_string(name);
+    if(s != NULL) {
+        *value = xstrdup(s);
+        return 1;
+    }
+    return 0;
+}
+
+int options_config_get_bool(const char *name, int* value) {
+    if(config_get_string(name)) {
+        *value = config_get_bool(name);
+        return 1;
+    }
+    return 0;
+}
+
+int options_config_get_int(const char *name, int* value) {
+    if(config_get_string(name)) {
+        config_get_int(name, value);
+        return 1;
+    }
+    return 0;
+}
+
+int options_config_get_enum(char *name, config_enumeration_type* enumeration, int *result) {
+    int i;
+    if(config_get_string(name)) {
+        if(config_get_enum(name, enumeration, &i)) {
+            *result = i; 
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int options_config_get_promiscuous() {
+    if(config_get_string("promiscuous")) {
+        options.promiscuous = config_get_bool("promiscuous");
+        if(options.promiscuous) {
+            /* User has explicitly requested promiscuous mode, so don't be
+             * choosy */
+            options.promiscuous_but_choosy = 0;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int options_config_get_bw_rate(char *directive, long long* result) {
+    char* units;
+    long long mult = 1;
+    long long value;
+    char *s;
+    s = config_get_string(directive);
+    if(s) {
+        units = s + strspn(s, "0123456789");
+        if(strlen(units) > 1) {
+            fprintf(stderr, "Invalid units in value: %s\n", s);
+            return 0;
+        }
+        if(strlen(units) == 1) {
+            if(*units == 'k' || *units == 'K') {
+                mult = 1024;
+            }
+            else if(*units == 'm' || *units == 'M') {
+                mult = 1024 * 1024;
+            }
+            else if(*units == 'g' || *units == 'G') {
+                mult = 1024 * 1024 * 1024;
+            }
+            else if(*units == 'b' || *units == 'B') {
+                /* bits => mult = 1 */
+            }
+            else {
+                fprintf(stderr, "Invalid units in value: %s\n", s);
+                return 0;
+            }
+        }
+        *units = '\0';
+        if(sscanf(s, "%lld", &value) != 1) {
+            fprintf(stderr, "Error reading rate: %s\n", s);
+        }
+        options.max_bandwidth = value * mult;
+        return 1;
+    }
+    return 0;
+}
+
+/*
+ * Read the net filter option.  
+ */
+int options_config_get_net_filter() {
+    char* s;
+    s = config_get_string("net-filter");
+    if(s) {
+        char* mask;
+
+        mask = strchr(s, '/');
+        if (mask == NULL) {
+            fprintf(stderr, "Could not parse net/mask: %s\n", s);
+            return 0;
+        }
+        *mask = '\0';
+        mask++;
+        if (inet_aton(s, &options.netfilternet) == 0) {
+            fprintf(stderr, "Invalid network address: %s\n", s);
+            return 0;
+        }
+        /* Accept a netmask like /24 or /255.255.255.0. */
+        if (mask[strspn(mask, "0123456789")] == '\0') {
+            /* Whole string is numeric */
+            int n;
+            n = atoi(mask);
+            if (n > 32) {
+                fprintf(stderr, "Invalid netmask: %s\n", s);
+            }
+            else {
+                if(n == 32) {
+                  /* This needs to be special cased, although I don't fully 
+                   * understand why -pdw 
+                   */
+                  options.netfiltermask.s_addr = htonl(0xffffffffl);
+                }
+                else {
+                  u_int32_t mm = 0xffffffffl;
+                  mm >>= n;
+                  options.netfiltermask.s_addr = htonl(~mm);
+                }
+            }
+        } 
+        else if (inet_aton(mask, &options.netfiltermask) == 0) {
+            fprintf(stderr, "Invalid netmask: %s\n", s);
+        }
+        options.netfilternet.s_addr = options.netfilternet.s_addr & options.netfiltermask.s_addr;
+        options.netfilter = 1;
+        return 1;
+    }
+    return 0;
+}
+
+
+void options_make() {
+    options_config_get_string("interface", &options.interface);
+    options_config_get_bool("dns-resolution", &options.dnsresolution);
+    options_config_get_bool("port-resolution", &options.portresolution);
+    options_config_get_string("filter-code", &options.filtercode);
+    options_config_get_bool("show-bars", &options.showbars);
+    options_config_get_promiscuous();
+    options_config_get_bool("hide-source", &options.aggregate_src);
+    options_config_get_bool("hide-destination", &options.aggregate_dest);
+    options_config_get_bool("use-bytes", &options.bandwidth_in_bytes);
+    options_config_get_enum("sort", sort_enumeration, (int*)&options.sort);
+    options_config_get_enum("line-display", linedisplay_enumeration, (int*)&options.linedisplay);
+    options_config_get_bool("show-totals", &options.show_totals);
+    options_config_get_bool("log-scale", &options.log_scale);
+    options_config_get_bw_rate("max-bandwidth", &options.max_bandwidth);
+    options_config_get_enum("port-display", showports_enumeration, (int*)&options.showports);
+    options_config_get_net_filter();
+};

@@ -33,23 +33,24 @@ typedef enum {
   OPTION_LINEDISPLAY_ONE_LINE_SENT
 } option_linedisplay_t;
 
+/* 
+ * This structure has to be defined in the same order as the config 
+ * directives in cfgfile.c.  Clearly this is EBW.
+ */
 typedef struct {
     /* interface on which to listen */
     char *interface;
 
+    int dnsresolution;
+    int portresolution;
     /* pcap filter code */
     char *filtercode;
 
-    /* Cross network filter */
-    int netfilter;
-    struct in_addr netfilternet;
-    struct in_addr netfiltermask;
-    int dnsresolution;
-    int portresolution;
-    int promiscuous;
-    int promiscuous_but_choosy;
     int showbars;
     option_port_t showports;
+
+    int promiscuous;
+    int promiscuous_but_choosy;
     int aggregate_src;
     int aggregate_dest;
     int paused;
@@ -71,6 +72,17 @@ typedef struct {
     long long max_bandwidth;
     int log_scale;
 
+    /* Cross network filter */
+    int netfilter;
+    struct in_addr netfilternet;
+    struct in_addr netfiltermask;
+
+    char *config_file;
+
 } options_t;
+
+
+void options_set_defaults();
+void options_read(int argc, char **argv);
 
 #endif /* __OPTIONS_H_ */

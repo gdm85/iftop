@@ -42,6 +42,7 @@
 #include "llc.h"
 #include "extract.h"
 #include "ethertype.h"
+#include "cfgfile.h"
 
 
 /* ethernet address of interface. */
@@ -517,7 +518,12 @@ int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {};
 
-    options_read(argc, argv);
+    /* read command line options and config file */   
+    config_init();
+    options_set_defaults();
+    options_read_args(argc, argv);
+    read_config(options.config_file);
+    options_make();
     
     sa.sa_handler = finish;
     sigaction(SIGINT, &sa, NULL);

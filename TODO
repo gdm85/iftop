@@ -24,3 +24,6 @@ $Id$
 
 * Linear bar graphs.
 
+* Count obscured connections.
+
+* Startup warnings cause pause.
