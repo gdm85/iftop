@@ -14,6 +14,7 @@ typedef struct {
     long recv[HISTORY_LENGTH];
     long sent[HISTORY_LENGTH];
     int last_write;
+    int promisc;
 } history_type;
 
 void tick();

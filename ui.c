@@ -190,7 +190,15 @@ void ui_print() {
             tsent = trecv = 0;
 
             trecv += d->recv[ii];
-            tsent += d->sent[ii];
+            if(d->promisc == 1) {
+                /* If this was picked up by promiscuous mode, it must
+                 * have been incoming
+                 */
+                trecv += d->recv[ii];
+            }
+            else {
+                tsent += d->sent[ii];
+            }
 
             for(j = 0; j < HISTORY_DIVISIONS; j++) {
                 if(i < history_divs[j]) {

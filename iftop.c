@@ -113,6 +113,7 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
         struct ip* iptr;
         history_type* ht;
         addr_pair ap;
+	int promisc = 0;
 
         iptr = (struct ip*)(packet + sizeof(struct ether_header)); /* alignment? */
 
@@ -125,13 +126,19 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
             ap.src = iptr->ip_dst;
             ap.dst = iptr->ip_src;
         }
+	/*
+	 * This packet is not from or to this interface.  Therefore assume
+	 * it was picked up in promisc mode.
+	 */
         else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
             ap.src = iptr->ip_src;
             ap.dst = iptr->ip_dst;
+	    promisc = 1;
         }
         else {
             ap.src = iptr->ip_dst;
             ap.dst = iptr->ip_src;
+	    promisc = 1;
         }
 
 
@@ -140,12 +147,13 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
 
         if(hash_find(history, &ap, (void**)&ht) == HASH_STATUS_KEY_NOT_FOUND) {
             ht = history_create();
+	    ht->promisc = promisc;
             hash_insert(history, &ap, ht);
         }
 
         /* Update record */
         ht->last_write = history_pos;
-        if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
+        if(iptr->ip_src.s_addr == ap.src.s_addr) {
             ht->sent[history_pos] += ntohs(iptr->ip_len);
         }
         else {
