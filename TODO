@@ -1,8 +1,7 @@
 Things to do for iftop
 $Id$
 
-BUG: 20s/40s averages are wrong when freeze_order is on.
-BUG: MAC address is broken.
+* Add configurable offset for DLT_RAW
 
 * Search for BSD interface names - need to know what to look for.
 
