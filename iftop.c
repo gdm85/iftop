@@ -179,6 +179,7 @@ void usage(FILE *fp) {
 "iftop: display bandwidth usage on an interface by host\n"
 "Options:\n"
 "\n"
+"   -d                  don't do hostname lookups\n"
 "   -i interface        listen on named interface (default: eth0)\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
@@ -190,10 +191,11 @@ void usage(FILE *fp) {
 
 /* main:
  * Entry point. See usage(). */
-char optstr[] = "+i:f:h";
+char optstr[] = "+i:f:dh";
 int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {0};
+    extern int dnsresolution;   /* in ui.c */
     int opt;
 
     opterr = 0;
@@ -202,6 +204,10 @@ int main(int argc, char **argv) {
             case 'h':
                 usage(stdout);
                 return 0;
+
+            case 'd':
+                dnsresolution = 0;
+                break;
 
             case 'i':
                 interface = optarg;
@@ -224,7 +230,6 @@ int main(int argc, char **argv) {
     }
     
     sa.sa_handler = finish;
-
     sigaction(SIGINT, &sa, NULL);
 
     pthread_mutex_init(&tick_mutex, NULL);
