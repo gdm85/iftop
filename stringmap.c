@@ -16,7 +16,7 @@ static const char rcsid[] = "$Id$";
 
 #include "stringmap.h"
 #include "vector.h"
-#include "util.h"
+#include "iftop.h"
 
 /* stringmap_new:
  * Allocate memory for a new stringmap. */
