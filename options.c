@@ -18,7 +18,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:n:dhpbBP";
+char optstr[] = "+i:f:n:NhpbBP";
 
 /* Global options. */
 
@@ -153,10 +153,10 @@ static void usage(FILE *fp) {
     fprintf(fp,
 "iftop: display bandwidth usage on an interface by host\n"
 "\n"
-"Synopsis: iftop -h | [-dpb] [-i interface] [-f filter code] [-n net/mask]\n"
+"Synopsis: iftop -h | [-npbBP] [-i interface] [-f filter code] [-N net/mask]\n"
 "\n"
 "   -h                  display this message\n"
-"   -d                  don't do hostname lookups\n"
+"   -n                  don't do hostname lookups\n"
 "   -p                  run in promiscuous mode (show traffic between other\n"
 "                       hosts on the same network segment)\n"
 "   -b                  don't display a bar graph of traffic\n"
@@ -164,7 +164,7 @@ static void usage(FILE *fp) {
 "   -i interface        listen on named interface\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
-"   -n net/mask         show traffic flows in/out of network\n"
+"   -N net/mask         show traffic flows in/out of network\n"
 "   -P                  show ports as well as hosts\n"
 "\n"
 "iftop, version " IFTOP_VERSION "\n"
@@ -184,7 +184,7 @@ void options_read(int argc, char **argv) {
                 usage(stdout);
                 exit(0);
 
-            case 'd':
+            case 'n':
                 options.dnsresolution = 0;
                 break;
 
@@ -204,7 +204,7 @@ void options_read(int argc, char **argv) {
                 options.showports = OPTION_PORTS_ON;
                 break;
 
-            case 'n':
+            case 'N':
                 set_net_filter(optarg);
                 break;
 

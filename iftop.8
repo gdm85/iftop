@@ -11,7 +11,7 @@ iftop - display bandwidth usage on an interface by host
 
 .SH SYNOPSIS
 \fBiftop\fP \fB-h\fP |
-[\fB-dpbP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-n\fP \fInet\fP/\fImask\fP]
+[\fB-npbBP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-N\fP \fInet\fP/\fImask\fP]
 
 .SH DESCRIPTION
 \fBiftop\fP listens to network traffic on a named \fIinterface\fP, or on the
@@ -25,13 +25,13 @@ By default, \fBiftop\fP will look up the hostnames associated with addresses it
 finds in packets. This can cause substantial traffic of itself, and may result
 in a confusing display. You may wish to suppress display of DNS traffic by
 using filter code such as \fBnot port domain\fP, or switch it off entirely,
-by using the \fB-d\fP option or by pressing \fBR\fP when the program is running.
+by using the \fB-n\fP option or by pressing \fBR\fP when the program is running.
 
 By default, \fBiftop\fP counts all IP packets that pass through the filter, and
 the direction of the packet is determined according to the direction the packet
-is moving across the interface.  Using the \fB-n\fP option it is possible to
+is moving across the interface.  Using the \fB-N\fP option it is possible to
 get \fBiftop\fP to show packets entering and leaving a given network.  For
-example, \fBiftop -n 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and
+example, \fBiftop -N 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and
 out of the 10.* network.
 
 Some other filter ideas:
@@ -52,7 +52,7 @@ slow?
 \fB-h\fP
 Print a summary of usage.
 .TP
-\fB-d\fP
+\fB-n\fP
 Don't do hostname lookups. This setting may be altered at run time.
 .TP
 \fB-p\fP
@@ -75,7 +75,7 @@ Listen to packets on \fIinterface\fP.
 Use \fIfilter code\fP to select the packets to count. Only IP packets are ever
 counted, so the specified code is evaluated as \fB(\fP\fIfilter code\fP\fB) and ip\fP.
 .TP
-\fB-n\fP \fInet\fP/\fImask\fP
+\fB-N\fP \fInet\fP/\fImask\fP
 Specifies a network for traffic analysis.  If specified, iftop will only
 include packets flowing in to or out of the given network, and packet direction
 is determined relative to the network boundary, rather than to the interface.
@@ -169,7 +169,7 @@ frozen.  In this case some captured information is not being shown to
 you, but is included in the totals.
 
 A more subtle explanation comes about when running in promiscuous mode
-without specifying a \fB-n\fP option.  In this case there is no easy way
+without specifying a \fB-N\fP option.  In this case there is no easy way
 to assign the direction of traffic between two other hosts.  For the
 purposes of the main display this is done in an arbitrary fashion (by
 ordering of IP addresses), but for the sake of totals all traffic
