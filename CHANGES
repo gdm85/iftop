@@ -1,6 +1,10 @@
 Change log for iftop
 $Id$
 
+0.7 02/10/02
+
+Fixed missing sll.h file.
+
 0.6 28/08/02
 
 Fixed segfault bug affecting some systems
