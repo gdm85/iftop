@@ -17,7 +17,7 @@ dnl
 AC_INIT(iftop.c)
 AC_CONFIG_AUX_DIR(config)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(iftop, "0.11pre2")
+AM_INIT_AUTOMAKE(iftop, "0.11")
 
 AC_DEFINE_UNQUOTED(IFTOP_VERSION, "$VERSION", [The iftop version number])
 
