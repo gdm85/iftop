@@ -244,29 +244,27 @@ int history_length(const int d) {
 }
 
 void draw_line_totals(int y, host_pair_line* line) {
-    int j, t, L;
+    int j, L;
     char buf[10];
     int x = (COLS - 8 * HISTORY_DIVISIONS);
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-        t = history_length(j);
-        readable_size(line->sent[j] / t, buf, 10, 1024, options.bandwidth_in_bytes);
+        readable_size(line->sent[j], buf, 10, 1024, options.bandwidth_in_bytes);
         mvaddstr(y, x, buf);
 
-        readable_size(line->recv[j] / t, buf, 10, 1024, options.bandwidth_in_bytes);
+        readable_size(line->recv[j], buf, 10, 1024, options.bandwidth_in_bytes);
         mvaddstr(y+1, x, buf);
         x += 8;
     }
     
     if(options.showbars) {
-        t = history_length(BARGRAPH_INTERVAL);
         mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-        L = get_bar_length(8 * line->sent[BARGRAPH_INTERVAL] / t);
+        L = get_bar_length(8 * line->sent[BARGRAPH_INTERVAL] );
         if (L > 0)
             mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
 
         mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-        L = get_bar_length(8 * line->recv[BARGRAPH_INTERVAL] / t);
+        L = get_bar_length(8 * line->recv[BARGRAPH_INTERVAL] );
         if (L > 0)
             mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
     }
@@ -275,15 +273,14 @@ void draw_line_totals(int y, host_pair_line* line) {
 void draw_totals(host_pair_line* totals) {
     /* Draw rule */
     int y = LINES - 4;
-    int j, t;
+    int j;
     char buf[10];
     int x = (COLS - 8 * HISTORY_DIVISIONS);
     y++;
     draw_line_totals(y, totals);
     y += 2;
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-        t = history_length(j);
-        readable_size((totals->sent[j] + totals->recv[j]) / t, buf, 10, 1024, options.bandwidth_in_bytes);
+        readable_size((totals->sent[j] + totals->recv[j]) , buf, 10, 1024, options.bandwidth_in_bytes);
         mvaddstr(y, x, buf);
         x += 8;
     }
@@ -332,12 +329,24 @@ void calculate_totals() {
             peaktotal = history_totals.recv[i] + history_totals.sent[i];	
         }
     }
+    for(i = 0; i < HISTORY_DIVISIONS; i++) {
+      int t = history_length(i);
+      totals.recv[i] /= t;
+      totals.sent[i] /= t;
+    }
 }
 
 void make_screen_list() {
     hash_node_type* n = NULL;
     while(hash_next_item(screen_hash, &n) == HASH_STATUS_OK) {
-        sorted_list_insert(&screen_list, (host_pair_line*)n->rec);
+        host_pair_line* line = (host_pair_line*)n->rec;
+        int i;
+        for(i = 0; i < HISTORY_DIVISIONS; i++) {
+          line->recv[i] /= history_length(i);
+          line->sent[i] /= history_length(i);
+        }
+
+        sorted_list_insert(&screen_list, line);
     }
 }
 
@@ -360,6 +369,7 @@ void analyse_data() {
       return;
     }
 
+    // Zero totals
     memset(&totals, 0, sizeof totals);
 
     if(options.freezeorder) {
@@ -417,7 +427,6 @@ void analyse_data() {
                     screen_line->sent[j] += d->sent[ii];
                 }
             }
-
         }
 
     }
