@@ -1,6 +1,11 @@
 Change log for iftop
 $Id$
 
+0.5 
+
+Added support for monitoring PPP interfaces
+Converted longs to double longs in various places to avoid overflow problems
+
 0.4 16/04/02
 
 No code changes

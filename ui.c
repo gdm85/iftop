@@ -28,8 +28,8 @@ int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 typedef struct host_pair_line_tag {
     addr_pair ap;
-    long recv[HISTORY_DIVISIONS];
-    long sent[HISTORY_DIVISIONS];
+    double long recv[HISTORY_DIVISIONS];
+    double long sent[HISTORY_DIVISIONS];
 } host_pair_line;
 
 
