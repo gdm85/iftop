@@ -265,6 +265,93 @@ char *do_resolve(struct in_addr * addr) {
     }
 }
 
+#elif defined(USE_FORKING_RESOLVER)
+
+/**
+ * Resolver which forks a process, then uses gethostbyname.
+ */
+
+#include <signal.h>
+
+#define NAMESIZE        64
+
+int forking_resolver_worker(int fd) {
+    while (1) {
+        struct in_addr a;
+        struct hostent *he;
+        char buf[NAMESIZE] = {0};
+        if (read(fd, &a, sizeof a) != sizeof a)
+            return -1;
+
+        he = gethostbyaddr((char*)&a, sizeof a, AF_INET);
+        if (he)
+            strncpy(buf, he->h_name, NAMESIZE - 1);
+
+        if (write(fd, buf, NAMESIZE) != NAMESIZE)
+            return -1;
+    }
+}
+
+char *do_resolve(struct in_addr *addr) {
+    struct {
+        int fd;
+        pid_t child;
+    } *workerinfo;
+    char name[NAMESIZE];
+    static pthread_mutex_t worker_init_mtx = PTHREAD_MUTEX_INITIALIZER;
+    static pthread_key_t worker_key;
+    static int gotkey;
+
+    /* If no process exists, we need to spawn one. */
+    pthread_mutex_lock(&worker_init_mtx);
+    if (!gotkey) {
+        pthread_key_create(&worker_key, NULL);
+        gotkey = 1;
+    }
+    pthread_mutex_unlock(&worker_init_mtx);
+    
+    workerinfo = pthread_getspecific(worker_key);
+    if (!workerinfo) {
+        int p[2];
+
+        if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, p) == -1)
+            return NULL;
+
+        workerinfo = xmalloc(sizeof *workerinfo);
+        pthread_setspecific(worker_key, workerinfo);
+        workerinfo->fd = p[0];
+
+        switch (workerinfo->child = fork()) {
+            case 0:
+                close(p[0]);
+                _exit(forking_resolver_worker(p[1]));
+
+            case -1:
+                close(p[0]);
+                close(p[1]);
+                return NULL;
+
+            default:
+                close(p[1]);
+        }
+    }
+
+    /* Now have a worker to which we can write requests. */
+    if (write(workerinfo->fd, addr, sizeof *addr) != sizeof *addr
+        || read(workerinfo->fd, name, NAMESIZE) != NAMESIZE) {
+        /* Something went wrong. Just kill the child and get on with it. */
+        kill(workerinfo->child, SIGKILL);
+        wait();
+        close(workerinfo->fd);
+        xfree(workerinfo);
+        pthread_setspecific(worker_key, NULL);
+    }
+    if (!*name)
+        return NULL;
+    else
+        return xstrdup(name);
+}
+
 #else
 
 #   warning No name resolution method specified; name resolution will not work

@@ -37,8 +37,9 @@ AC_ARG_WITH(resolver,
     [  --with-resolver=TYPE    Technique iftop should use for name resolution. Valid
                           options are netdb, netdb_1thread (for systems without
                           working gethostbyaddr_r), ares for the MIT ARES
-                          asynchronous resolver library, or none if you don't
-                          need any name resolution.
+                          asynchronous resolver library, forking for the REALLY SUCKY
+                          forking resolver, or none if you don't need any name
+                          resolution.
                           [default=netdb]],
     [resolver=$withval],
     [resolver=netdb])
@@ -164,7 +165,7 @@ if test x$resolver = xnetdb ; then
         AC_DEFINE(USE_GETNAMEINFO, 1, [use getnameinfo for name resolution])
     else
         dnl Now see if we can use gethostbyaddr_r.
-        AC_SEARCH_LIBS(gethostbyaddr_r, [nsl], , [resolver=netdb_1thread])
+        AC_SEARCH_LIBS(gethostbyaddr_r, [nsl], , [resolver=forking])
 
         dnl Still want gethostbyaddr_r....
         if test x$resolver = xnetdb ; then
@@ -185,8 +186,8 @@ if test x$resolver = xnetdb ; then
                                 [7-argument gethostbyaddr_r returns struct hostent*])
                         ], [
                             dnl neither
-                            AC_MSG_RESULT([no idea; dropping back to gethostbyaddr])
-                            resolver=netdb_1thread
+                            AC_MSG_RESULT([no idea; dropping back to the forking resolver])
+                            resolver=forking
                         ])
                 ])
 
@@ -209,24 +210,33 @@ if test x$resolver = xares ; then
         AC_DEFINE(USE_ARES, 1, [use ARES for name resolution])
         ], [
         dnl no ares
-        AC_MSG_RESULT([can't find ARES; dropping back to gethostbyaddr])
-        resolver=netdb_1thread])
+        AC_MSG_RESULT([can't find ARES; dropping back to the forking resolver])
+        resolver=forking])
 fi
 
 
-dnl Ugh. gethostbyaddr.
-if test x$resolver = xnetdb_1thread ; then
+dnl Ugh. Both the single-threaded and the forking resolvers use gethostbyaddr.
+if test x$resolver = xnetdb_1thread || test x$resolver = xforking ; then
     AC_SEARCH_LIBS(gethostbyaddr, [nsl], , [
         AC_MSG_ERROR([not even gethostbyaddr is available
-  What sort of UNIX system is this, anyway?])
+  What sort of UNIX system is this, anyway?
+  
+  You will have to recompile with no name resolution at all.
+])
+
         ]
         )
 
-    dnl Oh dear, just use gethostbyaddr; but whine about it
-    AC_MSG_WARN([using single-threaded resolver with gethostbyaddr
+    if test x$resolver = xnetdb_1thread ; then
+        dnl Oh dear, just use gethostbyaddr; but whine about it
+    
+        AC_MSG_WARN([using single-threaded resolver with gethostbyaddr
   Consider obtaining ARES or a machine with a working gethostbyaddr_r.])
 
-    AC_DEFINE(USE_GETHOSTBYADDR, 1, [use gethostbyaddr for name resolution])
+        AC_DEFINE(USE_GETHOSTBYADDR, 1, [use gethostbyaddr for name resolution])
+    else
+        AC_DEFINE(USE_FORKING_RESOLVER, 1, [use a REALLY SUCKY forking resolver for name resolution])
+    fi
 fi
 
 dnl Otherwise, no resolver at all. Boo hoo.
