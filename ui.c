@@ -58,15 +58,15 @@ int screen_line_compare(void* a, void* b) {
     return 1;
 }
 
-void readable_size(float n, char* buf, int bsize, int ksize) {
+void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
     if(n >= 100000) {
-       snprintf(buf, bsize, " %4.1fM", n / (ksize * ksize)); 
+       snprintf(buf, bsize, " %4.1f%s", n / (ksize * ksize), bytes ? "MB" : "M"); 
     }
     else if(n >= 1000) {
-       snprintf(buf, bsize, " %4.1fK", n / ksize); 
+       snprintf(buf, bsize, " %4.1f%s", n / ksize, bytes ? "KB" : "K" ); 
     }
     else {
-       snprintf(buf, bsize, " %4.0fb", n ); 
+       snprintf(buf, bsize, " %4.0f%s", n, bytes ? "B" : "b"); 
     }
 }
 
@@ -103,7 +103,7 @@ static void draw_bar_scale(int* y) {
         for (i = 1; i <= scale[rateidx].max; i *= scale[rateidx].interval) {
             char s[40], *p;
             int x;
-            readable_size(i, s, sizeof s, 1000);
+            readable_size(i, s, sizeof s, 1000, 0);
             p = s + strspn(s, " ");
             x = get_bar_length(i);
             mvaddch(*y + 1, x, ACS_BTEE);
@@ -134,10 +134,10 @@ void draw_line_totals(int y, host_pair_line* line) {
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
         t = history_length(j);
-        readable_size(8 * line->sent[j] / t, buf, 10, 1024);
+        readable_size(8 * line->sent[j] / t, buf, 10, 1024, 0);
         mvaddstr(y, x, buf);
 
-        readable_size(8 * line->recv[j] / t, buf, 10, 1024);
+        readable_size(8 * line->recv[j] / t, buf, 10, 1024, 0);
         mvaddstr(y+1, x, buf);
         x += 8;
     }
@@ -264,6 +264,11 @@ void ui_print() {
     attroff(A_REVERSE);
     addstr(options.dnsresolution ? " name resolution off "
                          : " name resolution on  ");
+    attron(A_REVERSE);
+    addstr(" B ");
+    attroff(A_REVERSE);
+    addstr(options.showbars ? " bar graphs off "
+                         : " bar graphs on  ");
     draw_bar_scale(&y);
 
 
@@ -314,31 +319,32 @@ void ui_print() {
     mvaddstr(y, 0, "total: ");
     mvaddstr(y+1, 0, " peak: ");
 
-    readable_size((totals.recv[0] + totals.sent[0]) * 8 / RESOLUTION, line, 10, 1024);
+    readable_size((totals.recv[0] + totals.sent[0]) * 8 / RESOLUTION, line, 10, 1024, 0);
     mvaddstr(y, 8, line);
 
-    readable_size(peaktotal * 8 / RESOLUTION, line, 10, 1024);
+    readable_size(peaktotal * 8 / RESOLUTION, line, 10, 1024, 0);
     mvaddstr(y+1, 8, line);
 
-    readable_size((peakrecv + peaksent) * 8 / RESOLUTION, line, 10, 1024);
+    readable_size((peakrecv + peaksent) * 8 / RESOLUTION, line, 10, 1024, 0);
     mvaddstr(y+1, 8, line);
 
     mvaddstr(y, 18, "TX: ");
     mvaddstr(y+1, 18, "RX: ");
 
-    readable_size(history_totals.total_sent / RESOLUTION, line, 10, 1024);
+    /* Cummulative totals */
+    readable_size(history_totals.total_sent, line, 10, 1024, 1);
     mvaddstr(y, 22, line);
 
-    readable_size(history_totals.total_recv / RESOLUTION, line, 10, 1024);
+    readable_size(history_totals.total_recv, line, 10, 1024, 1);
     mvaddstr(y+1, 22, line);
 
+    /* Peak traffic */
     mvaddstr(y, 33, "peaks: ");
-    /* mvaddstr(y+1, 24, "recv:       "); */
 
-    readable_size(peaksent * 8 / RESOLUTION, line, 10, 1024);
+    readable_size(peaksent * 8 / RESOLUTION, line, 10, 1024, 0);
     mvaddstr(y, 39, line);
 
-    readable_size(peakrecv * 8 / RESOLUTION, line, 10, 1024);
+    readable_size(peakrecv * 8 / RESOLUTION, line, 10, 1024, 0);
     mvaddstr(y+1, 39, line);
 
     mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 8, "totals:");

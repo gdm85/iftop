@@ -52,7 +52,7 @@ uninstall:
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-clean: nodepend
+clean:
 	rm -f *~ *.o core iftop
 
 tarball: depend $(SRCS) $(HDRS) $(TXTS)

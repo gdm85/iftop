@@ -1,6 +1,14 @@
 Change log for iftop
 $Id$
 
-0.1
+0.2 02/04/02
+
+Added -n option to analyse traffic flows across a network boundary.
+Added cummulative traffic totals.
+Graphs now optional.
+UI more responsive to key presses.
+Auto-sizing bar graph scale.
+
+0.1 29/3/02
 
 First release.
