@@ -5,14 +5,15 @@ $Id$
 
 * IP types other than v4?
 
+* Include ports in display.
+
 * Which average to use for the bar graph? Show several and peaks? Colours?
 
 * Single keypress firewalling of troublesome connections, a la top(1)'s K
   to kill?
 
-* Aggregate traffic by source host / dest host rather than just by host pair.
-
 * Configurable sort criteria.
 
 * Configurable refresh rates.
 
+* Filtering of items included in diplay
