@@ -101,8 +101,7 @@ void ui_print() {
     screen_list.compare = &screen_line_compare;
     sorted_list_initialise(&screen_list);
 
-    clear();
-    //erase();
+    erase();
     draw_bar_scale();
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {

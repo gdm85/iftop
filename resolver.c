@@ -22,7 +22,6 @@ struct in_addr resolve_queue[RESOLVE_QUEUE_LENGTH];
 
 pthread_cond_t resolver_queue_cond;
 pthread_mutex_t resolver_queue_mutex;
-pthread_mutex_t resolver_queue_access_mutex;
 
 hash_type* ns_hash;
 
@@ -31,8 +30,10 @@ int tail;
 
 void resolver_worker(void* ptr) {
     struct timespec delay;
+    int thread_number = *(int*)ptr;
     delay.tv_sec = 0;
     delay.tv_nsec = 500;
+    pthread_mutex_lock(&resolver_queue_mutex);
     while(1) {
         /* Wait until we are told that an address has been added to the 
          * queue
@@ -40,7 +41,6 @@ void resolver_worker(void* ptr) {
         pthread_cond_wait(&resolver_queue_cond, &resolver_queue_mutex);
 
         /* Keep resolving until the queue is empty */
-        pthread_mutex_lock(&resolver_queue_access_mutex);
         while(head != tail) {
             struct in_addr addr = resolve_queue[tail];
             struct hostent hostbuf, *hp;
@@ -53,7 +53,9 @@ void resolver_worker(void* ptr) {
 
             tail = (tail + 1) % RESOLVE_QUEUE_LENGTH;
 
-            pthread_mutex_unlock(&resolver_queue_access_mutex);
+            pthread_mutex_unlock(&resolver_queue_mutex);
+
+            fprintf(stderr,"Thread %d resolving: %s\n", thread_number, inet_ntoa(addr));
 
 
             hstbuflen = 1024;
@@ -68,10 +70,12 @@ void resolver_worker(void* ptr) {
                 tmphstbuf = realloc (tmphstbuf, hstbuflen);
               }
 
+            fprintf(stderr,"Thread %d resolved: %s\n", thread_number, inet_ntoa(addr));
+
             /*
              * Store the result in ns_hash
              */
-            pthread_mutex_lock(&resolver_queue_access_mutex);
+            pthread_mutex_lock(&resolver_queue_mutex);
 
             /*  Check for errors.  */
             if (res || hp == NULL) {
@@ -96,28 +100,33 @@ void resolver_worker(void* ptr) {
             }
             xfree(tmphstbuf);
         }
-        pthread_mutex_unlock(&resolver_queue_access_mutex);
     }
 }
 
 void resolver_initialise() {
+    int* n;
+    int i;
     pthread_t thread;
     head = tail = 0;
 
     ns_hash = ns_hash_create();
     
     pthread_mutex_init(&resolver_queue_mutex, NULL);
-    pthread_mutex_init(&resolver_queue_access_mutex, NULL);
     pthread_cond_init(&resolver_queue_cond, NULL);
 
-    pthread_create(&thread, NULL, (void*)&resolver_worker, NULL);
+    for(i = 0; i < 2; i++) {
+        n = (int*)xmalloc(sizeof n);
+        *n = i;
+        pthread_create(&thread, NULL, (void*)&resolver_worker, (void*)n);
+    }
 
 }
 
 void resolve(struct in_addr* addr, char* result, int buflen) {
     char* hostname;
+    int added = 0;
 
-    pthread_mutex_lock(&resolver_queue_access_mutex);
+    pthread_mutex_lock(&resolver_queue_mutex);
 
     if(hash_find(ns_hash, addr, (void**)&hostname) == HASH_STATUS_OK) {
         /* Found => already resolved, or on the queue */
@@ -132,10 +141,14 @@ void resolve(struct in_addr* addr, char* result, int buflen) {
         else {
             resolve_queue[head] = *addr;
             head = (head + 1) % RESOLVE_QUEUE_LENGTH;
-            pthread_cond_signal(&resolver_queue_cond);
+            added = 1;
         }
     }
-    pthread_mutex_unlock(&resolver_queue_access_mutex);
+    pthread_mutex_unlock(&resolver_queue_mutex);
+
+    if(added == 1) {
+        pthread_cond_signal(&resolver_queue_cond);
+    }
 
     if(result != NULL && buflen > 1) {
         strncpy(result, hostname, buflen - 1);
