@@ -44,7 +44,13 @@
 #include "ethertype.h"
 
 
-unsigned char if_hw_addr[6];    /* ethernet address of interface. */
+/* ethernet address of interface. */
+int have_hw_addr = 0;
+unsigned char if_hw_addr[6];    
+
+/* IP address of interface */
+int have_ip_addr = 0;
+struct in_addr if_ip_addr;
 
 extern options_t options;
 
@@ -139,6 +145,10 @@ int in_filter_net(struct in_addr addr) {
     return ret;
 }
 
+int ip_addr_match(struct in_addr addr) {
+    return addr.s_addr == if_ip_addr.s_addr;
+}
+
 /**
  * Creates an addr_pair from an ip (and tcp/udp) header, swapping src and dst
  * if required
@@ -193,11 +203,24 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
             assign_addr_pair(&ap, iptr, 1);
             direction = 0;
         }
-
+        /* Packet direction is not given away by h/ware layer.  Try IP
+         * layer
+         */
+        else if(have_ip_addr && ip_addr_match(iptr->ip_src)) {
+            /* outgoing */
+            assign_addr_pair(&ap, iptr, 0);
+            direction = 1;
+        }
+        else if(have_ip_addr && ip_addr_match(iptr->ip_dst)) {
+            /* incoming */
+            assign_addr_pair(&ap, iptr, 1);
+            direction = 0;
+        }
         /*
-         * This packet is not from or to this interface, or the h/ware 
-         * layer did not give the direction away.  Therefore assume
-         * it was picked up in promisc mode, and account it as incoming.
+         * Cannot determine direction from hardware or IP levels.  Therefore 
+         * assume that it was a packet between two other machines, assign
+         * source and dest arbitrarily (by numerical value) and account as 
+         * incoming.
          */
         else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
             assign_addr_pair(&ap, iptr, 1);
@@ -358,12 +381,13 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
         /*
          * Is a direction implied by the MAC addresses?
          */
-        if(memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
+        if(have_hw_addr && memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
             /* packet leaving this i/f */
             dir = 1;
         } 
-        else if(memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
-            /* packet entering this i/f */
+        else if((have_hw_addr && memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0) 
+              || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
+            /* packet entering this i/f (include broadcast packets here */
             dir = 0;
         }
 
@@ -405,6 +429,7 @@ void packet_init() {
     char errbuf[PCAP_ERRBUF_SIZE];
     char *m;
     int s;
+    int i;
     struct ifreq ifr = {};
     int dlt;
 
@@ -416,26 +441,49 @@ void packet_init() {
         exit(1);
     }
     fprintf(stderr,"if: %s\n", options.interface);
-#ifdef SIOCGIFHWADDR
+    memset(if_hw_addr, 0, 6);
     strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
+#ifdef SIOCGIFHWADDR
     if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
         fprintf(stderr, "Error getting hardware address for interface: %s\n", options.interface); 
         perror("ioctl(SIOCGIFHWADDR)");
         exit(1);
     }
-    memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
+    else {
+        memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
+        have_hw_addr = 1;
+    }
 #else
     fprintf(stderr, "Cannot obtain hardware address on this platform\n");
-    memset(if_hw_addr, 0, 6);
+#endif
+
+    if(have_hw_addr) {
+        fprintf(stderr, "MAC address is:");
+        for (i = 0; i < 6; ++i)
+            fprintf(stderr, "%c%02x", i ? ':' : ' ', (unsigned int)if_hw_addr[i]);
+        fprintf(stderr, "\n");
+    }
+
+    /* Get the IP address of the interface */
+#ifdef SIOCGIFADDR
+    (*(struct sockaddr_in *) &ifr.ifr_addr).sin_family = AF_INET;
+    if (ioctl(s, SIOCGIFADDR, &ifr) < 0) {
+        fprintf(stderr, "Error getting IP address for interface: %s\n", options.interface); 
+        perror("ioctl(SIOCGIFADDR)");
+        exit(1);
+    }
+    else {
+        have_ip_addr = 1;
+        memcpy(&if_ip_addr, &((*(struct sockaddr_in *) &ifr.ifr_addr).sin_addr), sizeof(struct sockaddr_in));
+    }
+#else
+    fprintf(stderr, "Cannot obtain IP address on this platform\n");
 #endif
 
     close(s);
-    fprintf(stderr, "MAC address is:");
-    for (s = 0; s < 6; ++s)
-        fprintf(stderr, "%c%02x", s ? ':' : ' ', (unsigned int)if_hw_addr[s]);
-    fprintf(stderr, "\n");
 
-    fprintf(stderr, "IP address is: %s", inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
+    if(have_ip_addr) 
+        fprintf(stderr, "IP address is: %s\n", inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
     
     resolver_initialise();
 
