@@ -209,12 +209,12 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     
 }
 
-static void handle_raw_packet(char* args, const struct pcap_pkthdr* pkthdr,const char* packet)
+static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     handle_ip_packet((struct ip*)packet, -1);
 }
 
-static void handle_eth_packet(char* args, const struct pcap_pkthdr* pkthdr,const char* packet)
+static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     struct ether_header *eptr;
     eptr = (struct ether_header*)packet;
@@ -261,13 +261,13 @@ void packet_init() {
     s = socket(PF_INET, SOCK_DGRAM, 0); /* any sort of IP socket will do */
     if (s == -1) {
         perror("socket");
-        exit;
+        exit(1);
     }
     strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
     ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
     if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
         perror("ioctl(SIOCGIFHWADDR)");
-        exit;
+        exit(1);
     }
     close(s);
     memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
@@ -281,7 +281,7 @@ void packet_init() {
     pd = pcap_open_live(options.interface, CAPTURE_LENGTH, options.promiscuous, 1000, errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", options.interface, errbuf); 
-        exit;
+        exit(1);
     }
     dlt = pcap_datalink(pd);
     if(dlt == DLT_EN10MB) {
@@ -294,7 +294,7 @@ void packet_init() {
         fprintf(stderr, "Unsupported datalink type: %d\n"
                 "Please email pdw@ex-parrot.com, quoting the datalink type and what you were\n"
                 "trying to do at the time\n.", dlt);
-        exit(0);
+        exit(1);
     }
 
     if (options.filtercode) {
@@ -303,12 +303,12 @@ void packet_init() {
     }
     if (pcap_compile(pd, &F, str, 1, 0) == -1) {
         fprintf(stderr, "pcap_compile(%s): %s\n", str, pcap_geterr(pd));
-        exit;
+        exit(1);
         return;
     }
     if (pcap_setfilter(pd, &F) == -1) {
         fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(pd));
-        exit;
+        exit(1);
         return;
     }
     if (options.filtercode)
