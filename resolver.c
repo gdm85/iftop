@@ -34,6 +34,7 @@ void resolver_worker(void* ptr) {
     delay.tv_sec = 0;
     delay.tv_nsec = 500;
     pthread_mutex_lock(&resolver_queue_mutex);
+    sethostent(1);
     while(1) {
         /* Wait until we are told that an address has been added to the 
          * queue. */

@@ -4,7 +4,7 @@ $Id$
 0.2 02/04/02
 
 Added -n option to analyse traffic flows across a network boundary.
-Added cummulative traffic totals.
+Added cumulative traffic totals.
 Graphs now optional.
 UI more responsive to key presses.
 Auto-sizing bar graph scale.
