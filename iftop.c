@@ -13,12 +13,16 @@
 #include <curses.h>
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "iftop.h"
 #include "addr_hash.h"
 #include "resolver.h"
 #include "ui.h"
 
+/* Global options. */
+char *interface = "eth0";
+char *filtercode = NULL;
 
 
 hash_type* history;
@@ -131,27 +135,31 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
  */
 void packet_loop(void* ptr) {
     char errbuf[PCAP_ERRBUF_SIZE];
-    char* device;
+    char* str = "ip";
     pcap_t* pd;
     struct bpf_program F;
 
     resolver_initialise();
 
-    device = pcap_lookupdev(errbuf);
-    printf("Device: %s\n",device);
-    pd = pcap_open_live("eth0",CAPTURE_LENGTH,1,1000,errbuf);
+    pd = pcap_open_live(interface, CAPTURE_LENGTH, 1, 1000, errbuf);
     if(pd == NULL) { 
-        fprintf(stderr, "pcap_open_live(): %s\n",errbuf); 
+        fprintf(stderr, "pcap_open_live(%s): %s\n", interface, errbuf); 
         exit(1); 
     }
-    if (pcap_compile(pd, &F, "ip", 1, 0) == -1) {
-        fprintf(stderr, "pcap_compile: %s\n", pcap_geterr(pd));
+    if (filtercode) {
+        str = xmalloc(strlen(filtercode) + sizeof "() and ip");
+        sprintf(str, "(%s) and ip", filtercode);
+    }
+    if (pcap_compile(pd, &F, str, 1, 0) == -1) {
+        fprintf(stderr, "pcap_compile(%s): %s\n", str, pcap_geterr(pd));
         exit(1);
     }
     if (pcap_setfilter(pd, &F) == -1) {
         fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(pd));
         exit(1);
     }
+    if (filtercode)
+        xfree(str);
     printf("Begin loop\n");
     pcap_loop(pd,0,(pcap_handler)handle_packet,NULL);
     printf("end loop\n");
@@ -164,9 +172,56 @@ static void finish(int sig)
     foad = sig;
 }
 
+/* usage:
+ * Print usage information. */
+void usage(FILE *fp) {
+    fprintf(fp,
+"Options:\n"
+"\n"
+"   -i interface        listen on named interface (default: eth0)\n"
+"   -f filtercode code      use filtercode code to select packets to count\n"
+"                       (default: none, but only IP packets are counted)\n"
+"   -h                  display this message\n"
+"\n"
+"iftop, $Id$\n"
+            );
+}
+
+/* main:
+ * Entry point. See usage(). */
+char optstr[] = "+i:f:h";
 int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {0};
+    int opt;
+
+    opterr = 0;
+    while ((opt = getopt(argc, argv, optstr)) != -1) {
+        switch (opt) {
+            case 'h':
+                usage(stdout);
+                return 0;
+
+            case 'i':
+                interface = optarg;
+                break;
+
+            case 'f':
+                filtercode = optarg;
+                break;
+
+            case '?':
+                fprintf(stderr, "iftop: unknown option -%c\n", optopt);
+                usage(stderr);
+                return 1;
+
+            case ':':
+                fprintf(stderr, "iftop: option -%c requires an argument\n", optopt);
+                usage(stderr);
+                return 1;
+        }
+    }
+    
     sa.sa_handler = finish;
 
     sigaction(SIGINT, &sa, NULL);
