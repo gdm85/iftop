@@ -18,7 +18,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:n:NhpbBP";
+char optstr[] = "+i:f:nN:hpbBP";
 
 /* Global options. */
 
