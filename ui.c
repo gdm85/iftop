@@ -9,7 +9,6 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <sys/time.h>
 
 #include "addr_hash.h"
 #include "iftop.h"
@@ -183,16 +182,8 @@ void ui_loop() {
     pthread_mutex_init(&tick_wait_mutex, NULL);
     pthread_cond_init(&tick_wait_cond, NULL);
     while(foad == 0) {
-        struct timeval tv;
         struct timespec t;
-        gettimeofday(&tv, NULL);
-        tv.tv_usec += 250000;
-        if (tv.tv_usec > 999999) {
-            ++tv.tv_sec;
-            tv.tv_usec -= 1000000;
-        }
-        t.tv_sec = tv.tv_sec;
-        t.tv_nsec = 1000 * tv.tv_usec;
+        t.tv_sec = time(NULL) + 1;
 
         pthread_cond_timedwait(&tick_wait_cond, &tick_wait_mutex, &t);
         //fprintf(stderr,"timeout tick\n");
