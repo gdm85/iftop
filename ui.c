@@ -37,9 +37,15 @@ extern int history_len;
 void ui_finish();
 
 int screen_line_compare(void* a, void* b) {
+    int i;
     host_pair_line* aa = (host_pair_line*)a;
     host_pair_line* bb = (host_pair_line*)b;
-    return(aa->recv[0] + aa->sent[0] < bb->recv[0] + bb->sent[0]);
+    for(i = 0; i < HISTORY_DIVISIONS; i++) {
+        if(aa->recv[i] + aa->sent[i] != bb->recv[i] + bb->sent[i]) {
+            return(aa->recv[i] + aa->sent[i] < bb->recv[i] + bb->sent[i]);
+        }
+    }
+    return 1;
 }
 
 void readable_size(float n, char* buf, int bsize, int ksize) {
