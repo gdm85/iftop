@@ -27,7 +27,7 @@ int screen_filter_set(char* s) {
         regfree(&preg);
     }
 
-    r = regcomp(&preg, s, 0);
+    r = regcomp(&preg, s, REG_ICASE|REG_EXTENDED);
       
     if(r == 0) {
         options.screenfilter = s;
