@@ -221,15 +221,16 @@ void packet_loop(void* ptr) {
 void usage(FILE *fp) {
     fprintf(fp,
 "iftop: display bandwidth usage on an interface by host\n"
-"Options:\n"
 "\n"
+"Synopsis: iftop -h | [-d] [-p] [-i interface] [-f filter code]\n"
+"\n"
+"   -h                  display this message\n"
 "   -d                  don't do hostname lookups\n"
+"   -p                  run in promiscuous mode (show traffic between other\n"
+"                       hosts on the same network segment)\n"
 "   -i interface        listen on named interface (default: eth0)\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
-"   -p                  run in promiscuous mode (show traffic between other\n"
-"                       hosts on the same network segment)\n"
-"   -h                  display this message\n"
 "\n"
 "iftop, $Id$\n"
             );

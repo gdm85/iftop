@@ -102,12 +102,11 @@ int history_length(const int d) {
 }
 
 void draw_line_totals(int y, host_pair_line* line) {
-    int j;
+    int j, t, L;
     char buf[10];
     int x = (COLS - 8 * HISTORY_DIVISIONS);
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-        int t;
         t = history_length(j);
         readable_size(8 * line->sent[j] / t, buf, 10, 1024);
         mvaddstr(y, x, buf);
@@ -116,7 +115,17 @@ void draw_line_totals(int y, host_pair_line* line) {
         mvaddstr(y+1, x, buf);
         x += 8;
     }
+    
+    t = history_length(BARGRAPH_INTERVAL);
+    mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
+    L = get_bar_length(8 * line->sent[BARGRAPH_INTERVAL] / t);
+    if (L > 0)
+        mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
 
+    mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
+    L = get_bar_length(8 * line->recv[BARGRAPH_INTERVAL] / t);
+    if (L > 0)
+        mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
 }
 
 void draw_totals(host_pair_line* totals) {
@@ -260,7 +269,6 @@ void ui_print() {
         free(screen_line);
     }
 
-    draw_totals(&totals);
 
     y = LINES - 2;
     mvaddstr(y, 0, "sent   peak: ");
@@ -274,6 +282,8 @@ void ui_print() {
 
     mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 10, "totals:");
 
+    draw_totals(&totals);
+    
     refresh();
 
     sorted_list_destroy(&screen_list);
