@@ -20,5 +20,6 @@ in order to compile iftop.
 
 FreeBSD 4.7:
 
-DNS resolution does not work due to the lack of a proper gethostbyaddr_r
-implementation.
+This version of FreeBSD lacks a proper gethostbyaddr_r function. You should
+choose an alternative name resolution technique; see comments in the Makefile.
+We recommend using ares (-DUSE_ARES).

@@ -209,6 +209,8 @@ static void draw_bar_scale(int* y) {
     int i;
     if(options.showbars) {
         /* Draw bar graph scale on top of the window. */
+        move(*y, 0);
+        clrtoeol();
         mvhline(*y + 1, 0, 0, COLS);
         for (i = 1; i <= scale[rateidx].max; i *= scale[rateidx].interval) {
             char s[40], *p;
@@ -773,17 +775,19 @@ void ui_loop() {
                 dontshowdisplay = 1;
                 if ((s = edline(0, "Net filter", options.filtercode))) {
                     char *m;
+                    if (s[strspn(s, " \t")] == 0) {
+                        /* Empty filter; set to NULL. */
+                        xfree(s);
+                        s = NULL;
+                    }
                     if (!(m = set_filter_code(s))) {
                         xfree(options.filtercode);
                         options.filtercode = s;
                         /* -lpcap will write junk to stderr; we do our best to
                          * erase it.... */
-                        touchline(stdscr, 0, 2);
-                        move(0, 0);
-                        clrtoeol();
-                        move(1, 0);
-                        clrtoeol();
-                        refresh();
+                        move(COLS - 1, LINES - 1);
+                        wrefresh(curscr);
+                        showhelp("Installed new filter");
                     } else {
                         showhelp(m);
                         xfree(s);
@@ -828,7 +832,12 @@ void ui_loop() {
                     xfree(s);
                 }
                 dontshowdisplay = 0;
+                break;
             }
+            case KEY_CLEAR:
+            case 12:    /* ^L */
+                wrefresh(curscr);
+                break;
             case ERR:
                 break;
             default:
