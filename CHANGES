@@ -5,6 +5,7 @@ $Id$
 
 Added support for displaying port numbers
 Minor fix to rate display
+Minor fix to netmask handling (specifying /32 was broken)
 
 0.7 02/10/02
 

@@ -1,10 +1,6 @@
 Things to do for iftop
 $Id$
 
-* Include ports in display
-  - implement service name hash
-  - add key press for src/dest port aggregation
-
 * IP types other than v4?
 
 * Which average to use for the bar graph? Show several and peaks? Colours?
