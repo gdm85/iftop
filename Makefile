@@ -21,19 +21,43 @@ CFLAGS += -I/usr/include/pcap
 # LDFLAGS += -pg -a
 
 #
-# Uncomment to use libresolv
+# Name resolution. Sensible systems have gethostbyaddr_r, which is reentrant
+# and can be called from several threads of a multithreaded program. Other
+# systems don't, or their implementations don't work ([cough] FreeBSD). For
+# these you can use gethostbyaddr (not recommended, since then only one thread
+# can resolve a name at once), libresolv (not recommended and may not work
+# depending on which header files you have), or ares, an asynchronous DNS
+# resolution library from
+#   ftp://athena-dist.mit.edu/pub/ATHENA/ares/
+# For systems without a working gethostbyaddr_r, this is recommended.
 #
-#CFLAGS += -DUSELIBRESOLV 
+# Leave exactly one of these uncommented, or comment all of them out if you
+# don't care about name resolution at all.
+#
+CFLAGS += -DUSE_GETHOSTBYADDR_R
+#CFLAGS += -DUSE_GETHOSTBYADDR
+#CFLAGS += -DUSE_LIBRESOLV
+#CFLAGS += -DUSE_ARES
 
-# This may be needed to use libresolv on Linux.
-#LDLIBS += /usr/lib/libresolv.a
+#
+# Uncomment if you are using libresolv.
+#
+#LDLIBS += -lresolv # or /usr/lib/libresolv.a on Linux?
+
+#
+# Uncomment if you are using ares.
+#
+#LDLIBS += -lares 
+# ... and uncomment these if your libares is in an unusual place.
+#CFLAGS += -I/software/include
+#LDFLAGS += -L/software/lib
 
 
 # PREFIX specifies the base directory for the installation.
 PREFIX = /usr/local
 #PREFIX = /software
 
-# BINDIR is where the binary lives. No leading /.
+# BINDIR is where the binary lives relative to PREFIX (no leading /).
 BINDIR = sbin
 
 # MANDIR is where the manual page goes.

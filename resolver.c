@@ -14,11 +14,6 @@
 #include <errno.h>
 #include <string.h>
 
-#ifdef USELIBRESOLV
-#include <arpa/nameser.h>
-#include <resolv.h>
-#endif
-
 #include "ns_hash.h"
 #include "iftop.h"
 
@@ -39,7 +34,14 @@ int head;
 int tail;
 
 
-#ifndef USELIBRESOLV
+/* 
+ * We have a choice of resolver methods. Real computers have gethostbyaddr_r,
+ * which is reentrant and therefore thread safe. Other machines don't, and so
+ * we can use non-reentrant gethostbyaddr and have only one resolver thread.
+ * Alternatively, we can use the MIT ares asynchronous DNS library to do this.
+ */
+
+#if defined(USE_GETHOSTBYADDR_R)
 /**
  * Implementation of do_resolve for platforms with working gethostbyaddr_r
  */
@@ -75,7 +77,29 @@ char* do_resolve(struct in_addr * addr) {
     return ret;
 }
 
-#else
+#elif defined(USE_GETHOSTBYADDR)
+
+/**
+ * Implementation using gethostbyname. Since this is nonreentrant, we have to
+ * wrap it in a mutex, losing all benefit of multithreaded resolution.
+ */
+char *do_resolve(struct in_addr *addr) {
+    static pthread_mutex_t ghba_mtx = PTHREAD_MUTEX_INITIALIZER;
+    char *s = NULL;
+    struct hostent *he;
+    pthread_mutex_lock(&ghba_mtx);
+    he = gethostbyaddr((char*)addr, sizeof *addr, AF_INET);
+    if (he)
+        s = xstrdup(he->h_name);
+    pthread_mutex_unlock(&ghba_mtx);
+    return s;
+}
+
+
+#elif defined(USE_LIBRESOLV)
+
+#include <arpa/nameser.h>
+#include <resolv.h>
 
 /**
  * libresolv implementation
@@ -106,13 +130,107 @@ char* do_resolve(struct in_addr * addr) {
             ns_name_uncompress(msg, msg + l, ns_rr_rdata(rr), buf, 256);
             ret = xstrdup(buf);
           }
-
         }
       }
     }
   }
   return ret;
 }
+
+#elif defined(USE_ARES)
+
+/**
+ * ares implementation
+ */
+
+#include <sys/time.h>
+#include <ares.h>
+#include <arpa/nameser.h>
+
+/* callback function for ares */
+struct ares_callback_comm {
+    struct in_addr *addr;
+    int result;
+    char *name;
+};
+
+static void do_resolve_ares_callback(void *arg, int status, unsigned char *abuf, int alen) {
+    struct hostent *he;
+    struct ares_callback_comm *C;
+    C = (struct ares_callback_comm*)arg;
+
+    if (status == ARES_SUCCESS) {
+        C->result = 1;
+        ares_parse_ptr_reply(abuf, alen, C->addr, sizeof *C->addr, AF_INET, &he);
+        C->name = xstrdup(he->h_name);;
+        ares_free_hostent(he);
+    } else {
+        C->result = -1;
+    }
+}
+
+char *do_resolve(struct in_addr * addr) {
+    struct ares_callback_comm C;
+    char s[35];
+    unsigned char *a;
+    ares_channel *chan;
+    static pthread_mutex_t ares_init_mtx = PTHREAD_MUTEX_INITIALIZER;
+    static pthread_key_t ares_key;
+    static int gotkey;
+
+    /* Make sure we have an ARES channel for this thread. */
+    pthread_mutex_lock(&ares_init_mtx);
+    if (!gotkey) {
+        pthread_key_create(&ares_key, NULL);
+        gotkey = 1;
+        
+    }
+    pthread_mutex_unlock(&ares_init_mtx);
+    
+    chan = pthread_getspecific(ares_key);
+    if (!chan) {
+        chan = xmalloc(sizeof *chan);
+        pthread_setspecific(ares_key, chan);
+        if (ares_init(chan) != ARES_SUCCESS) return NULL;
+    }
+    
+    a = (unsigned char*)addr;
+    sprintf(s, "%d.%d.%d.%d.in-addr.arpa.", a[3], a[2], a[1], a[0]);
+    
+    C.result = 0;
+    C.addr = addr;
+    ares_query(*chan, s, C_IN, T_PTR, do_resolve_ares_callback, &C);
+    while (C.result == 0) {
+        int n;
+        fd_set readfds, writefds;
+        struct timeval tv;
+        FD_ZERO(&readfds);
+        FD_ZERO(&writefds);
+        n = ares_fds(*chan, &readfds, &writefds);
+        ares_timeout(*chan, NULL, &tv);
+        select(n, &readfds, &writefds, NULL, &tv);
+        ares_process(*chan, &readfds, &writefds);
+    }
+
+    /* At this stage, the query should be complete. */
+    switch (C.result) {
+        case -1:
+        case 0:     /* shouldn't happen */
+            return NULL;
+
+        default:
+            return C.name;
+    }
+}
+
+#else
+
+#   warning No name resolution method specified; name resolution will not work
+
+char *do_resolve(struct in_addr *addr) {
+    return NULL;
+}
+
 #endif
 
 void resolver_worker(void* ptr) {
