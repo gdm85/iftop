@@ -1,6 +1,8 @@
 Things to do for iftop
 $Id$
 
+* Cummulative totals on each host pair
+
 * Add configurable offset for DLT_RAW
 
 * Search for BSD interface names - need to know what to look for.
