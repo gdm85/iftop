@@ -12,6 +12,7 @@ static const char rcsid[] = "$Id$";
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
@@ -23,8 +24,10 @@ void *worker_thread(void *v) {
     pthread_mutex_lock(&mtx);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&mtx);
-    while (1)
+    while (1) {
+        sleep(1);
         pthread_testcancel();
+    }
 }
 
 /* Start a thread, and have it set a variable to some other value, then signal
