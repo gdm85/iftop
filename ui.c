@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <netdb.h>
 
 #include <sys/wait.h>
@@ -30,28 +31,23 @@
 #define HELP_TIME 2
 
 #define HELP_MESSAGE \
-"Host display:\n"\
-" r - toggle DNS host resolution \n"\
-" s - toggle show source host\n"\
-" d - toggle show destination host\n"\
-"\nPort display:\n"\
-" R - toggle service resolution \n"\
-" S - toggle show source port \n"\
+"Host display:                          General:\n"\
+" r - toggle DNS host resolution         P - pause display\n"\
+" s - toggle show source host            h - toggle this help display\n"\
+" d - toggle show destination host       b - toggle bar graph display\n"\
+"                                        f - edit filter code\n"\
+"Port display:                           ! - shell command\n"\
+" R - toggle service resolution          q - quit\n"\
+" S - toggle show source port\n"\
 " D - toggle show destination port\n"\
 " p - toggle port display\n"\
-"\nSorting:\n"\
+"\n"\
+"Sorting:\n"\
 " 1/2/3 - sort by 1st/2nd/3rd column\n"\
 " < - sort by source name\n"\
 " > - sort by dest name\n"\
-"\nGeneral:\n"\
-" P - pause display\n"\
-" h - toggle this help display\n"\
-" b - toggle bar graph display\n"\
-" f - edit filter code\n"\
-" ! - shell command\n"\
-" q - quit\n"\
-"\niftop, version " IFTOP_VERSION 
-
+"\n"\
+"iftop, version " IFTOP_VERSION 
 
 
 /* 1, 15 and 60 seconds */
@@ -627,7 +623,7 @@ void ui_loop() {
     /* in edline.c */
     char *edline(int linenum, const char *prompt, const char *initial);
     /* in iftop.c */
-    int set_filter_code(const char *filter);
+    char *set_filter_code(const char *filter);
 
     extern sig_atomic_t foad;
 
@@ -772,6 +768,14 @@ void ui_loop() {
                     if (!(m = set_filter_code(s))) {
                         xfree(options.filtercode);
                         options.filtercode = s;
+                        /* -lpcap will write junk to stderr; we do our best to
+                         * erase it.... */
+                        touchline(stdscr, 0, 2);
+                        move(0, 0);
+                        clrtoeol();
+                        move(1, 0);
+                        clrtoeol();
+                        refresh();
                     } else {
                         showhelp(m);
                         xfree(s);
