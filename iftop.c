@@ -30,6 +30,10 @@
 #include "ether.h"
 #include "ip.h"
 #include "tcp.h"
+#include "token.h"
+#include "llc.h"
+#include "extract.h"
+#include "ethertype.h"
 
 
 unsigned char if_hw_addr[6];    /* ethernet address of interface. */
@@ -257,6 +261,59 @@ static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     handle_ip_packet((struct ip*)packet, -1);
 }
 
+static void handle_llc_packet(const struct llc* llc, int dir) {
+
+    struct ip* ip = (struct ip*)((void*)llc + sizeof(struct llc));
+
+    /* Taken from tcpdump/print-llc.c */
+    if(llc->ssap == LLCSAP_SNAP && llc->dsap == LLCSAP_SNAP
+       && llc->llcui == LLC_UI) {
+        u_int32_t orgcode;
+        register u_short et;
+        orgcode = EXTRACT_24BITS(&llc->llc_orgcode[0]);
+        et = EXTRACT_16BITS(&llc->llc_ethertype[0]);
+        switch(orgcode) {
+          case OUI_ENCAP_ETHER:
+          case OUI_CISCO_90:
+            handle_ip_packet(ip, dir);
+            break;
+          case OUI_APPLETALK:
+            if(et == ETHERTYPE_ATALK) {
+              handle_ip_packet(ip, dir);
+            }
+            break;
+          default:
+            /* Not a lot we can do */
+        }
+    }
+}
+
+static void handle_tokenring_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
+{
+    struct token_header *trp;
+    int dir = -1;
+    trp = (struct token_header *)packet;
+
+    if(IS_SOURCE_ROUTED(trp)) {
+      packet += RIF_LENGTH(trp);
+    }
+    packet += TOKEN_HDRLEN;
+
+    if(memcmp(trp->token_shost, if_hw_addr, 6) == 0 ) {
+      /* packet leaving this i/f */
+      dir = 1;
+    } 
+        else if(memcmp(trp->token_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", trp->token_dhost, 6) == 0) {
+      /* packet entering this i/f */
+      dir = 0;
+    }
+
+    /* Only know how to deal with LLC encapsulated packets */
+    if(FRAME_TYPE(trp) == TOKEN_FC_LLC) {
+      handle_llc_packet((struct llc*)packet, dir);
+    }
+}
+
 #ifdef DLT_LINUX_SLL
 static void handle_cooked_packet(unsigned char *args, const struct pcap_pkthdr * thdr, const unsigned char * packet)
 {
@@ -367,6 +424,7 @@ void packet_init() {
     resolver_initialise();
 
     pd = pcap_open_live(options.interface, CAPTURE_LENGTH, options.promiscuous, 1000, errbuf);
+    // DEBUG: pd = pcap_open_offline("tcpdump.out", errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", options.interface, errbuf); 
         exit(1);
@@ -378,6 +436,9 @@ void packet_init() {
     else if(dlt == DLT_RAW) {
         packet_handler = handle_raw_packet;
     } 
+    else if(dlt == DLT_IEEE802) {
+        packet_handler = handle_tokenring_packet;
+    }
 /* 
  * SLL support not available in older libpcaps
  */

@@ -238,10 +238,7 @@ char *do_resolve(struct in_addr *addr) {
 #endif
 
 void resolver_worker(void* ptr) {
-    struct timespec delay;
 /*    int thread_number = *(int*)ptr;*/
-    delay.tv_sec = 0;
-    delay.tv_nsec = 500;
     pthread_mutex_lock(&resolver_queue_mutex);
     sethostent(1);
     while(1) {
