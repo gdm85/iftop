@@ -5,6 +5,8 @@ Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
 0.16 
+* Fix for pthread.c behaviour on Solaris.
+
 * Fixed behaviour of -n and -N options
     Klaus Sperner <klaus@heaven.escape.de>
 
