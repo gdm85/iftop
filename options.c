@@ -18,7 +18,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:n:dhpb";
+char optstr[] = "+i:f:n:dhpbP";
 
 /* Global options. */
 
@@ -66,6 +66,7 @@ static void set_defaults() {
     options.dnsresolution = 1;
     options.promiscuous = 0;
     options.showbars = 1;
+    options.showports = OPTION_PORTS_OFF;
     options.aggregate = OPTION_AGGREGATE_OFF;
 }
 
@@ -120,6 +121,7 @@ static void usage(FILE *fp) {
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
 "   -n net/mask         show traffic flows in/out of network\n"
+"   -P                  show ports as well as hosts\n"
 "\n"
 "iftop, version " IFTOP_VERSION " copyright (c) 2002 Paul Warren <pdw@ex-parrot.com>\n"
             );
@@ -151,6 +153,10 @@ void options_read(int argc, char **argv) {
 
             case 'p':
                 options.promiscuous = 1;
+                break;
+
+            case 'P':
+                options.showports = OPTION_PORTS_ON;
                 break;
 
             case 'n':

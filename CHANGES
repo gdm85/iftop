@@ -1,6 +1,10 @@
 Change log for iftop
 $Id$
 
+0.8
+
+Added support for displaying port numbers
+
 0.7 02/10/02
 
 Fixed missing sll.h file.

@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <netdb.h>
 
 #include "addr_hash.h"
 #include "iftop.h"
@@ -199,15 +200,25 @@ void analyse_data() {
 
         ap = *(addr_pair*)n->key;
 
+        /* Aggregate hosts, if required */
         if(options.aggregate == OPTION_AGGREGATE_SRC) {
             ap.dst.s_addr = 0;
         }
         else if(options.aggregate == OPTION_AGGREGATE_DEST) {
             ap.src.s_addr = 0;
         }
+
+        /* Aggregate ports, if required */
+        if(options.showports == OPTION_PORTS_AGGSRC || options.showports == OPTION_PORTS_OFF) {
+            ap.src_port = 0;
+        }
+        if(options.showports == OPTION_PORTS_AGGDEST || options.showports == OPTION_PORTS_OFF) {
+            ap.dst_port = 0;
+        }
+
 	
         if(hash_find(screen_hash, &ap, (void**)&screen_line) == HASH_STATUS_KEY_NOT_FOUND) {
-	    	screen_line = xcalloc(1, sizeof *screen_line);
+            screen_line = xcalloc(1, sizeof *screen_line);
             hash_insert(screen_hash, &ap, screen_line);
             screen_line->ap = ap;
         }
@@ -233,6 +244,9 @@ void analyse_data() {
     }
     hash_delete_all(screen_hash);
     
+    /**
+     * Calculate peaks and totals
+     */
     for(i = 0; i < HISTORY_LENGTH; i++) {
         int j;
         int ii = (HISTORY_LENGTH + history_pos - i) % HISTORY_LENGTH;
@@ -255,6 +269,48 @@ void analyse_data() {
         }
     }
 
+}
+
+void sprint_host(char * line, struct in_addr* addr, unsigned int port, int L) {
+    char hostname[HOSTNAME_LENGTH];
+    char service[10];
+    struct servent* sent;
+    int left;
+    if(addr->s_addr == 0) {
+        sprintf(hostname, " * ");
+    }
+    else {
+        if (options.dnsresolution)
+            resolve(addr, hostname, L);
+        else
+            strcpy(hostname, inet_ntoa(*addr));
+    }
+    left = strlen(hostname);
+
+    //TODO: Replace this with in-memory hash for speed.
+    //sent = getservbyport(port, "tcp");
+    if(port != 0) {
+      sent = NULL;
+      if(sent == NULL) {
+        snprintf(service, 10, ":%d", port);
+      }
+      else {
+        snprintf(service, 10, ":%s", sent->s_name);
+      }
+    }
+    else {
+      service[0] = '\0';
+    }
+
+
+    sprintf(line, "%-*s", L, hostname);
+    if(left > (L - strlen(service))) {
+        left = L - strlen(service);
+        if(left < 0) {
+           left = 0;
+        }
+    }
+    sprintf(line + left, "%-*s", L-left, service);
 }
 
 void ui_print() {
@@ -313,22 +369,16 @@ void ui_print() {
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
         if(y < LINES - 4) {
+            fprintf(stderr, "Drawing at %d \r\n", y);
             
             L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
             if(L > sizeof hostname) {
                 L = sizeof hostname;
             }
 
-            if(screen_line->ap.src.s_addr == 0) {
-                sprintf(hostname, " * ");
-            }
-            else {
-                if (options.dnsresolution)
-                    resolve(&(screen_line->ap.src), hostname, L);
-                else
-                    strcpy(hostname, inet_ntoa(screen_line->ap.src));
-            }
-            sprintf(line, "%-*s", L, hostname);
+            sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, L);
+
+            //sprintf(line, "%-*s", L, hostname);
             mvaddstr(y, x, line);
             x += L;
 
@@ -336,16 +386,9 @@ void ui_print() {
             mvaddstr(y+1, x, " <= ");
 
             x += 4;
-            if(screen_line->ap.dst.s_addr == 0) {
-                sprintf(hostname, " * ");
-            }
-            else {
-                if (options.dnsresolution)
-                    resolve(&screen_line->ap.dst, hostname, L);
-                else
-                    strcpy(hostname, inet_ntoa(screen_line->ap.dst));
-            } 
-            sprintf(line, "%-*s", L, hostname);
+
+            sprint_host(line, &(screen_line->ap.dst), screen_line->ap.dst_port, L);
+
             mvaddstr(y, x, line);
             
             draw_line_totals(y, screen_line);
@@ -413,6 +456,7 @@ void ui_init() {
 
     screen_list_init();
     screen_hash = addr_hash_create();
+
 }
 
 void ui_loop() {
@@ -447,6 +491,13 @@ void ui_loop() {
                     (options.aggregate == OPTION_AGGREGATE_DEST) 
                     ? OPTION_AGGREGATE_OFF
                     : OPTION_AGGREGATE_DEST;
+                break;
+            case 'P':
+                options.showports = 
+                  (options.showports == OPTION_PORTS_OFF)
+                  ? OPTION_PORTS_ON
+                  : OPTION_PORTS_OFF;
+                // Don't tick here, otherwise we get a bogus display
                 break;
         }
         tick(0);

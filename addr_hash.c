@@ -12,7 +12,9 @@ int compare(void* a, void* b) {
     addr_pair* aa = (addr_pair*)a;
     addr_pair* bb = (addr_pair*)b;
     return (aa->src.s_addr == bb->src.s_addr 
-            && aa->dst.s_addr == bb->dst.s_addr);
+            && aa->src_port == bb->src_port
+            && aa->dst.s_addr == bb->dst.s_addr
+            && aa->dst_port == bb->dst_port);
 }
 
 int hash(void* key) {
@@ -25,13 +27,15 @@ int hash(void* key) {
     hash = ((addr & 0x000000FF)
             + (addr & 0x0000FF00 >> 8)
             + (addr & 0x00FF0000 >> 16)
-            + (addr & 0xFF000000 >> 24)) % 0xFF;
+            + (addr & 0xFF000000 >> 24)
+            + ap->src_port) % 0xFF;
 
     addr = (long)ap->dst.s_addr;
     hash = ( hash + (addr & 0x000000FF)
             + (addr & 0x0000FF00 >> 8)
             + (addr & 0x00FF0000 >> 16)
-            + (addr & 0xFF000000 >> 24)) % 0xFF;
+            + (addr & 0xFF000000 >> 24)
+            + ap->dst_port) % 0xFF;
 
     return hash;
 }

@@ -11,6 +11,8 @@
 #include <net/if.h>
 #include <net/ethernet.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <pthread.h>
 #include <curses.h>
 #include <signal.h>
@@ -47,8 +49,8 @@ static void finish(int sig) {
 
 
 
-/* Only need ethernet and IP headers. */
-#define CAPTURE_LENGTH 48
+/* Only need ethernet and IP headers (48) + first 2 bytes of tcp/udp header */
+#define CAPTURE_LENGTH 68
 
 void init_history() {
     history = addr_hash_create();
@@ -118,6 +120,39 @@ int in_filter_net(struct in_addr addr) {
     return ret;
 }
 
+/**
+ * Creates an addr_pair from an ip (and tcp/udp) header, swapping src and dst
+ * if required
+ */
+void assign_addr_pair(addr_pair* ap, struct ip* iptr, int flip) {
+  unsigned short int src_port = 0;
+  unsigned short int dst_port = 0;
+
+  /* Does this protocol use ports? */
+  if(iptr->ip_p == SOL_TCP || iptr->ip_p == SOL_UDP) {
+    /* We take a slight liberty here by treating UDP the same as TCP */
+
+    /* Find the TCP/UDP header */
+    struct tcphdr* thdr = ((void*)iptr) + iptr->ip_hl * 4;
+    src_port = ntohs(thdr->source);
+    dst_port = ntohs(thdr->dest);
+  }
+
+  if(flip == 0) {
+    ap->src = iptr->ip_src;
+    ap->src_port = src_port;
+    ap->dst = iptr->ip_dst;
+    ap->dst_port = dst_port;
+  }
+  else {
+    ap->src = iptr->ip_dst;
+    ap->src_port = dst_port;
+    ap->dst = iptr->ip_src;
+    ap->dst_port = src_port;
+  }
+
+}
+
 static void handle_ip_packet(struct ip* iptr, int hw_dir)
 {
     int direction = 0; /* incoming */
@@ -131,28 +166,27 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
          */
         if(hw_dir == 1) {
             /* Packet leaving this interface. */
-            ap.src = iptr->ip_src;
-            ap.dst = iptr->ip_dst;
+            assign_addr_pair(&ap, iptr, 0);
             direction = 1;
         }
         else if(hw_dir == 0) {
             /* Packet incoming */
-            ap.src = iptr->ip_dst;
-            ap.dst = iptr->ip_src;
+            assign_addr_pair(&ap, iptr, 1);
+            direction = 0;
         }
 
-       /*
-        * This packet is not from or to this interface, or the h/ware 
-        * layer did not give the direction away.  Therefore assume
-        * it was picked up in promisc mode, and account it as incoming.
-        */
+        /*
+         * This packet is not from or to this interface, or the h/ware 
+         * layer did not give the direction away.  Therefore assume
+         * it was picked up in promisc mode, and account it as incoming.
+         */
         else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
-            ap.src = iptr->ip_src;
-            ap.dst = iptr->ip_dst;
+            assign_addr_pair(&ap, iptr, 0);
+            direction = 0;
         }
         else {
-            ap.src = iptr->ip_dst;
-            ap.dst = iptr->ip_src;
+            assign_addr_pair(&ap, iptr, 0);
+            direction = 0;
         }
     }
     else {
@@ -161,14 +195,13 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
          */ 
         if(in_filter_net(iptr->ip_src) & !in_filter_net(iptr->ip_dst)) {
             /* out of network */
-            ap.src = iptr->ip_src;
-            ap.dst = iptr->ip_dst;
+            assign_addr_pair(&ap, iptr, 0);
             direction = 1;
         }
         else if(in_filter_net(iptr->ip_dst) & !in_filter_net(iptr->ip_src)) {
             /* into network */
-            ap.src = iptr->ip_dst;
-            ap.dst = iptr->ip_src;
+            assign_addr_pair(&ap, iptr, 1);
+            direction = 0;
         }
         else {
             /* drop packet */
