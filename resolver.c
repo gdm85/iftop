@@ -30,14 +30,13 @@ int tail;
 
 void resolver_worker(void* ptr) {
     struct timespec delay;
-    int thread_number = *(int*)ptr;
+/*    int thread_number = *(int*)ptr;*/
     delay.tv_sec = 0;
     delay.tv_nsec = 500;
     pthread_mutex_lock(&resolver_queue_mutex);
     while(1) {
         /* Wait until we are told that an address has been added to the 
-         * queue
-         */
+         * queue. */
         pthread_cond_wait(&resolver_queue_cond, &resolver_queue_mutex);
 
         /* Keep resolving until the queue is empty */
@@ -110,7 +109,7 @@ void resolver_initialise() {
     pthread_cond_init(&resolver_queue_cond, NULL);
 
     for(i = 0; i < 2; i++) {
-        n = (int*)xmalloc(sizeof n);
+        n = (int*)xmalloc(sizeof *n);
         *n = i;
         pthread_create(&thread, NULL, (void*)&resolver_worker, (void*)n);
     }

@@ -34,6 +34,8 @@ int history_pos = 0;
 int history_len = 1;
 pthread_mutex_t tick_mutex;
 
+/* Open non-promiscuous by default since this is intended to be run on a
+ * router. */
 int promiscuous = 0;
 
 sig_atomic_t foad;
@@ -187,7 +189,6 @@ void packet_loop(void* ptr) {
     
     resolver_initialise();
 
-    /* Open non-promiscuous since this is intended to be run on a router. */
     pd = pcap_open_live(interface, CAPTURE_LENGTH, promiscuous, 1000, errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", interface, errbuf); 
