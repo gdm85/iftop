@@ -102,7 +102,7 @@ get_addrs_dlpi(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
 
   if (cp == NULL) {
     free(devname2);
-    return -1;
+    goto get_ip_address;
   } else {
     *cp = '\0';			/* null terminate devname2 right before numeric extension */
   }
@@ -114,12 +114,12 @@ get_addrs_dlpi(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
     if (errno != ENOENT) {
       fprintf(stderr, "Couldn't open %s\n", devname2);
       free(devname2);
-      return -1;
+      goto get_ip_address;
     } else {
       if ((fd = open(fulldevpath, O_RDWR)) < 0) {
 	fprintf(stderr, "Couldn't open %s\n", fulldevpath);
 	free(devname2);
-	return -1;
+	goto get_ip_address;
       }
     }
   }
@@ -167,11 +167,11 @@ get_addrs_dlpi(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
     fprintf(stderr, "Error, bad length for hardware interface %s -- %d\n", 
 	    interface,
 	    dlp->info_ack.dl_addr_length);
-    close(fd);
-    return -1;
   }
 
   close(fd);
+
+ get_ip_address:
 
   /* Get the IP address of the interface */
 
@@ -186,10 +186,7 @@ get_addrs_dlpi(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
   if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
     fprintf(stderr, "Error getting IP address for interface: %s\n", "ge0"); 
     perror("ioctl(SIOCGIFADDR)");
-    close(fd);
-    return -1;
-  }
-  else {
+  } else {
     memcpy(if_ip_addr, &((*(struct sockaddr_in *) &ifr.ifr_addr).sin_addr), sizeof(struct in_addr));
     got_ip_addr = 2;
   }
