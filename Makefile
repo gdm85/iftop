@@ -16,8 +16,8 @@ CFLAGS += -I/usr/include/pcap
 #LDFLAGS += -L/usr/local/lib
 
 # PREFIX specifies the base directory for the installation.
-#PREFIX = /usr/local
-PREFIX = /software
+PREFIX = /usr/local
+#PREFIX = /software
 
 # BINDIR is where the binary lives. No leading /.
 BINDIR = sbin
@@ -43,8 +43,8 @@ iftop: $(OBJS) Makefile
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS) 
 
 install: iftop
-	install -D iftop   $(PREFIX)/$(BINDIR)
-	install -D iftop.8 $(PREFIX)/$(MANDIR)/man8
+	install -D iftop   $(PREFIX)/$(BINDIR)/iftop
+	install -D iftop.8 $(PREFIX)/$(MANDIR)/man8/iftop.8
 
 uninstall:
 	rm -f $(PREFIX)/$(BINDIR)/iftop $(PREFIX)/$(MANDIR)/man8/iftop.8
