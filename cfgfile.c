@@ -66,7 +66,7 @@ int config_init() {
  * stringmap of the results. Prints errors to stderr, rather than using
  * syslog, since this file is called at program startup. Returns 1 on success
  * or 0 on failure. */
-int read_config_file(const char *f) {
+int read_config_file(const char *f, int whinge) {
     int ret = 0;
     FILE *fp;
     char *line;
@@ -76,7 +76,7 @@ int read_config_file(const char *f) {
 
     fp = fopen(f, "rt");
     if (!fp) {
-        fprintf(stderr, "%s: %s\n", f, strerror(errno));
+        if(whinge) fprintf(stderr, "%s: %s\n", f, strerror(errno)); 
         goto fail;
     }
 
@@ -238,14 +238,9 @@ void config_set_string(const char *directive, const char* s) {
     stringmap_insert(config, directive, item_ptr(xstrdup(s)));
 }
 
-int read_config(char *file) {
+int read_config(char *file, int whinge_on_error) {
     config_item_type* t;
     void* o;
 
-    read_config_file(file);
-    if(config == NULL) {
-        fprintf(stderr,"Unable to read config file\n");
-        return 0;
-    }
-    return 1;
+    return read_config_file(file, whinge_on_error);
 }

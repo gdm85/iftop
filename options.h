@@ -78,6 +78,7 @@ typedef struct {
     struct in_addr netfiltermask;
 
     char *config_file;
+    int config_file_specified;
 
 } options_t;
 

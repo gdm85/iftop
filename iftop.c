@@ -518,11 +518,13 @@ int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {};
 
+    /* TODO: tidy this up */
     /* read command line options and config file */   
     config_init();
     options_set_defaults();
     options_read_args(argc, argv);
-    read_config(options.config_file);
+    /* If a config was explicitly specified, whinge if it can't be found */
+    read_config(options.config_file, options.config_file_specified);
     options_make();
     
     sa.sa_handler = finish;

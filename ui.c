@@ -34,13 +34,13 @@
 
 #define HELP_MESSAGE \
 "Host display:                          General:\n"\
-" r - toggle DNS host resolution         P - pause display\n"\
+" n - toggle DNS host resolution         P - pause display\n"\
 " s - toggle show source host            h - toggle this help display\n"\
 " d - toggle show destination host       b - toggle bar graph display\n"\
 " t - cycle line display mode            B - cycle bar graph average\n"\
 "                                        T - toggle cummulative line totals\n"\
 "Port display:                           j/k - scroll display\n"\
-" R - toggle service resolution          f - edit filter code\n"\
+" N - toggle service resolution          f - edit filter code\n"\
 " S - toggle show source port            l - set screen filter\n"\
 " D - toggle show destination port       L - lin/log scales\n"\
 " p - toggle port display                ! - shell command\n"\
@@ -807,7 +807,7 @@ void ui_loop() {
                 foad = 1;
                 break;
 
-            case 'r':
+            case 'n':
                 if(options.dnsresolution) {
                     options.dnsresolution = 0;
                     showhelp("DNS resolution off");
@@ -819,7 +819,7 @@ void ui_loop() {
                 tick(1);
                 break;
 
-            case 'R':
+            case 'N':
                 if(options.portresolution) {
                     options.portresolution = 0;
                     showhelp("Port resolution off");

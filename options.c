@@ -29,7 +29,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:nN:hpbBPm:";
+char optstr[] = "+i:f:nNF:hpbBPm:c:";
 
 /* Global options. */
 
@@ -143,16 +143,17 @@ void options_set_defaults() {
     options.log_scale = 0;
     options.bar_interval = 1;
 
+    /* Figure out the name for the config file */
     s = getenv("HOME");
     if(s != NULL) {
         int i = strlen(s) + 9 + 1;
         options.config_file = xmalloc(i);
         snprintf(options.config_file,i,"%s/.iftoprc",s);
-        fprintf(stderr,options.config_file);
     }
     else {
         options.config_file = xstrdup("iftoprc");
     }
+    options.config_file_specified = 0;
     
 }
 
@@ -239,6 +240,7 @@ static void usage(FILE *fp) {
 "\n"
 "   -h                  display this message\n"
 "   -n                  don't do hostname lookups\n"
+"   -N                  don't convery port numbers to services\n"
 "   -p                  run in promiscuous mode (show traffic between other\n"
 "                       hosts on the same network segment)\n"
 "   -b                  don't display a bar graph of traffic\n"
@@ -246,9 +248,10 @@ static void usage(FILE *fp) {
 "   -i interface        listen on named interface\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
-"   -N net/mask         show traffic flows in/out of network\n"
+"   -F net/mask         show traffic flows in/out of network\n"
 "   -P                  show ports as well as hosts\n"
 "   -m limit            sets the upper limit for the bandwidth scale\n"
+"   -c config file      specifies an alternative configuration file\n"
 "\n"
 "iftop, version " IFTOP_VERSION "\n"
 "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com> and contributors\n"
@@ -266,39 +269,49 @@ void options_read_args(int argc, char **argv) {
                 exit(0);
 
             case 'n':
-		config_set_string("dns-resolution","true");
-                break;
-
-            case 'i':
-		config_set_string("interface", optarg);
-                break;
-
-            case 'f':
-		config_set_string("filter-code", optarg);
-                break;
-
-            case 'p':
-		config_set_string("promiscuous", "true");
-                break;
-
-            case 'P':
-		config_set_string("port-display", "on");
+                config_set_string("dns-resolution","true");
                 break;
 
             case 'N':
-		config_set_string("net-filter", optarg);
+                config_set_string("port-resolution","true");
+                break;
+
+            case 'i':
+                config_set_string("interface", optarg);
+                break;
+
+            case 'f':
+                config_set_string("filter-code", optarg);
+                break;
+
+            case 'p':
+                config_set_string("promiscuous", "true");
+                break;
+
+            case 'P':
+                config_set_string("port-display", "on");
+                break;
+
+            case 'F':
+                config_set_string("net-filter", optarg);
                 break;
             
             case 'm':
-		config_set_string("max-bandwidth", optarg);
+                config_set_string("max-bandwidth", optarg);
                 break;
 
             case 'b':
-		config_set_string("show-bars", "true");
+                config_set_string("show-bars", "true");
                 break;
 
             case 'B':
-		config_set_string("use-bytes", "true");
+                config_set_string("use-bytes", "true");
+                break;
+
+            case 'c':
+                xfree(options.config_file);
+                options.config_file = xstrdup(optarg);
+                options.config_file_specified = 1;
                 break;
 
             case '?':

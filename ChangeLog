@@ -8,6 +8,8 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Added linear bar scales (default) ("L")
 * Added fixed upper limit for bandwidth
 * Choose which average bars display ("B")
+* Renamed some buttons and command line options
+* Added config file support
 
 * Fixed the search for libpcap in the configure script
     Thomas Schwinge <tschwinge@gmx.net>
@@ -81,7 +83,7 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Minor fix to netmask handling (specifying /32 was broken)
 
 * Updated RPM spec file 
-      Iain Lea <iain@bricbrac.de>
+    Iain Lea <iain@bricbrac.de>
 
 * Added pause functionality (P)
 * Changed behaviour of source/dest traffic aggregation

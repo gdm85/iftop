@@ -11,7 +11,7 @@ iftop - display bandwidth usage on an interface by host
 
 .SH SYNOPSIS
 \fBiftop\fP \fB-h\fP |
-[\fB-npbBP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-N\fP \fInet\fP/\fImask\fP]
+[\fB-nNpbBP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-F\fP \fInet\fP/\fImask\fP]
 
 .SH DESCRIPTION
 \fBiftop\fP listens to network traffic on a named \fIinterface\fP, or on the
@@ -53,7 +53,10 @@ slow?
 Print a summary of usage.
 .TP
 \fB-n\fP
-Don't do hostname lookups. This setting may be altered at run time.
+Don't do hostname lookups. 
+.TP
+\fB-N\fP
+Do not resolve port number to service names
 .TP
 \fB-p\fP
 Run in promiscuous mode, so that traffic which does not pass directly through
@@ -63,7 +66,7 @@ the specified interface is also counted.
 Turn on port display.
 .TP
 \fB-b\fP
-Don't display bar graphs of traffic. This setting may be altered at run time.
+Don't display bar graphs of traffic. 
 .TP
 \fB-B\fP
 Display bandwidth rates in bytes/sec rather than bits/sec.
@@ -75,7 +78,7 @@ Listen to packets on \fIinterface\fP.
 Use \fIfilter code\fP to select the packets to count. Only IP packets are ever
 counted, so the specified code is evaluated as \fB(\fP\fIfilter code\fP\fB) and ip\fP.
 .TP
-\fB-N\fP \fInet\fP/\fImask\fP
+\fB-F\fP \fInet\fP/\fImask\fP
 Specifies a network for traffic analysis.  If specified, iftop will only
 include packets flowing in to or out of the given network, and packet direction
 is determined relative to the network boundary, rather than to the interface.

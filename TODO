@@ -3,13 +3,9 @@ $Id$
 
 * Add configurable offset for DLT_RAW
 
-* Search for BSD interface names - need to know what to look for.
-
 * IP types other than v4?
 
-* Config file.
-
-* Which average to use for the bar graph? - add option to choose
+* Write config file
 
 * Show several and peaks? Colours?
 
@@ -20,10 +16,8 @@ $Id$
 
 * Specify max link, then show %age capacity.
 
-* Turn off port resolution => add to config file
-
-* Linear bar graphs.
-
 * Count obscured connections.
 
 * Startup warnings cause pause.
+
+* Re-merge spec file
