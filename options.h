@@ -38,7 +38,8 @@ typedef struct {
     int promiscuous;
     int showbars;
     option_port_t showports;
-    option_aggregate_t aggregate;
+    int aggregate_src;
+    int aggregate_dest;
 
 } options_t;
 

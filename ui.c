@@ -209,11 +209,11 @@ void analyse_data() {
         ap = *(addr_pair*)n->key;
 
         /* Aggregate hosts, if required */
-        if(options.aggregate == OPTION_AGGREGATE_SRC) {
-            ap.dst.s_addr = 0;
-        }
-        else if(options.aggregate == OPTION_AGGREGATE_DEST) {
+        if(options.aggregate_src) {
             ap.src.s_addr = 0;
+        }
+        if(options.aggregate_dest) {
+            ap.dst.s_addr = 0;
         }
 
         /* Aggregate ports, if required */
@@ -362,13 +362,13 @@ void ui_print() {
     attron(A_REVERSE);
     addstr(" s ");
     attroff(A_REVERSE);
-    addstr(options.aggregate == OPTION_AGGREGATE_SRC ? " aggregate off "
+    addstr(options.aggregate_src ? " aggregate off "
                          : " aggregate src ");
 
     attron(A_REVERSE);
     addstr(" d ");
     attroff(A_REVERSE);
-    addstr(options.aggregate == OPTION_AGGREGATE_DEST ? " aggregate off  "
+    addstr(options.aggregate_dest ? " aggregate off  "
                          : " aggregate dest ");
 
     draw_bar_scale(&y);
@@ -497,17 +497,11 @@ void ui_loop() {
                 break;
 
             case 's':
-                options.aggregate = 
-                    (options.aggregate == OPTION_AGGREGATE_SRC) 
-                    ? OPTION_AGGREGATE_OFF
-                    : OPTION_AGGREGATE_SRC;
+                options.aggregate_src = !options.aggregate_src;
                 break;
 
             case 'd':
-                options.aggregate = 
-                    (options.aggregate == OPTION_AGGREGATE_DEST) 
-                    ? OPTION_AGGREGATE_OFF
-                    : OPTION_AGGREGATE_DEST;
+                options.aggregate_dest = !options.aggregate_dest;
                 break;
             case 'S':
                 /* Show source ports */

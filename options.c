@@ -67,7 +67,8 @@ static void set_defaults() {
     options.promiscuous = 0;
     options.showbars = 1;
     options.showports = OPTION_PORTS_OFF;
-    options.aggregate = OPTION_AGGREGATE_OFF;
+    options.aggregate_src = 0;
+    options.aggregate_dest = 0;
 }
 
 static void die(char *msg) {
