@@ -55,7 +55,6 @@ void resolver_worker(void* ptr) {
 
             pthread_mutex_unlock(&resolver_queue_mutex);
 
-            fprintf(stderr,"Thread %d resolving: %s\n", thread_number, inet_ntoa(addr));
 
 
             hstbuflen = 1024;
@@ -70,7 +69,6 @@ void resolver_worker(void* ptr) {
                 tmphstbuf = realloc (tmphstbuf, hstbuflen);
               }
 
-            fprintf(stderr,"Thread %d resolved: %s\n", thread_number, inet_ntoa(addr));
 
             /*
              * Store the result in ns_hash
