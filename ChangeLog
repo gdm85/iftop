@@ -15,6 +15,10 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Fixed the search for libpcap in the configure script
     Thomas Schwinge <tschwinge@gmx.net>
 
+* Updated RPM spec file
+    Richard Lucassen <spamtrap@lucassen.org>
+
+
 0.14 06/09/03
 * Added forking resolver as fall-back resolver
 * Fixed DNS resolution so that no lookups are done if options.dns_resolution ==
