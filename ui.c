@@ -82,7 +82,8 @@ int peaksent, peakrecv, peaktotal;
 
 #define HELP_MSG_SIZE 80
 int showhelphint = 0;
-int helptimer = 0;
+int persistenthelp = 0;
+time_t helptimer = 0;
 char helpmsg[HELP_MSG_SIZE];
 int dontshowdisplay = 0;
 
@@ -598,7 +599,7 @@ void ui_tick(int print) {
   if(print) {
     ui_print();
   }
-  else if(showhelphint && (time(NULL) - helptimer > HELP_TIME)) {
+  else if(showhelphint && (time(NULL) - helptimer > HELP_TIME) && !persistenthelp) {
     showhelphint = 0;
     ui_print();
   }
@@ -631,6 +632,7 @@ void showhelp(const char * s) {
   strncpy(helpmsg, s, HELP_MSG_SIZE);
   showhelphint = 1;
   helptimer = time(NULL);
+  persistenthelp = 0;
   tick(1);
 }
 
@@ -769,7 +771,15 @@ void ui_loop() {
                 // Don't tick here, otherwise we get a bogus display
                 break;
             case 'P':
-                options.paused = !options.paused;
+                if(options.paused) {
+                    options.paused = 0;
+                    showhelp("Display unpaused");
+                }
+                else {
+                    options.paused = 1;
+                    showhelp("Display paused");
+                    persistenthelp = 1;
+                }
                 break;
             case 'o':
                 if(options.freezeorder) {
@@ -779,6 +789,7 @@ void ui_loop() {
                 else {
                     options.freezeorder = 1;
                     showhelp("Order frozen");
+                    persistenthelp = 1;
                 }
                 break;
             case '1':
