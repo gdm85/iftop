@@ -42,6 +42,7 @@ typedef struct {
     int aggregate_src;
     int aggregate_dest;
     int paused;
+    int showhelp;
 
 } options_t;
 

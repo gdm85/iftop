@@ -24,6 +24,25 @@
 #define HISTORY_DIVISIONS   3
 #define BARGRAPH_INTERVAL   1   /* which division used for bars. */
 
+#define HELP_MESSAGE \
+"Host display:\n"\
+" r - toggle DNS host resolution \n"\
+" s - toggle show source host\n"\
+" d - toggle show destination host\n"\
+"\nPort display:\n"\
+" R - toggle service resolution \n"\
+" S - toggle show source port \n"\
+" D - toggle show destination port\n"\
+" p - toggle port display\n"\
+"\nGeneral:\n"\
+" P - pause display\n"\
+" h - toggle this help display\n"\
+" b - toggle bar graph display\n"\
+" q - quit\n"\
+"\niftop, version " IFTOP_VERSION 
+
+
+
 /* 1, 15 and 60 seconds */
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
@@ -384,52 +403,57 @@ void ui_print() {
     attron(A_REVERSE);
     addstr(" s ");
     attroff(A_REVERSE);
-    addstr(options.aggregate_src ? " aggregate off "
-                         : " aggregate src ");
+    addstr(options.aggregate_src ? " show src "
+                         : " hide src ");
 
     attron(A_REVERSE);
     addstr(" d ");
     attroff(A_REVERSE);
-    addstr(options.aggregate_dest ? " aggregate off  "
-                         : " aggregate dest ");
+    addstr(options.aggregate_dest ? " show dest "
+                         : " hide dest ");
 
     draw_bar_scale(&y);
 
+    if(options.showhelp) {
+      mvaddstr(y,0,HELP_MESSAGE);
+    }
+    else {
 
 
-    /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
-     * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
-     * host names. */
+      /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
+       * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
+       * host names. */
 
-    while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
-        int x = 0, L;
-        host_pair_line* screen_line = (host_pair_line*)nn->data;
+      while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
+          int x = 0, L;
+          host_pair_line* screen_line = (host_pair_line*)nn->data;
 
-        if(y < LINES - 4) {
-            L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
-            if(L > sizeof hostname) {
-                L = sizeof hostname;
-            }
+          if(y < LINES - 4) {
+              L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
+              if(L > sizeof hostname) {
+                  L = sizeof hostname;
+              }
 
-            sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
+              sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
 
-            //sprintf(line, "%-*s", L, hostname);
-            mvaddstr(y, x, line);
-            x += L;
+              //sprintf(line, "%-*s", L, hostname);
+              mvaddstr(y, x, line);
+              x += L;
 
-            mvaddstr(y, x, " => ");
-            mvaddstr(y+1, x, " <= ");
+              mvaddstr(y, x, " => ");
+              mvaddstr(y+1, x, " <= ");
 
-            x += 4;
+              x += 4;
 
-            sprint_host(line, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
+              sprint_host(line, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
 
-            mvaddstr(y, x, line);
-            
-            draw_line_totals(y, screen_line);
+              mvaddstr(y, x, line);
+              
+              draw_line_totals(y, screen_line);
 
-        }
-        y += 2;
+          }
+          y += 2;
+      }
     }
 
 
@@ -515,6 +539,11 @@ void ui_loop() {
 
             case 'R':
                 options.portresolution = !options.portresolution;
+                tick(1);
+                break;
+
+            case 'h':
+                options.showhelp = !options.showhelp;
                 tick(1);
                 break;
 

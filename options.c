@@ -71,6 +71,7 @@ static void set_defaults() {
     options.aggregate_src = 0;
     options.aggregate_dest = 0;
     options.paused = 0;
+    options.showhelp = 0;
 }
 
 static void die(char *msg) {
