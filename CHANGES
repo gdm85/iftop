@@ -4,6 +4,7 @@ $Id$
 0.3
 
 Fixed segfault bug.
+Added src/dest aggregation.
 
 0.2 02/04/02
 

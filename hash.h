@@ -35,5 +35,6 @@ hash_status_enum hash_insert(hash_type*, void* key, void *rec);
 hash_status_enum hash_delete(hash_type* hash_table, void* key);
 hash_status_enum hash_find(hash_type* hash_table, void* key, void** rec);
 hash_status_enum hash_next_item(hash_type* hash_table, hash_node_type** ppnode);
+void hash_delete_all(hash_type* hash_table);
 
 #endif /* __HASH_H_ */

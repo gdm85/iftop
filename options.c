@@ -121,6 +121,7 @@ void options_read(int argc, char **argv) {
                 options.showbars = 0;
                 break;
 
+
             case '?':
                 fprintf(stderr, "iftop: unknown option -%c\n", optopt);
                 usage(stderr);

@@ -10,9 +10,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-enum {
+typedef enum {
   OPTION_AGGREGATE_OFF,
-  OPTION_AGGREGATE_SOURCE,
+  OPTION_AGGREGATE_SRC,
   OPTION_AGGREGATE_DEST
 } option_aggregate_t;
 

@@ -100,6 +100,22 @@ hash_status_enum hash_next_item(hash_type* hash_table, hash_node_type** ppnode) 
     return HASH_STATUS_OK;
 }
 
+void hash_delete_all(hash_type* hash_table) {
+    int i;
+    hash_node_type *n, *nn;
+    for(i = 0; i < hash_table->size; i++) {
+        n = hash_table->table[i];
+        while(n != NULL) {
+            nn = n->next;
+            hash_table->delete_key(n->key);
+            free(n);
+            n = nn;
+        }
+        hash_table->table[i] = NULL;
+    }
+}
+
+
 /*
  * Allocate and return a hash
  */

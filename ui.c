@@ -27,7 +27,7 @@ int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 
 typedef struct host_pair_line_tag {
-    addr_pair* ap;
+    addr_pair ap;
     long recv[HISTORY_DIVISIONS];
     long sent[HISTORY_DIVISIONS];
 } host_pair_line;
@@ -41,6 +41,7 @@ extern options_t options ;
 
 void ui_finish();
 
+hash_type* screen_hash;
 sorted_list_type screen_list;
 host_pair_line totals;
 int peaksent, peakrecv, peaktotal;
@@ -191,13 +192,25 @@ void analyse_data() {
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
         host_pair_line* screen_line;
+        addr_pair ap;
         int i;
         int tsent, trecv;
         tsent = trecv = 0;
-        
-        screen_line = xcalloc(1, sizeof *screen_line);
-        screen_line->ap = (addr_pair*)n->key;
 
+        ap = *(addr_pair*)n->key;
+
+        if(options.aggregate == OPTION_AGGREGATE_SRC) {
+            ap.dst.s_addr = 0;
+        }
+        else if(options.aggregate == OPTION_AGGREGATE_DEST) {
+            ap.src.s_addr = 0;
+        }
+	
+        if(hash_find(screen_hash, &ap, (void**)&screen_line) == HASH_STATUS_KEY_NOT_FOUND) {
+	    	screen_line = xcalloc(1, sizeof *screen_line);
+            hash_insert(screen_hash, &ap, screen_line);
+            screen_line->ap = ap;
+        }
         
         for(i = 0; i < HISTORY_LENGTH; i++) {
             int j;
@@ -212,8 +225,13 @@ void analyse_data() {
 
         }
 
-        sorted_list_insert(&screen_list, screen_line);
     }
+
+    n = NULL;
+    while(hash_next_item(screen_hash, &n) == HASH_STATUS_OK) {
+        sorted_list_insert(&screen_list, (host_pair_line*)n->rec);
+    }
+    hash_delete_all(screen_hash);
     
     for(i = 0; i < HISTORY_LENGTH; i++) {
         int j;
@@ -262,13 +280,26 @@ void ui_print() {
     attron(A_REVERSE);
     addstr(" R ");
     attroff(A_REVERSE);
-    addstr(options.dnsresolution ? " name resolution off "
-                         : " name resolution on  ");
+    addstr(options.dnsresolution ? " resolver off "
+                         : " resolver on  ");
     attron(A_REVERSE);
     addstr(" B ");
     attroff(A_REVERSE);
-    addstr(options.showbars ? " bar graphs off "
-                         : " bar graphs on  ");
+    addstr(options.showbars ? " bars off "
+                         : " bars on  ");
+
+    attron(A_REVERSE);
+    addstr(" S ");
+    attroff(A_REVERSE);
+    addstr(options.aggregate == OPTION_AGGREGATE_SRC ? " aggregate off "
+                         : " aggregate src ");
+
+    attron(A_REVERSE);
+    addstr(" D ");
+    attroff(A_REVERSE);
+    addstr(options.aggregate == OPTION_AGGREGATE_DEST ? " aggregate off  "
+                         : " aggregate dest ");
+
     draw_bar_scale(&y);
 
 
@@ -288,10 +319,15 @@ void ui_print() {
                 L = sizeof hostname;
             }
 
-            if (options.dnsresolution)
-                resolve(&screen_line->ap->src, hostname, L);
-            else
-                strcpy(hostname, inet_ntoa(screen_line->ap->src));
+            if(screen_line->ap.src.s_addr == 0) {
+                sprintf(hostname, " * ");
+            }
+            else {
+                if (options.dnsresolution)
+                    resolve(&(screen_line->ap.src), hostname, L);
+                else
+                    strcpy(hostname, inet_ntoa(screen_line->ap.src));
+            }
             sprintf(line, "%-*s", L, hostname);
             mvaddstr(y, x, line);
             x += L;
@@ -300,10 +336,15 @@ void ui_print() {
             mvaddstr(y+1, x, " <= ");
 
             x += 4;
-            if (options.dnsresolution)
-                resolve(&screen_line->ap->dst, hostname, L);
-            else
-                strcpy(hostname, inet_ntoa(screen_line->ap->dst));
+            if(screen_line->ap.dst.s_addr == 0) {
+                sprintf(hostname, " * ");
+            }
+            else {
+                if (options.dnsresolution)
+                    resolve(&screen_line->ap.dst, hostname, L);
+                else
+                    strcpy(hostname, inet_ntoa(screen_line->ap.dst));
+            } 
             sprintf(line, "%-*s", L, hostname);
             mvaddstr(y, x, line);
             
@@ -371,6 +412,7 @@ void ui_init() {
     erase();
 
     screen_list_init();
+    screen_hash = addr_hash_create();
 }
 
 void ui_loop() {
@@ -391,6 +433,20 @@ void ui_loop() {
 	        case 'B':
                 options.showbars = !options.showbars; 
                 tick(1);
+                break;
+
+            case 'S':
+                options.aggregate = 
+                    (options.aggregate == OPTION_AGGREGATE_SRC) 
+                    ? OPTION_AGGREGATE_OFF
+                    : OPTION_AGGREGATE_SRC;
+                break;
+
+            case 'D':
+                options.aggregate = 
+                    (options.aggregate == OPTION_AGGREGATE_DEST) 
+                    ? OPTION_AGGREGATE_OFF
+                    : OPTION_AGGREGATE_DEST;
                 break;
         }
         tick(0);
