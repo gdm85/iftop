@@ -84,6 +84,10 @@ include packets flowing in to or out of the given network, and packet direction
 is determined relative to the network boundary, rather than to the interface.
 You may specify \fImask\fP as a dotted quad, such as /255.255.255.0, or as a
 single number specifying the number of bits set in the netmask, such as /24.
+.TP
+\fB-c\fP \fIconfig file\fP
+Specifies an alternate config file.  If not specified, iftop will use
+\fB~/.iftopc\fP if it exists.  See below for a description of config files
 
 .SH DISPLAY
 
@@ -170,6 +174,75 @@ useful when the display order is frozen (see above).
 \fBf\fP allows you to edit the filter code whilst iftop running.  This
 can lead to some unexpected behaviour.
 
+.SH CONFIG FILE
+
+iftop can read its configuration from a config file.  If the \fB-c\fP option is
+not specified, iftop will attempt to read its configuration from
+\fB~/.iftoprc\fP, if it exists.  Any command line options specified will
+override settings in the config file.
+
+The config file consists of one configuration directive per line.  Each
+directive is a name value pair, for example:
+.nf
+
+interface: eth0
+
+.Sp
+.fi
+sets the network interface.  The following config directives are supported:
+
+.TP
+\fBinterface:\fP \fIif\fP
+Sets the network interface to \fIif\fP.
+.TP
+\fBdns-resolution:\fP \fI(yes|no)\fP
+Controls reverse lookup of IP addresses.
+.TP
+\fBport-resolution:\fP \fI(yes|no)\fP
+Controls conversion of port numbers to service names.
+.TP
+\fBfilter-code:\fP \fIbpf\fP
+Sets the filter code to \fIbpf\fP.
+.TP
+\fBshow-bars:\fP \fI(yes|no)\fP
+Controls display of bar graphs.
+.TP
+\fBpromiscuous:\fP \fI(yes|no)\fP
+Puts the interface into promiscuous mode.
+.TP
+\fBport-display:\fP \fI(off|source-only|destination-only|on)\fP
+Controls display of port numbers.
+.TP
+\fBhide-source:\fP \fI(yes|no)\fP
+Hides source host names.
+.TP
+\fBhide-destination:\fP \fI(yes|no)\fP
+Hides destination host names.
+.TP
+\fBuse-bytes:\fP \fI(yes|no)\fP
+Use bytes for bandwidth display, rather than bits.
+.TP
+\fBsort:\fP \fI(2s|10s|40s|source|destination)\fP
+Sets which column is used to sort the display.
+.TP
+\fBline-display:\fP \fI(two-line|one-line-both|one-line-sent|one-line-received)\fP
+Controls the appearance of each item in the display.
+.TP
+\fBshow-totals:\fP \fI(yes|no)\fP
+Shows cummulative total for each item.
+.TP
+\fBlog-scale:\fP \fI(yes|no)\fP
+Use a logarithmic scale for bar graphs.
+.TP
+\fBmax-bandwidth:\fP \fIbw\fP
+Fixes the maximum for the bar graph scale to \fIbw\fP, e.g. "10M"
+.TP
+\fBnet-filter:\fP \fInet/mask\fP
+Defines an IP network boundary for determining packet direction.
+.TP
+\fBscreen-filter:\fP \fIregexp\fP
+Sets a regular expression to filter screen output.
+
 .SH QUIRKS (aka they're features, not bugs)
 
 There are some circumstances in which iftop may not do what you expect.  In
@@ -206,6 +279,12 @@ based on some fraction of the last 40s window of capturing.  After
 changing the filter there may be entries on the display that are
 disallowed by the current filter for up to 40s.  DISPLAY FILTERING has
 immediate effect and does not affect what is captured.
+
+.SH FILES
+
+.TP
+\fB~/.iftoprc\fP
+Configuration file for iftop.
 
 .SH SEE ALSO
 .BR tcpdump (8),

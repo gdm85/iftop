@@ -50,8 +50,8 @@ static char *bad_interface_names[] = {
 
 config_enumeration_type sort_enumeration[] = {
 	{ "2s", OPTION_SORT_DIV1 },
-	{ "10", OPTION_SORT_DIV2 },
-	{ "40", OPTION_SORT_DIV3 },
+	{ "10s", OPTION_SORT_DIV2 },
+	{ "40s", OPTION_SORT_DIV3 },
 	{ "source", OPTION_SORT_SRC },
 	{ "destination", OPTION_SORT_SRC },
 	{ NULL, -1 }
@@ -496,5 +496,6 @@ void options_make() {
     options_config_get_bool("log-scale", &options.log_scale);
     options_config_get_bw_rate("max-bandwidth", &options.max_bandwidth);
     options_config_get_enum("port-display", showports_enumeration, (int*)&options.showports);
+    options_config_get_string("screen-filter", &options.screenfilter);
     options_config_get_net_filter();
 };

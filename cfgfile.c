@@ -19,30 +19,24 @@
 
 #define MAX_CONFIG_LINE     2048
 
-typedef struct {
-	char * name;
-	int type;
-} config_item_type;
-
-config_item_type config_directives[] = {
-	{ "interface", CONFIG_TYPE_STRING },
-	{ "dns-resolution", CONFIG_TYPE_BOOL },
-	{ "port-resolution", CONFIG_TYPE_BOOL },
-	{ "filter-code", CONFIG_TYPE_STRING },
-	{ "show-bars", CONFIG_TYPE_BOOL },
-	{ "promiscuous", CONFIG_TYPE_BOOL },
-	{ "show-ports", CONFIG_TYPE_INT },
-	{ "hide-source", CONFIG_TYPE_INT },
-	{ "hide-destination", CONFIG_TYPE_INT },
-	{ "use-bytes", CONFIG_TYPE_INT },
-	{ "sort", CONFIG_TYPE_INT },
-	{ "line-display", CONFIG_TYPE_INT },
-	{ "show-totals", CONFIG_TYPE_INT },
-	{ "log-scale", CONFIG_TYPE_INT },
-	{ "max-bandwidth", CONFIG_TYPE_INT },
-	{ "net-filter", CONFIG_TYPE_INT },
-	{ "port-display", CONFIG_TYPE_INT },
-    { NULL, 0}
+char * config_directives[] = {
+	"interface", 
+	"dns-resolution",
+	"port-resolution",
+	"filter-code",
+	"show-bars", 
+	"promiscuous",
+	"hide-source",
+	"hide-destination",
+	"use-bytes", 
+	"sort", 
+	"line-display", 
+	"show-totals", 
+	"log-scale", 
+	"max-bandwidth",
+	"net-filter", 
+	"port-display", 
+	NULL
 };
 
 stringmap config;
@@ -50,9 +44,9 @@ stringmap config;
 extern options_t options ;
 
 int is_cfgdirective_valid(const char *s) {
-    config_item_type* t;
-    for (t = config_directives; t->name != NULL; ++t)
-        if (strcmp(s, t->name) == 0) return 1;
+    char* t;
+    for (t = config_directives[0]; t != NULL; ++t)
+        if (strcmp(s, t) == 0) return 1;
     return 0;
 }
 
@@ -239,7 +233,6 @@ void config_set_string(const char *directive, const char* s) {
 }
 
 int read_config(char *file, int whinge_on_error) {
-    config_item_type* t;
     void* o;
 
     return read_config_file(file, whinge_on_error);
