@@ -277,7 +277,7 @@ if test $foundpcaph = 0 ; then
 else
     dnl assume that -lpcap is under $test_prefix/lib
     if test x$test_prefix != x ; then
-        LDFLAGS="$LDFLAGS -L$test_prefix"
+        LDFLAGS="$LDFLAGS -L$test_prefix/lib"
     fi
     AC_CHECK_LIB(pcap, pcap_open_live, , [
             AC_MSG_ERROR([can't find libpcap
