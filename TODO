@@ -1,6 +1,10 @@
 Things to do for iftop
 $Id$
 
+* 1-line per host display
+
+* Up and down arrows to scroll through host list
+
 * Search for BSD interface names - need to know what to look for.
 
 * IP types other than v4?
