@@ -8,6 +8,7 @@ On-the-fly filter code changes
 Shell escape
 Alternative resolver back-ends
 Improved totals display
+Added regexp based screen filtering 
 
 0.9 22/10/02
 

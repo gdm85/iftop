@@ -353,6 +353,7 @@ void packet_init() {
     strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
     ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
     if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
+        fprintf(stderr, "Error getting hardware address for interface: %s\n", options.interface); 
         perror("ioctl(SIOCGIFHWADDR)");
         exit(1);
     }

@@ -558,7 +558,9 @@ void ui_print() {
     if(showhelphint) {
       mvaddstr(0, 0, helpmsg);
       clrtoeol();
+      mvchgat(0, 0, -1, A_REVERSE, 0, NULL);
     }
+    move(LINES - 1, COLS - 1);
     
     refresh();
 
