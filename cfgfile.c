@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 #include "stringmap.h"
@@ -162,15 +163,16 @@ int config_get_int(const char *directive, int *value) {
  * Get an integer value from a config string. Returns 1 on success, -1 on
  * failure, or 0 if no value was found. */
 int config_get_float(const char *directive, float *value) {
+    stringmap S;
     item *I;
     char *s, *t;
 
     if (!value) return -1;
 
-    I = stringmap_find(config, directive);
-    if (!I) return 0;
+    if (!(S = stringmap_find(config, directive)))
+        return 0;
 
-    s = (char*)I->v;
+    s = (char*)S->d.v;
     if (!*s) return -1;
     errno = 0;
     *value = strtod(s, &t);

@@ -240,7 +240,7 @@ static void usage(FILE *fp) {
 "\n"
 "   -h                  display this message\n"
 "   -n                  don't do hostname lookups\n"
-"   -N                  don't convery port numbers to services\n"
+"   -N                  don't convert port numbers to services\n"
 "   -p                  run in promiscuous mode (show traffic between other\n"
 "                       hosts on the same network segment)\n"
 "   -b                  don't display a bar graph of traffic\n"
