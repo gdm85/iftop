@@ -1,6 +1,14 @@
 Change log for iftop
 $Id$
 
+0.10 
+
+User selectable sort criteria
+On-the-fly filter code changes
+Shell escape
+Alternative resolver back-ends
+Improved totals display
+
 0.9 22/10/02
 
 Now works on FreeBSD

@@ -96,6 +96,7 @@ static void set_defaults() {
     options.showhelp = 0;
     options.bandwidth_in_bytes = 0;
     options.sort = OPTION_SORT_DIV2;
+    options.screenfilter = NULL;
 }
 
 static void die(char *msg) {

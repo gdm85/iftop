@@ -49,6 +49,8 @@ typedef struct {
     int bandwidth_in_bytes;
     option_sort_t sort;
 
+    char* screenfilter;
+
 } options_t;
 
 #endif /* __OPTIONS_H_ */

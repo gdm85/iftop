@@ -22,6 +22,7 @@
 #include "resolver.h"
 #include "sorted_list.h"
 #include "options.h"
+#include "screenfilter.h"
 
 #define HOSTNAME_LENGTH 256
 
@@ -36,9 +37,9 @@
 " s - toggle show source host            h - toggle this help display\n"\
 " d - toggle show destination host       b - toggle bar graph display\n"\
 "                                        f - edit filter code\n"\
-"Port display:                           ! - shell command\n"\
-" R - toggle service resolution          q - quit\n"\
-" S - toggle show source port\n"\
+"Port display:                           l - set screen filter\n"\
+" R - toggle service resolution          ! - shell command\n"\
+" S - toggle show source port            q - quit\n"\
 " D - toggle show destination port\n"\
 " p - toggle port display\n"\
 "\n"\
@@ -450,7 +451,7 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
 
 void ui_print() {
     sorted_list_node* nn = NULL;
-    char hostname[HOSTNAME_LENGTH];
+    char host1[HOSTNAME_LENGTH], host2[HOSTNAME_LENGTH];
     static char *line;
     static int lcols;
     int y = 0;
@@ -482,17 +483,23 @@ void ui_print() {
 
       while((y < LINES - 5) && ((nn = sorted_list_next_item(&screen_list, nn)) != NULL)) {
           int x = 0, L;
+
+
           host_pair_line* screen_line = (host_pair_line*)nn->data;
 
           if(y < LINES - 5) {
               L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
-              if(L > sizeof hostname) {
-                  L = sizeof hostname;
+              if(L > HOSTNAME_LENGTH) {
+                  L = HOSTNAME_LENGTH;
               }
 
-              sprint_host(line, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
+              sprint_host(host1, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
+              sprint_host(host2, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
+              if(!screen_filter_match(host1) && !screen_filter_match(host2)) {
+                continue;
+              }
 
-              mvaddstr(y, x, line);
+              mvaddstr(y, x, host1);
               x += L;
 
               mvaddstr(y, x, " => ");
@@ -500,9 +507,8 @@ void ui_print() {
 
               x += 4;
 
-              sprint_host(line, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
 
-              mvaddstr(y, x, line);
+              mvaddstr(y, x, host2);
               
               draw_line_totals(y, screen_line);
 
@@ -763,7 +769,7 @@ void ui_loop() {
             case 'f': {
                 char *s;
                 dontshowdisplay = 1;
-                if ((s = edline(0, "Filter", options.filtercode))) {
+                if ((s = edline(0, "Net filter", options.filtercode))) {
                     char *m;
                     if (!(m = set_filter_code(s))) {
                         xfree(options.filtercode);
@@ -779,6 +785,17 @@ void ui_loop() {
                     } else {
                         showhelp(m);
                         xfree(s);
+                    }
+                }
+                dontshowdisplay = 0;
+                break;
+            }
+            case 'l': {
+                char *s;
+                dontshowdisplay = 1;
+                if ((s = edline(0, "Screen filter", options.screenfilter))) {
+                    if(!screen_filter_set(s)) {
+                        showhelp("Invalid regexp");
                     }
                 }
                 dontshowdisplay = 0;
