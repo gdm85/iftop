@@ -16,3 +16,8 @@ $Id$
 
 * Configurable refresh rates.
 
+* Specify max link, then show %age capacity.
+
+* Turn off port resolution (optional)
+
+* Linear bar graphs.
