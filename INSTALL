@@ -12,5 +12,12 @@ build a version of iftop which uses the ARES asynchronous DNS library for name
 resolution. An alternative is to use --with-resolver=netdb_1thread, which will
 make iftop run only one name resolution thread. This is not recommended.
 
+On some systems (notably Red Hat Linux) the libpcap header files are installed
+under /usr/include/pcap; on these systems, you should manually specify this
+when running configure, like this:
+
+    $ CPPFLAGS=-I/usr/include/pcap ./configure
+
+
 For historical interest, the old iftop makefile is included in Makefile.OLD.
 
