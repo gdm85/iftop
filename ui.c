@@ -5,12 +5,15 @@
 
 #include <ctype.h>
 #include <curses.h>
+#include <errno.h>
 #include <string.h>
 #include <math.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <netdb.h>
+
+#include <sys/wait.h>
 
 #include "addr_hash.h"
 #include "serv_hash.h"
@@ -40,6 +43,8 @@
 " P - pause display\n"\
 " h - toggle this help display\n"\
 " b - toggle bar graph display\n"\
+" f - edit filter code\n"\
+" ! - shell command\n"\
 " q - quit\n"\
 "\niftop, version " IFTOP_VERSION 
 
@@ -77,6 +82,7 @@ int peaksent, peakrecv, peaktotal;
 int showhelphint = 0;
 int helptimer = 0;
 char helpmsg[HELP_MSG_SIZE];
+int dontshowdisplay = 0;
 
 int screen_line_compare(void* a, void* b) {
     int i;
@@ -395,6 +401,9 @@ void ui_print() {
     static int lcols;
     int y = 0;
 
+    if (dontshowdisplay)
+        return;
+
     if (!line || lcols != COLS) {
         xfree(line);
         line = calloc(COLS + 1, 1);
@@ -510,14 +519,18 @@ void ui_tick(int print) {
   }
 }
 
-void ui_init() {
+void ui_curses_init() {
     (void) initscr();      /* initialize the curses library */
     keypad(stdscr, TRUE);  /* enable keyboard mapping */
     (void) nonl();         /* tell curses not to do NL->CR/NL on output */
     (void) cbreak();       /* take input chars one at a time, no wait for \n */
     (void) noecho();       /* don't echo input */
     halfdelay(2);
+}
 
+void ui_init() {
+    ui_curses_init();
+    
     erase();
 
     screen_list_init();
@@ -551,8 +564,15 @@ void showportstatus() {
   }
 }
 
+
 void ui_loop() {
+    /* in edline.c */
+    char *edline(int linenum, const char *prompt, const char *initial);
+    /* in iftop.c */
+    int set_filter_code(const char *filter);
+
     extern sig_atomic_t foad;
+
     while(foad == 0) {
         int i;
         i = getch();
@@ -586,7 +606,7 @@ void ui_loop() {
                 break;
 
             case 'h':
-            case '?'
+            case '?':
                 options.showhelp = !options.showhelp;
                 tick(1);
                 break;
@@ -666,6 +686,48 @@ void ui_loop() {
             case 'P':
                 options.paused = !options.paused;
                 break;
+            case 'f': {
+                char *s;
+                dontshowdisplay = 1;
+                if ((s = edline(0, "Filter", options.filtercode))) {
+                    char *m;
+                    if (!(m = set_filter_code(s))) {
+                        xfree(options.filtercode);
+                        options.filtercode = s;
+                    } else {
+                        showhelp(m);
+                        xfree(s);
+                    }
+                }
+                dontshowdisplay = 0;
+                break;
+            }
+            case '!': {
+                char *s;
+                dontshowdisplay = 1;
+                if ((s = edline(0, "Command", ""))) {
+                    int i;
+                    erase();
+                    refresh();
+                    endwin();
+                    errno = 0;
+                    i = system(s);
+                    if (i == -1 || (i == 127 && errno != 0)) {
+                        fprintf(stderr, "system: %s: %s\n", s, strerror(errno));
+                        sleep(1);
+                    } else if (i != 0) {
+                        if (WIFEXITED(i))
+                            fprintf(stderr, "%s: exited with code %d\n", s, WEXITSTATUS(i));
+                        else if (WIFSIGNALED(i))
+                            fprintf(stderr, "%s: killed by signal %d\n", s, WTERMSIG(i));
+                        sleep(1);
+                    }
+                    ui_curses_init();
+                    erase();
+                    xfree(s);
+                }
+                dontshowdisplay = 0;
+            }
             case ERR:
                 break;
             default:

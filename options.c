@@ -190,7 +190,7 @@ void options_read(int argc, char **argv) {
                 break;
 
             case 'f':
-                options.filtercode = optarg;
+                options.filtercode = xstrdup(optarg);
                 break;
 
             case 'p':

@@ -70,7 +70,7 @@ LDLIBS += -lpcap -lcurses -lm
 
 
 SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c\
-       options.c serv_hash.c threadprof.c
+       options.c serv_hash.c threadprof.c edline.c
 HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h options.h sll.h\
        serv_hash.h threadprof.h ether.h ip.h tcp.h
 TXTS = README CHANGES INSTALL TODO iftop.8 COPYING

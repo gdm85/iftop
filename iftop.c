@@ -44,6 +44,7 @@ int history_len = 1;
 pthread_mutex_t tick_mutex;
 
 pcap_t* pd; /* pcap descriptor */
+struct bpf_program pcap_filter;
 pcap_handler packet_handler;
 
 sig_atomic_t foad;
@@ -307,6 +308,29 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
 }
 
 
+/* set_filter_code:
+ * Install some filter code. Returns NULL on success or an error message on
+ * failure. */
+char *set_filter_code(const char *filter) {
+    char *x;
+    if (filter) {
+        x = xmalloc(strlen(filter) + sizeof "() and ip");
+        sprintf(x, "(%s) and ip", filter);
+    } else
+        x = xstrdup("ip");
+    if (pcap_compile(pd, &pcap_filter, x, 1, 0) == -1) {
+        xfree(x);
+        return pcap_geterr(pd);
+    }
+    xfree(x);
+    if (pcap_setfilter(pd, &pcap_filter) == -1)
+        return pcap_geterr(pd);
+    else
+        return NULL;
+}
+
+
+
 /*
  * packet_init:
  *
@@ -314,8 +338,7 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
  */
 void packet_init() {
     char errbuf[PCAP_ERRBUF_SIZE];
-    char* str = "ip";
-    struct bpf_program F;
+    char *m;
     int s;
     struct ifreq ifr = {0};
     int dlt;
@@ -369,23 +392,11 @@ void packet_init() {
         exit(1);
     }
 
-    if (options.filtercode) {
-        str = xmalloc(strlen(options.filtercode) + sizeof "() and ip");
-        sprintf(str, "(%s) and ip", options.filtercode);
-    }
-    if (pcap_compile(pd, &F, str, 1, 0) == -1) {
-        fprintf(stderr, "pcap_compile(%s): %s\n", str, pcap_geterr(pd));
+    if ((m = set_filter_code(options.filtercode))) {
+        fprintf(stderr, "set_filter_code: %s\n", m);
         exit(1);
         return;
     }
-    if (pcap_setfilter(pd, &F) == -1) {
-        fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(pd));
-        exit(1);
-        return;
-    }
-    if (options.filtercode)
-        xfree(str);
-
 }
 
 /* packet_loop:
