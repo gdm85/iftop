@@ -50,6 +50,7 @@ typedef struct {
     option_sort_t sort;
 
     char* screenfilter;
+    int freezeorder;
 
 } options_t;
 

@@ -47,6 +47,7 @@
 " 1/2/3 - sort by 1st/2nd/3rd column\n"\
 " < - sort by source name\n"\
 " > - sort by dest name\n"\
+" o - freeze current order\n"\
 "\n"\
 "iftop, version " IFTOP_VERSION 
 
@@ -292,7 +293,7 @@ void screen_list_init() {
     sorted_list_initialise(&screen_list);
 }
 
-void screen_data_clear() {
+void screen_list_clear() {
     sorted_list_node* nn = NULL;
     peaksent = peakrecv = peaktotal = 0;
     while((nn = sorted_list_next_item(&screen_list, nn)) != NULL) {
@@ -337,6 +338,18 @@ void make_screen_list() {
     }
 }
 
+/*
+ * Zeros all data in the screen hash, but does not remove items.
+ */
+void screen_hash_clear() {
+    hash_node_type* n = NULL;
+    while(hash_next_item(screen_hash, &n) == HASH_STATUS_OK) {
+        host_pair_line* hpl = (host_pair_line*)n->rec;
+        memset(hpl->recv, 0, sizeof(hpl->recv));
+        memset(hpl->sent, 0, sizeof(hpl->sent));
+    }
+}
+
 void analyse_data() {
     hash_node_type* n = NULL;
 
@@ -346,7 +359,13 @@ void analyse_data() {
 
     memset(&totals, 0, sizeof totals);
 
-    screen_data_clear();
+    if(options.freezeorder) {
+      screen_hash_clear();
+    }
+    else {
+      screen_list_clear();
+      hash_delete_all(screen_hash);
+    }
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
@@ -355,6 +374,7 @@ void analyse_data() {
         int i;
         int tsent, trecv;
         tsent = trecv = 0;
+
 
         ap = *(addr_pair*)n->key;
 
@@ -399,9 +419,10 @@ void analyse_data() {
 
     }
 
-    make_screen_list();
+    if(!options.freezeorder) {
+      make_screen_list();
+    }
 
-    hash_delete_all(screen_hash);
     
     calculate_totals();
 
@@ -749,6 +770,16 @@ void ui_loop() {
                 break;
             case 'P':
                 options.paused = !options.paused;
+                break;
+            case 'o':
+                if(options.freezeorder) {
+                    options.freezeorder = 0;
+                    showhelp("Order unfrozen");
+                }
+                else {
+                    options.freezeorder = 1;
+                    showhelp("Order frozen");
+                }
                 break;
             case '1':
                 options.sort = OPTION_SORT_DIV1;

@@ -5,7 +5,7 @@
 # $Id$
 #
 
-VERSION = 0.10pre2
+VERSION = 0.10pre3
 
 # C compiler to use.
 #CC = gcc
