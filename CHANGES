@@ -1,6 +1,11 @@
 Change log for iftop
 $Id$
 
+0.12
+
+Added 1-line display options.
+Added display scrolling.
+
 0.11 08/01/03
 
 Added support for token ring networks

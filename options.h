@@ -26,6 +26,13 @@ typedef enum {
   OPTION_SORT_DEST
 } option_sort_t;
 
+typedef enum {
+  OPTION_LINEDISPLAY_TWO_LINE,
+  OPTION_LINEDISPLAY_ONE_LINE_BOTH,
+  OPTION_LINEDISPLAY_ONE_LINE_RECV,
+  OPTION_LINEDISPLAY_ONE_LINE_SENT
+} option_linedisplay_t;
+
 typedef struct {
     /* interface on which to listen */
     char *interface;
@@ -51,6 +58,10 @@ typedef struct {
 
     char* screenfilter;
     int freezeorder;
+
+    int screen_offset;
+
+    option_linedisplay_t linedisplay;
 
 } options_t;
 

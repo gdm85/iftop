@@ -128,6 +128,12 @@ machine.
 \fBS\fP or \fBD\fP toggle the display of source and destination ports
 respectively. \fBp\fP will toggle port display on/off.
 
+.SH DISPLAY TYPE
+
+\fBt\fP cycles through the four line display modes; the default 2-line display,
+with sent and received traffic on separate lines, and 3 1-line displays, with
+sent, received, or total traffic shown.
+
 .SH DISPLAY ORDER
 
 By default, the display is ordered according to the 10s average (2nd column).
@@ -140,7 +146,8 @@ source or destination hostname respectively.
 \fBl\fP allows you to enter a POSIX extended regular expression that will be
 used to filter hostnames shown in the display.  This is a good way to quickly
 limit what is shown on the display.  Note that this happens at a much later
-stage than filter code, and does not affect what is actually captured.
+stage than filter code, and does not affect what is actually captured.  Display
+filters DO NOT affect the totals at the bottom of the screen.
 
 .SH PAUSE DISPLAY / FREEZE ORDER
 
@@ -149,6 +156,11 @@ stage than filter code, and does not affect what is actually captured.
 \fBo\fP will freeze the current screen order.  This has the side effect that
 traffic between hosts not shown on the screen at the time will not be shown at
 all, although it will be included in the totals at the bottom of the screen.
+
+.SH SCROLL DISPLAY
+
+\fBj\fP and \fBk\fP will scroll the display of hosts.  This feature is most
+useful when the display order is frozen (see above).
 
 .SH FILTER CODE
 
@@ -170,11 +182,12 @@ you, but is included in the totals.
 
 A more subtle explanation comes about when running in promiscuous mode
 without specifying a \fB-N\fP option.  In this case there is no easy way
-to assign the direction of traffic between two other hosts.  For the
-purposes of the main display this is done in an arbitrary fashion (by
-ordering of IP addresses), but for the sake of totals all traffic
-between other hosts is accounted as incoming, because that's what it is
-from the point of view of your interface.  
+to assign the direction of traffic between two third parties.  For the purposes
+of the main display this is done in an arbitrary fashion (by ordering of IP
+addresses), but for the sake of totals all traffic between other hosts is
+accounted as incoming, because that's what it is from the point of view of your
+interface.  The \fB-N\fP option allows you to specify an arbitrary network
+boundary, and to show traffic flowing across it.
 
 \fBPeak totals don't add up\fP
 

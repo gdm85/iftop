@@ -98,6 +98,8 @@ static void set_defaults() {
     options.sort = OPTION_SORT_DIV2;
     options.screenfilter = NULL;
     options.freezeorder = 0;
+    options.linedisplay = OPTION_LINEDISPLAY_TWO_LINE;
+    options.screen_offset = 0;
 }
 
 static void die(char *msg) {

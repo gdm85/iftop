@@ -38,6 +38,7 @@
 " r - toggle DNS host resolution         P - pause display\n"\
 " s - toggle show source host            h - toggle this help display\n"\
 " d - toggle show destination host       b - toggle bar graph display\n"\
+" t - cycle line display mode            j/k - scroll display\n"\
 "                                        f - edit filter code\n"\
 "Port display:                           l - set screen filter\n"\
 " R - toggle service resolution          ! - shell command\n"\
@@ -245,30 +246,60 @@ int history_length(const int d) {
         return history_divs[d] * RESOLUTION;
 }
 
-void draw_line_totals(int y, host_pair_line* line) {
-    int j, L;
+void draw_line_total(float n, int y, int x) {
     char buf[10];
+    readable_size(n, buf, 10, 1024, options.bandwidth_in_bytes);
+    mvaddstr(y, x, buf);
+}
+
+void draw_bar(float n, int y) {
+  int L;
+  mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
+  L = get_bar_length(8 * n);
+  if (L > 0)
+      mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
+}
+
+void draw_line_totals(int y, host_pair_line* line, option_linedisplay_t linedisplay) {
+    int j;
     int x = (COLS - 8 * HISTORY_DIVISIONS);
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-        readable_size(line->sent[j], buf, 10, 1024, options.bandwidth_in_bytes);
-        mvaddstr(y, x, buf);
+      switch(linedisplay) {
+        case OPTION_LINEDISPLAY_TWO_LINE:
+          draw_line_total(line->sent[j], y, x);
+          draw_line_total(line->recv[j], y+1, x);
+          break;
+        case OPTION_LINEDISPLAY_ONE_LINE_SENT:
+          draw_line_total(line->sent[j], y, x);
+          break;
+        case OPTION_LINEDISPLAY_ONE_LINE_RECV:
+          draw_line_total(line->recv[j], y, x);
+          break;
+        case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
+          draw_line_total(line->recv[j] + line->sent[j], y, x);
+          break;
+      }
 
-        readable_size(line->recv[j], buf, 10, 1024, options.bandwidth_in_bytes);
-        mvaddstr(y+1, x, buf);
-        x += 8;
+      x += 8;
     }
     
     if(options.showbars) {
-        mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
-        L = get_bar_length(8 * line->sent[BARGRAPH_INTERVAL] );
-        if (L > 0)
-            mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
-
-        mvchgat(y+1, 0, -1, A_NORMAL, 0, NULL);
-        L = get_bar_length(8 * line->recv[BARGRAPH_INTERVAL] );
-        if (L > 0)
-            mvchgat(y+1, 0, L + 1, A_REVERSE, 0, NULL);
+      switch(linedisplay) {
+        case OPTION_LINEDISPLAY_TWO_LINE:
+          draw_bar(line->sent[BARGRAPH_INTERVAL],y);
+          draw_bar(line->recv[BARGRAPH_INTERVAL],y+1);
+          break;
+        case OPTION_LINEDISPLAY_ONE_LINE_SENT:
+          draw_bar(line->sent[BARGRAPH_INTERVAL],y);
+          break;
+        case OPTION_LINEDISPLAY_ONE_LINE_RECV:
+          draw_bar(line->recv[BARGRAPH_INTERVAL],y);
+          break;
+        case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
+          draw_bar(line->recv[BARGRAPH_INTERVAL] + line->sent[BARGRAPH_INTERVAL],y);
+          break;
+      }
     }
 }
 
@@ -279,7 +310,7 @@ void draw_totals(host_pair_line* totals) {
     char buf[10];
     int x = (COLS - 8 * HISTORY_DIVISIONS);
     y++;
-    draw_line_totals(y, totals);
+    draw_line_totals(y, totals, OPTION_LINEDISPLAY_TWO_LINE);
     y += 2;
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
         readable_size((totals->sent[j] + totals->recv[j]) , buf, 10, 1024, options.bandwidth_in_bytes);
@@ -513,44 +544,69 @@ void ui_print() {
       mvaddstr(y,0,HELP_MESSAGE);
     }
     else {
+      int i = 0;
+
+      while(i < options.screen_offset && ((nn = sorted_list_next_item(&screen_list, nn)) != NULL)) {
+        i++;
+      }
 
       /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
        * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
        * host names. */
 
-      while((y < LINES - 5) && ((nn = sorted_list_next_item(&screen_list, nn)) != NULL)) {
-          int x = 0, L;
+      if(i == 0 || nn != NULL) {
+        while((y < LINES - 5) && ((nn = sorted_list_next_item(&screen_list, nn)) != NULL)) {
+            int x = 0, L;
 
 
-          host_pair_line* screen_line = (host_pair_line*)nn->data;
+            host_pair_line* screen_line = (host_pair_line*)nn->data;
 
-          if(y < LINES - 5) {
-              L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
-              if(L > HOSTNAME_LENGTH) {
-                  L = HOSTNAME_LENGTH;
-              }
+            if(y < LINES - 5) {
+                L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
+                if(L > HOSTNAME_LENGTH) {
+                    L = HOSTNAME_LENGTH;
+                }
 
-              sprint_host(host1, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
-              sprint_host(host2, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
-              if(!screen_filter_match(host1) && !screen_filter_match(host2)) {
-                continue;
-              }
+                sprint_host(host1, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
+                sprint_host(host2, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
+                if(!screen_filter_match(host1) && !screen_filter_match(host2)) {
+                  continue;
+                }
 
-              mvaddstr(y, x, host1);
-              x += L;
+                mvaddstr(y, x, host1);
+                x += L;
 
-              mvaddstr(y, x, " => ");
-              mvaddstr(y+1, x, " <= ");
+                switch(options.linedisplay) {
+                  case OPTION_LINEDISPLAY_TWO_LINE:
+                    mvaddstr(y, x, " => ");
+                    mvaddstr(y+1, x, " <= ");
+                    break;
+                  case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
+                    mvaddstr(y, x, "<=> ");
+                    break;
+                  case OPTION_LINEDISPLAY_ONE_LINE_SENT:
+                    mvaddstr(y, x, " => ");
+                    break;
+                  case OPTION_LINEDISPLAY_ONE_LINE_RECV:
+                    mvaddstr(y, x, " <= ");
+                    break;
+                }
 
-              x += 4;
+                x += 4;
 
 
-              mvaddstr(y, x, host2);
-              
-              draw_line_totals(y, screen_line);
+                mvaddstr(y, x, host2);
+                
+                draw_line_totals(y, screen_line, options.linedisplay);
 
-          }
-          y += 2;
+            }
+            if(options.linedisplay == OPTION_LINEDISPLAY_TWO_LINE) {
+              y += 2;
+            }
+            else {
+              y += 1;
+            }
+        }
       }
     }
 
@@ -830,6 +886,34 @@ void ui_loop() {
             case '>':
                 options.sort = OPTION_SORT_DEST;
                 showhelp("Sort by dest");
+                break;
+            case 'j':
+                options.screen_offset++;
+                ui_print();
+                break;
+            case 'k':
+                if(options.screen_offset > 0) {
+                  options.screen_offset--;
+                  ui_print();
+                }
+                break;
+            case 't':
+                options.linedisplay = (options.linedisplay + 1) % 4;
+                switch(options.linedisplay) {
+                  case OPTION_LINEDISPLAY_TWO_LINE:
+                    showhelp("Two lines per host");
+                    break;
+                  case OPTION_LINEDISPLAY_ONE_LINE_SENT:
+                    showhelp("Sent traffic only");
+                    break;
+                  case OPTION_LINEDISPLAY_ONE_LINE_RECV:
+                    showhelp("Received traffic only");
+                    break;
+                  case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
+                    showhelp("One line per host");
+                    break;
+                }
+                ui_print();
                 break;
             case 'f': {
                 char *s;
