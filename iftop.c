@@ -127,7 +127,6 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
         }
 
     }
-    fflush(stdout);
 }
 
 /*
