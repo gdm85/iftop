@@ -4,7 +4,7 @@ $Id$
 0.8
 
 Added support for displaying port numbers
-Minor fix to rate display
+Minor fixes to rate display
 Minor fix to netmask handling (specifying /32 was broken)
 Updated RPM spec file 
     Iain Lea <iain@bricbrac.de>
