@@ -145,11 +145,12 @@ void ui_print() {
     char hostname[HOSTNAME_LENGTH];
     static char *line;
     static int lcols;
-    int peaksent = 0;
-    int peakrecv = 0;
+    int peaksent = 0, peakrecv = 0, peaktotal = 0;
     int y = 0;
+    int i;
     sorted_list_type screen_list;
     host_pair_line totals;
+    history_type history_totals;
 
     if (!line || lcols != COLS) {
         xfree(line);
@@ -174,6 +175,7 @@ void ui_print() {
     draw_bar_scale();
 
     memset(&totals, 0, sizeof totals);
+    memset(&history_totals, 0, sizeof history_totals);
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
@@ -184,6 +186,7 @@ void ui_print() {
         
         screen_line = xcalloc(1, sizeof *screen_line);
         screen_line->ap = (addr_pair*)n->key;
+
         
         for(i = 0; i < HISTORY_LENGTH; i++) {
             int j;
@@ -195,7 +198,9 @@ void ui_print() {
                     totals.recv[j] += d->recv[ii];
 
                     screen_line->sent[j] += d->sent[ii];
+                    
                     if(d->promisc == 1) {
+                      /* Treat all promisc traffic as incoming */
                       totals.recv[j] += d->sent[ii];
                     }
                     else {
@@ -204,16 +209,30 @@ void ui_print() {
                 }
             }
 
-            if(d->recv[ii] > peakrecv) 
-                peakrecv = d->recv[ii];
-            if(d->sent[ii] > peaksent)
-                peaksent = d->sent[ii];
+            history_totals.recv[ii] += d->recv[ii];
+            if(d->promisc == 1) {
+              /* Treat all promisc traffic as incoming */
+              history_totals.recv[ii] += d->sent[ii];
+            }
+            else {
+              history_totals.sent[ii] += d->sent[ii];
+            }
         }
 
         sorted_list_insert(&screen_list, screen_line);
     }
     
-
+    for(i = 0; i < HISTORY_LENGTH; i++) {
+        if(history_totals.recv[i] > peakrecv) {
+            peakrecv = history_totals.recv[i];
+        }
+        if(history_totals.sent[i] > peaksent) {
+            peaksent = history_totals.sent[i];
+        }
+        if(history_totals.recv[i] + history_totals.sent[i] > peaktotal) {
+            peaktotal = history_totals.recv[i] + history_totals.sent[i];	
+        }
+    }
 
     y = 3;
     
@@ -226,7 +245,7 @@ void ui_print() {
         int x = 0, L;
         host_pair_line* screen_line = (host_pair_line*)nn->data;
 
-        if(y < LINES - 5) {
+        if(y < LINES - 4) {
             int t;
             
             L = (COLS - 8 * HISTORY_DIVISIONS - 4) / 2;
@@ -273,14 +292,27 @@ void ui_print() {
 
 
     y = LINES - 2;
-    mvaddstr(y, 0, "sent   peak: ");
-    mvaddstr(y+1, 0, "recv       ");
+
+    mvaddstr(y, 0, "total: ");
+    mvaddstr(y+1, 0, " peak: ");
+
+    readable_size((totals.recv[0] + totals.sent[0]) * 8 / RESOLUTION, line, 10, 1024);
+    mvaddstr(y, 8, line);
+
+    readable_size(peaktotal * 8 / RESOLUTION, line, 10, 1024);
+    mvaddstr(y+1, 8, line);
+
+    readable_size((peakrecv + peaksent) * 8 / RESOLUTION, line, 10, 1024);
+    mvaddstr(y+1, 8, line);
+
+    mvaddstr(y, 17, "sent:   peak: ");
+    mvaddstr(y+1, 17, "recv:       ");
 
     readable_size(peaksent * 8 / RESOLUTION, line, 10, 1024);
-    mvaddstr(y, 15, line);
+    mvaddstr(y, 30, line);
 
     readable_size(peakrecv * 8 / RESOLUTION, line, 10, 1024);
-    mvaddstr(y+1, 15, line);
+    mvaddstr(y+1, 30, line);
 
     mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 10, "totals:");
 
