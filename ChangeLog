@@ -1,10 +1,111 @@
-2003-06-04 Jonathan Abbey <jonabbey@ganymeta.org>
-	* Fixed configure.in to properly specify libraries without the leading -l
-	* Separated the IP/ethernet identifying routine from iftop.c into addrs_ioctl.c
-	* Added addrs_dlpi.c, dlcommon.c, dlcommon.h to support the STREAMS DataLink Programming Interface on Solaris
-	* Hacked options.h, options.c, iftop.c to enable promiscuous_but_choosy mode which runs 
-	the interface in promiscuous mode but filters out non-broadcast packets not addressed to or from the interface
-	* Added NEWS, AUTHORS, ChangeLog
-	* Improved interface auto-detect logic in iftop.c
-	* Fixed configure.in to not overload prefix in the pcap test section
-	
+Change log for iftop
+$Id$
+
+0.13
+
+* Fixed configure.in to properly specify libraries without the leading -l
+* Separated the IP/ethernet identifying routine from iftop.c into addrs_ioctl.c
+* Added addrs_dlpi.c, dlcommon.c, dlcommon.h to support the STREAMS DataLink
+  Programming Interface on Solaris
+* Hacked options.h, options.c, iftop.c to enable promiscuous_but_choosy mode
+  which runs the interface in promiscuous mode but filters out non-broadcast
+  packets not addressed to or from the interface
+* Added NEWS, AUTHORS, ChangeLog
+* Improved interface auto-detect logic in iftop.c
+* Fixed configure.in to not overload prefix in the pcap test section
+    Jonathan Abbey <jonabbey@ganymeta.org>
+
+* Made errors during IP/MAC address discovery non-fatal
+
+0.12 21/05/03
+
+* Added 1-line display options ("t")
+* Added display scrolling ("j", "k")
+* Fixed code for obtaining hardware address (on Linux at least)
+* Added IP-based direction assignment
+
+0.11 08/01/03
+
+* Added support for token ring networks
+* Token ring network direction determination
+    Martin Garton <Martin.Garton@DCSTRANS.COM>
+
+* Added autoconf/automake build system
+* Improved network interface auto selection
+
+0.10 29/10/02
+
+* User selectable sort criteria
+* On-the-fly filter code changes
+* Shell escape
+* Alternative resolver back-ends
+* Improved totals display
+* Added regexp based screen filtering 
+* Fixed pause functionality
+* Change option names to be more like tcpdump
+
+0.9 22/10/02
+
+* Now works on FreeBSD
+* Added service resolution toggle ("R")
+* Added on-line help ("h")
+* More fixes to rate display
+* Improved interface selection (excludes lo:* and vmnet*)
+* Added bandwidth-in-bytes option.
+
+0.8 17/10/02
+
+* Added support for displaying port numbers
+* Minor fixes to rate display
+* Minor fix to netmask handling (specifying /32 was broken)
+
+* Updated RPM spec file 
+      Iain Lea <iain@bricbrac.de>
+
+* Added pause functionality (P)
+* Changed behaviour of source/dest traffic aggregation
+
+0.7 02/10/02
+
+* Fixed missing sll.h file.
+
+0.6 28/08/02
+
+* Fixed segfault bug affecting some systems
+
+* Added support for Linux cooked sockets
+      Michael Bergbauer <michael@noname.franken.de>
+
+0.5 26/08/02
+
+* Added support for monitoring PPP interfaces
+* Converted longs to double longs in various places to avoid overflow problems
+* Minor bug fixes (usage messages, exit on error)
+* Improved selection of default interface when none specified
+
+0.4 16/04/02
+
+* No code changes
+
+* Added RPM spec file
+      Riku Meskanen <mesrik@cc.jyu.fi>
+
+* Fixes to "make install"
+      Steve Baker <sjb@ambrielconsulting.com>
+
+0.3 13/04/02
+
+* Fixed segfault bug.
+* Added src/dest aggregation.
+
+0.2 02/04/02
+
+* Added -n option to analyse traffic flows across a network boundary.
+* Added cumulative traffic totals.
+* Graphs now optional.
+* UI more responsive to key presses.
+* Auto-sizing bar graph scale.
+
+0.1 29/3/02
+
+* First release.

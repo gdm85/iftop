@@ -59,8 +59,6 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
   if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
     fprintf(stderr, "Error getting hardware address for interface: %s\n", interface); 
     perror("ioctl(SIOCGIFHWADDR)");
-    close(s);
-    return -1;
   }
   else {
     memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
@@ -76,8 +74,6 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
   if (ioctl(s, SIOCGIFADDR, &ifr) < 0) {
     fprintf(stderr, "Error getting IP address for interface: %s\n", interface); 
     perror("ioctl(SIOCGIFADDR)");
-    close(s);
-    return -1;
   }
   else {
     memcpy(if_ip_addr, &((*(struct sockaddr_in *) &ifr.ifr_addr).sin_addr), sizeof(struct in_addr));

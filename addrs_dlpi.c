@@ -39,6 +39,9 @@ extern char *strncat2(char *dest, char *src, int n);
  *
  * This function returns -1 on catastrophic failure, or a bitwise OR of the
  * following values:
+ * XXX: change this to perfom "best effort" identification of addresses.
+ * Failure to find an address - for whatever reason - isn't fatal, just a
+ * nuisance.
  *
  * 1 - Was able to get the ethernet address
  * 2 - Was able to get the IP address
