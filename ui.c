@@ -379,7 +379,12 @@ void make_screen_list() {
           line->sent[i] /= history_length(i);
         }
 
-        sorted_list_insert(&screen_list, line);
+        /* Don't make a new, sorted screen list if order is frozen
+         */
+        if(!options.freezeorder) {
+            sorted_list_insert(&screen_list, line);
+        } 
+	 
     }
 }
 
@@ -464,9 +469,7 @@ void analyse_data() {
 
     }
 
-    if(!options.freezeorder) {
-      make_screen_list();
-    }
+    make_screen_list();
 
     
     calculate_totals();

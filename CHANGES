@@ -5,6 +5,7 @@ $Id$
 
 Added 1-line display options.
 Added display scrolling.
+Fixed code for obtaining hardware address (on Linux at least)
 
 0.11 08/01/03
 
