@@ -139,7 +139,7 @@ void packet_loop(void* ptr) {
 
     device = pcap_lookupdev(errbuf);
     printf("Device: %s\n",device);
-    pd = pcap_open_live(device,CAPTURE_LENGTH,1,1000,errbuf);
+    pd = pcap_open_live("eth0",CAPTURE_LENGTH,1,1000,errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(): %s\n",errbuf); 
         exit(1); 
@@ -153,7 +153,6 @@ void packet_loop(void* ptr) {
         exit(1);
     }
     printf("Begin loop\n");
-    init_history();
     pcap_loop(pd,0,(pcap_handler)handle_packet,NULL);
     printf("end loop\n");
 }
@@ -173,6 +172,8 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &sa, NULL);
 
     pthread_mutex_init(&tick_mutex, NULL);
+
+    init_history();
 
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
 
