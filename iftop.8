@@ -18,20 +18,18 @@ iftop - display bandwidth usage on an interface by host
 if none is specified, and displays a table of current bandwidth usage by pairs
 of hosts.
 
-When run, \fBiftop\fP displays, for each pair of hosts, the rate at which data
-is sent and received averaged over 2, 10 and 40 second intervals. The direction
-of data flow is indicated by arrows, <= and =>. In addition, a simple bar graph
-shows the 10-second average. The pairs of hosts which consume the most bandwidth
-are displayed at the top of the screen, and totals for all hosts are shown at
-the bottom of the screen.
-
 By default, \fBiftop\fP will look up the hostnames associated with addresses it
 finds in packets. This can cause substantial traffic of itself, and may result
 in a confusing display. You may wish to suppress display of DNS traffic by
 using filter code such as \fBnot port domain\fP, or switch it off entirely,
 by using the \fB-d\fP option or by pressing \fBR\fP when the program is running.
 
-By default, \fBiftop\fP shows all IP packets that pass through the filter, and the direction of the packet is determined according to the direction the packet is moving across the interface.  Using the \fB-n\fP option it is possible to get \fBiftop\fP to show packets entering and leaving a given network.  For example, \fBiftop -n 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and out of the 10.* network.
+By default, \fBiftop\fP shows all IP packets that pass through the filter, and
+the direction of the packet is determined according to the direction the packet
+is moving across the interface.  Using the \fB-n\fP option it is possible to
+get \fBiftop\fP to show packets entering and leaving a given network.  For
+example, \fBiftop -n 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and
+out of the 10.* network.
 
 \fBiftop\fP must be run as root.
 
@@ -47,6 +45,51 @@ Count web traffic only, unless it is being directed through a local web cache.
 How much bandwith are users wasting trying to figure out why the network is
 slow?
 
+.SH DISPLAY
+
+When running, \fBiftop\fP uses the whole screen to display network usage. At
+the top of the display is a reminder of keys which control \fBiftop\fP in
+operation. Below that is a logarithmic scale for the `bar chart' visual display
+of traffic.
+
+The main part of the display lists, for each pair of hosts, the rate at which
+data has been sent and received over the preceding 2, 10 and 40 second
+intervals. The direction of data flow is indicated by arrows, <= and =>. In
+addition, a simple bar graph shows the 10s average. For instance,
+.nf
+
+foo.example.com  =>  bar.example.com      1K   500b   100b
+                 <=                       2M     2M     2M
+
+.Sp
+.fi
+shows, on the first line, traffic from \fBfoo.example.com\fP to
+\fBbar.example.com\fP; in the preceding 2 seconds, this averaged 1Kbit/s,
+around half that amount over the preceding 10s, and a fifth of that over the
+whole of the last 40s. During each of those intervals, the data sent in the
+other direction was about 2Mbin/s. On the actual display, part of each line
+would be inverted to give a visual indication of the 10s average of traffic.
+You might expect to see something like this where host \fBfoo\fP is making
+repeated HTTP requests to \fBbar\fP, which is sending data back which saturates
+a 2Mbit/s link.
+
+All rates are displayed in bits per second and multiples thereof. The pairs of
+hosts responsible for the most traffic are displayed at the top of the list.
+
+At the bottom of the display, various totals are shown, for instance:
+.nf
+
+total:  3.1K    TX: 0.3M  peaks:  64b     64b    30b   10b
+ peak:  4.5K    RX:   8M         4.5K    4.5K   0.1M    5K
+
+.Sp
+.fi
+The first column of numbers shows the total rate of received plus transmitted
+traffic, and its peak value over the past 40s. The next column shows the
+total amount of traffic observed during this session, \fIin bytes, not bits\fP.
+The next column shows the peaks in received and transmitted traffic, and the
+remaining colums show the 2, 10 and 40 second averages. As with the per-host
+displays, the top line shows transmitted and the bottom line received traffic.
 
 .SH OPTIONS
 
@@ -72,6 +115,8 @@ counted, so the specified code is evaluated as \fB(\fP\fIfilter code\fP\fB) and 
 Specifies a network for traffic analysis.  If specified, iftop will only
 include packets flowing in to or out of the given network, and packet direction
 is determined relative to the network boundary, rather than to the interface.
+You may specify \fImask\fP as a dotted quad, such as /255.255.255.0, or as a
+single number specifying the number of bits set in the netmask, such as /24.
 .SH SEE ALSO
 .BR tcpdump (8),
 .BR pcap (3),

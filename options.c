@@ -77,7 +77,7 @@ static void usage(FILE *fp) {
 "   -i interface        listen on named interface (default: eth0)\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
-"   -n network/netmask  show traffic flows in/out of network\n"
+"   -n net/mask         show traffic flows in/out of network\n"
 "\n"
 "iftop, version " IFTOP_VERSION " copyright (c) 2002 Paul Warren <pdw@ex-parrot.com>\n"
             );
