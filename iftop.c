@@ -8,13 +8,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <net/if.h>
-#include <net/ethernet.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
+
 #include <pthread.h>
 #include <curses.h>
 #include <signal.h>
@@ -28,6 +25,9 @@
 #include "options.h"
 #include "sll.h"
 #include "threadprof.h"
+#include "ether.h"
+#include "ip.h"
+#include "tcp.h"
 
 
 unsigned char if_hw_addr[6];    /* ethernet address of interface. */
@@ -132,13 +132,13 @@ void assign_addr_pair(addr_pair* ap, struct ip* iptr, int flip) {
   unsigned short int dst_port = 0;
 
   /* Does this protocol use ports? */
-  if(iptr->ip_p == IPPROTO_TCP || iptr->ip_p == IPPROTO_UDP) {
+  if(iptr->ip_p == IPPROTO_TCP || IP_HL(iptr) == IPPROTO_UDP) {
     /* We take a slight liberty here by treating UDP the same as TCP */
 
     /* Find the TCP/UDP header */
-    struct tcphdr* thdr = ((void*)iptr) + iptr->ip_hl * 4;
-    src_port = ntohs(thdr->source);
-    dst_port = ntohs(thdr->dest);
+    struct tcphdr* thdr = ((void*)iptr) + IP_HL(iptr) * 4;
+    src_port = ntohs(thdr->th_sport);
+    dst_port = ntohs(thdr->th_dport);
   }
 
   if(flip == 0) {
