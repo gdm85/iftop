@@ -4,6 +4,10 @@ $Id$
 Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
+0.16 
+* Fixed behaviour of -n and -N options
+    Klaus Sperner <klaus@heaven.escape.de>
+
 0.15 10/11/03
 * Added linear bar scales (default) ("L")
 * Added fixed upper limit for bandwidth

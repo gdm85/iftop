@@ -269,11 +269,11 @@ void options_read_args(int argc, char **argv) {
                 exit(0);
 
             case 'n':
-                config_set_string("dns-resolution","true");
+                config_set_string("dns-resolution","false");
                 break;
 
             case 'N':
-                config_set_string("port-resolution","true");
+                config_set_string("port-resolution","false");
                 break;
 
             case 'i':
