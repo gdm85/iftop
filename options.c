@@ -4,11 +4,16 @@
  *
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
+
+#include <net/if.h>
+#include <sys/ioctl.h>
+
+#include "iftop.h"
 #include "options.h"
 
 options_t options;
@@ -17,8 +22,43 @@ char optstr[] = "+i:f:n:dhpb";
 
 /* Global options. */
 
+static char *get_first_interface(void) {
+    int s, size = 1;
+    struct ifreq *ifr;
+    struct ifconf ifc;
+    char *i = NULL;
+    /* Use if_nameindex(3) instead? */
+    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+        return NULL;
+    ifc.ifc_len = sizeof *ifr;
+    do {
+        ++size;
+        ifc.ifc_req = xrealloc(ifc.ifc_req, size * sizeof *ifc.ifc_req);
+        ifc.ifc_len = size * sizeof *ifc.ifc_req;
+        if (ioctl(s, SIOCGIFCONF, &ifc) == -1) {
+            perror("SIOCGIFCONF");
+            return NULL;
+        }
+    } while (size * sizeof *ifc.ifc_req <= ifc.ifc_len);
+    /* Ugly. */
+    for (ifr = ifc.ifc_req; (char*)ifr < (char*)ifc.ifc_req + ifc.ifc_len; ++ifr) {
+        if (strcmp(ifr->ifr_name, "lo") != 0 && strncmp(ifr->ifr_name, "dummy", 5) != 0
+            && ioctl(s, SIOCGIFFLAGS, ifr) == 0 && ifr->ifr_flags & IFF_UP) {
+            i = xstrdup(ifr->ifr_name);
+            break;
+        }
+    }
+    xfree(ifc.ifc_req);
+    return i;
+}
+
 static void set_defaults() {
-    options.interface = "eth0";
+    /* Should go through the list of interfaces, and find the first one which
+     * is up and is not lo or dummy*. */
+    options.interface = get_first_interface();
+    if (!options.interface)
+        options.interface = "eth0";
+
     options.filtercode = NULL;
     options.netfilter = 0;
     inet_aton("10.0.1.0", &options.netfilternet);
