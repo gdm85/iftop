@@ -1,7 +1,7 @@
 Change log for iftop
 $Id$
 
-0.9
+0.9 22/10/02
 
 Now works on FreeBSD
 Added service resolution toggle ("R")
@@ -10,7 +10,7 @@ More fixes to rate display
 Improved interface selection (excludes lo:* and vmnet*)
 Added bandwidth-in-bytes option.
 
-0.8
+0.8 17/10/02
 
 Added support for displaying port numbers
 Minor fixes to rate display

@@ -31,7 +31,7 @@ MANDIR = man
 #MANDIR = share/man     # FHS-ish
 
 # You shouldn't need to change anything below this point.
-VERSION = 0.9pre4
+VERSION = 0.9
 CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
 LDFLAGS += -g 
 LDLIBS += -lpcap -lcurses -lm

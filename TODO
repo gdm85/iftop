@@ -7,6 +7,8 @@ $Id$
 
 * IP types other than v4?
 
+* Config file.
+
 * Redesign totals:
 
         2sec 10sec 40sec Peak Total
