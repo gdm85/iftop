@@ -79,17 +79,18 @@ hosts responsible for the most traffic are displayed at the top of the list.
 At the bottom of the display, various totals are shown, for instance:
 .nf
 
-total:  3.1K    TX: 0.3M  peaks:  64b     64b    30b   10b
- peak:  4.5K    RX:   8M         4.5K    4.5K   0.1M    5K
+total:  3.1K    TX: 0.3M  peaks:  64b totals:  64b    30b   10b
+ peak:  4.5K    RX:   8M         4.5K         4.5K   0.1M    5K
 
 .Sp
 .fi
 The first column of numbers shows the total rate of received plus transmitted
-traffic, and its peak value over the past 40s. The next column shows the
-total amount of traffic observed during this session, \fIin bytes, not bits\fP.
-The next column shows the peaks in received and transmitted traffic, and the
-remaining colums show the 2, 10 and 40 second averages. As with the per-host
-displays, the top line shows transmitted and the bottom line received traffic.
+traffic over the last 2s, and its peak value over the past 40s. The next column
+shows the total amount of traffic observed during this session,
+\fIin bytes, not bits\fP.  The next column shows the peaks in received and transmitted
+traffic, and the remaining colums show the 2, 10 and 40 second averages. As
+with the per-host displays, the top line shows transmitted and the bottom line
+received traffic.
 
 .SH OPTIONS
 
