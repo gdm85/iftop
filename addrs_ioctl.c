@@ -50,7 +50,7 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
     return -1;
   }
 
-  fprintf(stderr,"if: %s\n", interface);
+  fprintf(stderr,"interface: %s\n", interface);
 
   memset(if_hw_addr, 0, 6);
   strncpy(ifr.ifr_name, interface, IFNAMSIZ);
@@ -72,7 +72,7 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
 #ifdef SIOCGIFADDR
   (*(struct sockaddr_in *) &ifr.ifr_addr).sin_family = AF_INET;
   if (ioctl(s, SIOCGIFADDR, &ifr) < 0) {
-    fprintf(stderr, "Error getting IP address for interface: %s\n", interface); 
+    fprintf(stderr, "Unable to get IP address for interface: %s\n", interface); 
     perror("ioctl(SIOCGIFADDR)");
   }
   else {

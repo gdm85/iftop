@@ -90,7 +90,7 @@ get_addrs_dlpi(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
     return -1;
   }
 
-  fprintf(stderr,"if: %s\n", devname);
+  fprintf(stderr,"interface: %s\n", devname);
 
   // on Solaris, even though we are wanting to talk to ethernet device
   // ge0, we have to open /dev/ge, then bind to unit 0.  Dupe our
