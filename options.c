@@ -95,6 +95,7 @@ static void set_defaults() {
     options.paused = 0;
     options.showhelp = 0;
     options.bandwidth_in_bytes = 0;
+    options.sort = OPTION_SORT_DIV2;
 }
 
 static void die(char *msg) {

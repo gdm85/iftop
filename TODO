@@ -1,20 +1,11 @@
 Things to do for iftop
 $Id$
 
-* Bandwidth display in bytes/s
-
 * Search for BSD interface names - need to know what to look for.
 
 * IP types other than v4?
 
 * Config file.
-
-* Redesign totals:
-
-        2sec 10sec 40sec Peak Total
-TX         x     x     x    x     x
-RX         x     x     x    x     x
-Total      x     x     x    x     x
 
 * Find someone gullible to sort out autoconf.
 
@@ -22,8 +13,6 @@ Total      x     x     x    x     x
 
 * Single keypress firewalling of troublesome connections, a la top(1)'s K
   to kill?
-
-* Configurable sort criteria.
 
 * Configurable refresh rates.
 

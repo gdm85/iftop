@@ -39,6 +39,10 @@
 " S - toggle show source port \n"\
 " D - toggle show destination port\n"\
 " p - toggle port display\n"\
+"\nSorting:\n"\
+" 1/2/3 - sort by 1st/2nd/3rd column\n"\
+" < - sort by source name\n"\
+" > - sort by dest name\n"\
 "\nGeneral:\n"\
 " P - pause display\n"\
 " h - toggle this help display\n"\
@@ -84,16 +88,70 @@ int helptimer = 0;
 char helpmsg[HELP_MSG_SIZE];
 int dontshowdisplay = 0;
 
-int screen_line_compare(void* a, void* b) {
+/*
+ * Compare two screen lines based on bandwidth.  Start comparing from the 
+ * specified column
+ */
+int screen_line_bandwidth_compare(host_pair_line* aa, host_pair_line* bb, int start_div) {
     int i;
-    host_pair_line* aa = (host_pair_line*)a;
-    host_pair_line* bb = (host_pair_line*)b;
-    /* Ignore the first division so that stuff doesn't jump around too much */
-    for(i = 1; i < HISTORY_DIVISIONS; i++) {
+    for(i = start_div; i < HISTORY_DIVISIONS; i++) {
         if(aa->recv[i] + aa->sent[i] != bb->recv[i] + bb->sent[i]) {
             return(aa->recv[i] + aa->sent[i] < bb->recv[i] + bb->sent[i]);
         }
     }
+    return 1;
+}
+
+/*
+ * Compare two screen lines based on hostname / IP.  Fall over to compare by
+ * bandwidth.
+ */
+int screen_line_host_compare(struct in_addr* a, struct in_addr* b, host_pair_line* aa, host_pair_line* bb) {
+    char hosta[HOSTNAME_LENGTH], hostb[HOSTNAME_LENGTH];
+    int r;
+
+    /* This isn't overly efficient because we resolve again before 
+       display. */
+    if (options.dnsresolution) {
+        resolve(a, hosta, HOSTNAME_LENGTH);
+        resolve(b, hostb, HOSTNAME_LENGTH);
+    }
+    else {
+        strcpy(hosta, inet_ntoa(*a));
+        strcpy(hostb, inet_ntoa(*b));
+    }
+
+    r = strcmp(hosta, hostb);
+
+    if(r == 0) {
+        return screen_line_bandwidth_compare(aa, bb, 2);
+    }
+    else {
+        return (r > 0);
+    }
+
+
+}
+
+int screen_line_compare(void* a, void* b) {
+    host_pair_line* aa = (host_pair_line*)a;
+    host_pair_line* bb = (host_pair_line*)b;
+    if(options.sort == OPTION_SORT_DIV1) {
+      return screen_line_bandwidth_compare(aa, bb, 0);
+    }
+    else if(options.sort == OPTION_SORT_DIV2) {
+      return screen_line_bandwidth_compare(aa, bb, 1);
+    }
+    else if(options.sort == OPTION_SORT_DIV3) {
+      return screen_line_bandwidth_compare(aa, bb, 2);
+    }
+    else if(options.sort == OPTION_SORT_SRC) {
+      return screen_line_host_compare(&(aa->ap.src), &(bb->ap.src), aa, bb);
+    }
+    else if(options.sort == OPTION_SORT_DEST) {
+      return screen_line_host_compare(&(aa->ap.dst), &(bb->ap.dst), aa, bb);
+    }
+
     return 1;
 }
 
@@ -685,6 +743,26 @@ void ui_loop() {
                 break;
             case 'P':
                 options.paused = !options.paused;
+                break;
+            case '1':
+                options.sort = OPTION_SORT_DIV1;
+                showhelp("Sort by col 1");
+                break;
+            case '2':
+                options.sort = OPTION_SORT_DIV2;
+                showhelp("Sort by col 2");
+                break;
+            case '3':
+                options.sort = OPTION_SORT_DIV3;
+                showhelp("Sort by col 3");
+                break;
+            case '<':
+                options.sort = OPTION_SORT_SRC;
+                showhelp("Sort by source");
+                break;
+            case '>':
+                options.sort = OPTION_SORT_DEST;
+                showhelp("Sort by dest");
                 break;
             case 'f': {
                 char *s;

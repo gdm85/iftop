@@ -242,11 +242,11 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
 
     if(direction == 0) {
         /* incoming */
-        history_totals.recv[history_pos] += ntohs(iptr->ip_len);
+        history_totals.recv[history_pos] += len;
         history_totals.total_recv += len;
     }
     else {
-        history_totals.sent[history_pos] += ntohs(iptr->ip_len);
+        history_totals.sent[history_pos] += len;
         history_totals.total_sent += len;
     }
     
