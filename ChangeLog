@@ -4,7 +4,7 @@ $Id$
 Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
-0.15
+0.15 10/11/03
 * Added linear bar scales (default) ("L")
 * Added fixed upper limit for bandwidth
 * Choose which average bars display ("B")
