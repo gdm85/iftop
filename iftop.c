@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/ethernet.h>
@@ -130,7 +132,7 @@ void assign_addr_pair(addr_pair* ap, struct ip* iptr, int flip) {
   unsigned short int dst_port = 0;
 
   /* Does this protocol use ports? */
-  if(iptr->ip_p == SOL_TCP || iptr->ip_p == SOL_UDP) {
+  if(iptr->ip_p == IPPROTO_TCP || iptr->ip_p == IPPROTO_UDP) {
     /* We take a slight liberty here by treating UDP the same as TCP */
 
     /* Find the TCP/UDP header */

@@ -35,6 +35,7 @@ typedef struct {
     struct in_addr netfilternet;
     struct in_addr netfiltermask;
     int dnsresolution;
+    int portresolution;
     int promiscuous;
     int showbars;
     option_port_t showports;

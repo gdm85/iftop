@@ -328,7 +328,7 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
     if(port != 0) {
       skey.port = port;
       skey.protocol = protocol;
-      if(hash_find(service_hash, &skey, (void**)&s_name) == HASH_STATUS_OK) {
+      if(options.portresolution && hash_find(service_hash, &skey, (void**)&s_name) == HASH_STATUS_OK) {
         snprintf(service, HOSTNAME_LENGTH, ":%s", s_name);
       }
       else {
@@ -510,6 +510,11 @@ void ui_loop() {
 
             case 'r':
                 options.dnsresolution = !options.dnsresolution;
+                tick(1);
+                break;
+
+            case 'R':
+                options.portresolution = !options.portresolution;
                 tick(1);
                 break;
 

@@ -64,6 +64,7 @@ static void set_defaults() {
     inet_aton("10.0.1.0", &options.netfilternet);
     inet_aton("255.255.255.0", &options.netfiltermask);
     options.dnsresolution = 1;
+    options.portresolution = 1;
     options.promiscuous = 0;
     options.showbars = 1;
     options.showports = OPTION_PORTS_OFF;
