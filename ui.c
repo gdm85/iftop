@@ -6,7 +6,9 @@
 #include <curses.h>
 #include <string.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdlib.h>
+
 #include "addr_hash.h"
 #include "iftop.h"
 #include "resolver.h"
@@ -29,6 +31,8 @@ typedef struct host_pair_line_tag {
 extern hash_type* history;
 extern int history_pos;
 extern int history_len;
+
+void ui_finish();
 
 int screen_line_compare(void* a, void* b) {
     host_pair_line* aa = (host_pair_line*)a;
@@ -66,7 +70,7 @@ void ui_print() {
         host_pair_line* screen_line;
         int i;
         
-        screen_line = (host_pair_line*)calloc(1,sizeof(host_pair_line));
+        screen_line = xcalloc(1, sizeof *screen_line);
         screen_line->ap = (addr_pair*)n->key;
         
         for(i = 0; i < HISTORY_LENGTH; i++) {
@@ -125,7 +129,7 @@ void ui_print() {
 void ui_loop() {
     pthread_mutex_t tick_wait_mutex;
     pthread_cond_t tick_wait_cond;
-
+    extern sig_atomic_t foad;
 
     (void) initscr();      /* initialize the curses library */
     keypad(stdscr, TRUE);  /* enable keyboard mapping */
@@ -133,11 +137,11 @@ void ui_loop() {
     (void) cbreak();       /* take input chars one at a time, no wait for \n */
     (void) noecho();       /* don't echo input */
 
-
     pthread_mutex_init(&tick_wait_mutex, NULL);
     pthread_cond_init(&tick_wait_cond, NULL);
-    while(1) {
+    while(foad == 0) {
         struct timespec t;
+        int i;
         t.tv_sec = time(NULL) + 1;
         t.tv_nsec = 0;
 
@@ -145,7 +149,6 @@ void ui_loop() {
         //fprintf(stderr,"timeout tick\n");
         tick();
     }
-
 }
 
 void ui_finish() {

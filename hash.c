@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "hash.h"
+#include "iftop.h"
 
 hash_status_enum hash_insert(hash_type* hash_table, void* key, void* rec) {
     hash_node_type *p, *p0;
@@ -15,8 +16,7 @@ hash_status_enum hash_insert(hash_type* hash_table, void* key, void* rec) {
 
     /* insert node at beginning of list */
     bucket = hash_table->hash(key);
-    if ((p = malloc(sizeof(hash_node_type))) == 0)
-        return HASH_STATUS_MEM_EXHAUSTED;
+    p = xmalloc(sizeof *p);
     p0 = hash_table->table[bucket];
     hash_table->table[bucket] = p;
     p->next = p0;
@@ -98,10 +98,7 @@ hash_status_enum hash_next_item(hash_type* hash_table, hash_node_type** ppnode) 
  * Allocate and return a hash
  */
 hash_status_enum hash_initialise(hash_type* hash_table) {
-    if ((hash_table->table = calloc(hash_table->size, sizeof(hash_node_type *))) == 0) {
-        fprintf (stderr, "out of memory (hash_table)\n");
-        return HASH_STATUS_MEM_EXHAUSTED;
-    }
+    hash_table->table = xcalloc(hash_table->size, sizeof *hash_table->table);
     return HASH_STATUS_OK;
 }
 

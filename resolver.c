@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "ns_hash.h"
+#include "iftop.h"
 
 #define RESOLVE_QUEUE_LENGTH 20
 
@@ -57,7 +58,7 @@ void resolver_worker(void* ptr) {
 
             hstbuflen = 1024;
             /* Allocate buffer, remember to free it to avoid memory leakage.  */            
-            tmphstbuf = malloc (hstbuflen);
+            tmphstbuf = xmalloc (hstbuflen);
 
             while ((res = gethostbyaddr_r (&addr, sizeof(addr), AF_INET,
                                            &hostbuf, tmphstbuf, hstbuflen,
@@ -84,7 +85,7 @@ void resolver_worker(void* ptr) {
                 //printf("[ Resolved: %s ]\n", hp->h_name);
                 if(hash_find(ns_hash, &addr, (void**)&hostname) == HASH_STATUS_OK) {
                     hash_delete(ns_hash, &addr);
-                    free(hostname);
+                    xfree(hostname);
                 }
                 else {
                     //printf("[ Warning: Could not find hash entry for key: %s ]\n", inet_ntoa(addr));
@@ -93,7 +94,7 @@ void resolver_worker(void* ptr) {
                 hash_insert(ns_hash, &addr, (void*)hostname);
 
             }
-            free(tmphstbuf);
+            xfree(tmphstbuf);
         }
         pthread_mutex_unlock(&resolver_queue_access_mutex);
     }

@@ -38,10 +38,7 @@ void init_history() {
 
 history_type* history_create() {
     history_type* h;
-    if ((h = calloc(1, sizeof(history_type))) == 0) {
-        fprintf (stderr, "out of memory (history_type)\n");
-        exit(1);
-    }
+    h = xcalloc(1, sizeof *h);
     return h;
 }
 
@@ -135,6 +132,7 @@ void packet_loop(void* ptr) {
     char errbuf[PCAP_ERRBUF_SIZE];
     char* device;
     pcap_t* pd;
+    struct bpf_program F;
 
     resolver_initialise();
 
@@ -142,8 +140,16 @@ void packet_loop(void* ptr) {
     printf("Device: %s\n",device);
     pd = pcap_open_live(device,CAPTURE_LENGTH,1,1000,errbuf);
     if(pd == NULL) { 
-        printf("pcap_open_live(): %s\n",errbuf); 
+        fprintf(stderr, "pcap_open_live(): %s\n",errbuf); 
         exit(1); 
+    }
+    if (pcap_compile(pd, &F, "ip", 1, 0) == -1) {
+        fprintf(stderr, "pcap_compile: %s\n", pcap_geterr(pd));
+        exit(1);
+    }
+    if (pcap_setfilter(pd, &F) == -1) {
+        fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(pd));
+        exit(1);
     }
     printf("Begin loop\n");
     init_history();
@@ -151,16 +157,19 @@ void packet_loop(void* ptr) {
     printf("end loop\n");
 }
 
+sig_atomic_t foad;
+
 static void finish(int sig)
 {
-    ui_finish();
-    exit(0);
+    foad = sig;
 }
 
 int main(int argc, char **argv) {
     pthread_t thread;
+    struct sigaction sa = {0};
+    sa.sa_handler = finish;
 
-    (void) signal(SIGINT, finish);      /* arrange interrupts to terminate */
+    sigaction(SIGINT, &sa, NULL);
 
     pthread_mutex_init(&tick_mutex, NULL);
 
@@ -168,5 +177,9 @@ int main(int argc, char **argv) {
 
     ui_loop();
 
+    pthread_cancel(thread);
+
+    ui_finish();
+    
     return 0;
 }

@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include "ns_hash.h"
 #include "hash.h"
+#include "iftop.h"
 
 #define hash_table_size 256
 
@@ -31,11 +32,8 @@ int ns_hash_hash(void* key) {
 }
 
 void* ns_hash_copy_key(void* orig) {
-    struct in_addr* copy = malloc(sizeof(struct in_addr));
-    if(copy == NULL) {
-        printf("Out of memory\n");
-        exit(1);
-    }
+    struct in_addr* copy;
+    copy = xmalloc(sizeof *copy);
     *copy = *(struct in_addr*)orig;
     return copy;
 }
@@ -49,10 +47,7 @@ void ns_hash_delete_key(void* key) {
  */
 hash_type* ns_hash_create() {
     hash_type* hash_table;
-    if ((hash_table = calloc(hash_table_size, sizeof(hash_type*))) == 0) {
-        fprintf (stderr, "out of memory (hashTable)\n");
-        exit(1);
-    }
+    hash_table = xcalloc(hash_table_size, sizeof *hash_table);
     hash_table->size = hash_table_size;
     hash_table->compare = &ns_hash_compare;
     hash_table->hash = &ns_hash_hash;

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "addr_hash.h"
 #include "hash.h"
+#include "iftop.h"
 
 #define hash_table_size 256
 
@@ -36,11 +37,8 @@ int hash(void* key) {
 }
 
 void* copy_key(void* orig) {
-    addr_pair* copy = malloc(sizeof(addr_pair));
-    if(copy == NULL) {
-        printf("Out of memory\n");
-        exit(1);
-    }
+    addr_pair* copy;
+    copy = xmalloc(sizeof *copy);
     *copy = *(addr_pair*)orig;
     return copy;
 }
@@ -54,10 +52,7 @@ void delete_key(void* key) {
  */
 hash_type* addr_hash_create() {
     hash_type* hash_table;
-    if ((hash_table = calloc(hash_table_size, sizeof(hash_type*))) == 0) {
-        fprintf (stderr, "out of memory (hashTable)\n");
-        exit(1);
-    }
+    hash_table = xcalloc(hash_table_size, sizeof *hash_table);
     hash_table->size = hash_table_size;
     hash_table->compare = &compare;
     hash_table->hash = &hash;

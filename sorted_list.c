@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "sorted_list.h"
+#include "iftop.h"
 
 
 void sorted_list_insert(sorted_list_type* list, void* item) {
@@ -17,11 +18,7 @@ void sorted_list_insert(sorted_list_type* list, void* item) {
         p = p->next;
     } 
 
-    node = (sorted_list_node*)malloc(sizeof(sorted_list_node));
-    if(node == NULL) {
-        fprintf(stderr,"Out of memory\n");
-        exit(1);
-    }
+    node = xmalloc(sizeof *node);
 
     node->next = p->next;
     node->data = item;

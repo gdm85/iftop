@@ -18,4 +18,10 @@ typedef struct {
 
 void tick();
 
+void *xmalloc(size_t n);
+void *xcalloc(size_t n, size_t m);
+void *xrealloc(void *w, size_t n);
+char *xstrdup(const char *s);
+void xfree(void *v);
+
 #endif /* __IFTOP_H_ */
