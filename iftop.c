@@ -76,8 +76,8 @@ static void finish(int sig) {
 
 
 
-/* Only need ethernet and IP headers (48) + first 2 bytes of tcp/udp header */
-#define CAPTURE_LENGTH 68
+/* Only need ethernet (plus optional 4 byte VLAN) and IP headers (48) + first 2 bytes of tcp/udp header */
+#define CAPTURE_LENGTH 72
 
 void init_history() {
     history = addr_hash_create();
@@ -405,11 +405,22 @@ static void handle_cooked_packet(unsigned char *args, const struct pcap_pkthdr *
 static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     struct ether_header *eptr;
+    int ether_type;
+    const unsigned char *payload;
     eptr = (struct ether_header*)packet;
+    ether_type = ntohs(eptr->ether_type);
+    payload = packet + sizeof(struct ether_header);
 
     tick(0);
 
-    if(ntohs(eptr->ether_type) == ETHERTYPE_IP) {
+    if(ether_type == ETHERTYPE_8021Q) {
+	struct vlan_8021q_header* vptr;
+	vptr = (struct vlan_8021q_header*)payload;
+	ether_type = ntohs(vptr->ether_type);
+        payload += sizeof(struct vlan_8021q_header);
+    }
+
+    if(ether_type == ETHERTYPE_IP) {
         struct ip* iptr;
         int dir = -1;
         
@@ -429,7 +440,7 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
             dir = 0;
         }
 
-        iptr = (struct ip*)(packet + sizeof(struct ether_header) ); /* alignment? */
+        iptr = (struct ip*)(payload); /* alignment? */
         handle_ip_packet(iptr, dir);
     }
 }
