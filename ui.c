@@ -856,7 +856,7 @@ void ui_loop() {
                 char *s;
                 dontshowdisplay = 1;
                 if ((s = edline(0, "Command", ""))) {
-                    int i;
+                    int i, dowait = 0;
                     erase();
                     refresh();
                     endwin();
@@ -864,15 +864,19 @@ void ui_loop() {
                     i = system(s);
                     if (i == -1 || (i == 127 && errno != 0)) {
                         fprintf(stderr, "system: %s: %s\n", s, strerror(errno));
-                        sleep(1);
+                        dowait = 1;
                     } else if (i != 0) {
                         if (WIFEXITED(i))
                             fprintf(stderr, "%s: exited with code %d\n", s, WEXITSTATUS(i));
                         else if (WIFSIGNALED(i))
                             fprintf(stderr, "%s: killed by signal %d\n", s, WTERMSIG(i));
-                        sleep(1);
+                        dowait = 1;
                     }
                     ui_curses_init();
+                    if (dowait) {
+                        fprintf(stderr, "Press any key....");
+                        while (getch() == ERR);
+                    }
                     erase();
                     xfree(s);
                 }
