@@ -187,16 +187,17 @@ void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
 static struct {
     int max, interval;
 } scale[] = {
-        {       8000,     10 },     /* 64 kbit/s */
-        {      16000,     10 },
-        {      32000,     10 },
-        {     125000,     10 },     /* 1 Mbit/s */
-        {    1250000,     10 },     
-        {   12500000,    100 },
-        {  125000000,    100 }      /* 1 Gbit/s */
+        {      64000,     10 },     /* 64 kbit/s */
+        {     128000,     10 },
+        {     256000,     10 },
+        {    1000000,     10 },     /* 1 Mbit/s */
+        {   10000000,     10 },     
+        {  100000000,    100 },
+        { 1000000000,    100 }      /* 1 Gbit/s */
     };
 static int rateidx = 0, wantbiggerrate;
 
+/* rate in bits */
 static int get_bar_length(const int rate) {
     float l;
     if (rate <= 0)
@@ -208,18 +209,19 @@ static int get_bar_length(const int rate) {
 }
 
 static void draw_bar_scale(int* y) {
-    int i;
+    float i;
     if(options.showbars) {
         /* Draw bar graph scale on top of the window. */
         move(*y, 0);
         clrtoeol();
         mvhline(*y + 1, 0, 0, COLS);
-        for (i = 1; i <= scale[rateidx].max; i *= scale[rateidx].interval) {
+        /* i in bytes */
+        for (i = 1.25; i * 8 <= scale[rateidx].max; i *= scale[rateidx].interval) {
             char s[40], *p;
             int x;
             readable_size(i, s, sizeof s, 1000, 0);
             p = s + strspn(s, " ");
-            x = get_bar_length(i);
+            x = get_bar_length(i * 8);
             mvaddch(*y + 1, x, ACS_BTEE);
             if (x + strlen(p) >= COLS)
                 x = COLS - strlen(p);
