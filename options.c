@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -29,6 +28,7 @@ char optstr[] = "+i:f:n:dhpbP";
  * that they don't refer to interfaces of external type on which we are
  * likely to want to listen. We also compare candidate interfaces to lo. */
 static char *bad_interface_names[] = {
+            "lo:",
             "dummy",
             "vmnet",
             NULL        /* last entry must be NULL */
