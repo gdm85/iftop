@@ -70,15 +70,28 @@ void readable_size(float n, char* buf, int bsize, int ksize) {
     }
 }
 
-/* Maximum and minimum rate which we plot on the bar chart. */
-static int min_rate = 1;                /* 1 byte/s */
-static int max_rate = (10000000);   /* 10 Mbit/s */
+
+/* Barchart scales. */
+static struct {
+    int max, interval;
+} scale[] = {
+        {      64000,     10 },     /* 64 kbit/s */
+        {     128000,     10 },
+        {     256000,     10 },
+        {    1000000,     10 },     /* 1 Mbit/s */
+        {   10000000,     10 },     
+        {  100000000,    100 },
+        { 1000000000,    100 }      /* 1 Gbit/s */
+    };
+static int rateidx = 0, wantbiggerrate;
 
 static int get_bar_length(const int rate) {
     float l;
     if (rate <= 0)
         return 0;
-    l = (log(rate) - log(min_rate)) / (log(max_rate) - log(min_rate));
+    if (rate > scale[rateidx].max)
+        wantbiggerrate = 1;
+    l = log(rate) / log(scale[rateidx].max);
     return (l * COLS);
 }
 
@@ -87,7 +100,7 @@ static void draw_bar_scale(int* y) {
     if(options.showbars) {
         /* Draw bar graph scale on top of the window. */
         mvhline(*y + 1, 0, 0, COLS);
-        for (i = min_rate; i <= max_rate; i *= 10) {
+        for (i = 1; i <= scale[rateidx].max; i *= scale[rateidx].interval) {
             char s[40], *p;
             int x;
             readable_size(i, s, sizeof s, 1000);
@@ -334,6 +347,11 @@ void ui_print() {
     
     refresh();
 
+    /* Bar chart auto scale */
+    if (wantbiggerrate) {
+        ++rateidx;
+        wantbiggerrate = 0;
+    }
 }
 
 void ui_init() {
