@@ -40,6 +40,7 @@ typedef struct {
     option_port_t showports;
     int aggregate_src;
     int aggregate_dest;
+    int paused;
 
 } options_t;
 

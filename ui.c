@@ -194,6 +194,10 @@ void analyse_data() {
     hash_node_type* n = NULL;
     int i;
 
+    if(options.paused == 0) {
+      return;
+    }
+
     memset(&totals, 0, sizeof totals);
 
     screen_data_clear();
@@ -491,7 +495,7 @@ void ui_loop() {
                 tick(1);
                 break;
 
-	        case 'b':
+	          case 'b':
                 options.showbars = !options.showbars; 
                 tick(1);
                 break;
@@ -539,6 +543,9 @@ void ui_loop() {
                   ? OPTION_PORTS_ON
                   : OPTION_PORTS_OFF;
                 // Don't tick here, otherwise we get a bogus display
+                break;
+            case 'P':
+                options.paused = !options.paused;
                 break;
         }
         tick(0);

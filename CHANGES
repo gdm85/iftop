@@ -8,6 +8,7 @@ Minor fix to rate display
 Minor fix to netmask handling (specifying /32 was broken)
 Updated RPM spec file 
     Iain Lea <iain@bricbrac.de>
+Added pause functionality (P)
 
 0.7 02/10/02
 
