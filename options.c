@@ -25,7 +25,7 @@ char optstr[] = "+i:f:n:dhpb";
 static char *get_first_interface(void) {
     int s, size = 1;
     struct ifreq *ifr;
-    struct ifconf ifc;
+    struct ifconf ifc = {0};
     char *i = NULL;
     /* Use if_nameindex(3) instead? */
     if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
