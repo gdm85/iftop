@@ -54,6 +54,7 @@ static void finish(int sig) {
 
 
 
+
 /* Only need ethernet and IP headers (48) + first 2 bytes of tcp/udp header */
 #define CAPTURE_LENGTH 68
 
@@ -112,8 +113,8 @@ void tick(int print) {
         history_rotate();
         last_timestamp = t;
     }
-    else if(print) {
-        ui_print();
+    else {
+      ui_tick(print);
     }
 
     pthread_mutex_unlock(&tick_mutex);

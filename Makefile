@@ -43,7 +43,6 @@ CFLAGS += -DUSE_GETHOSTBYADDR_R
 # Uncomment if you are using libresolv.
 #
 #LDLIBS += -lresolv # or /usr/lib/libresolv.a on Linux?
-
 #
 # Uncomment if you are using ares.
 #

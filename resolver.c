@@ -44,6 +44,9 @@ int tail;
 #if defined(USE_GETHOSTBYADDR_R)
 /**
  * Implementation of do_resolve for platforms with working gethostbyaddr_r
+ *
+ * Some implementations of libc choose to implement gethostbyaddr_r as
+ * a non thread-safe wrapper to gethostbyaddr.  An interesting choice...
  */
 char* do_resolve(struct in_addr * addr) {
     struct hostent hostbuf, *hp;
@@ -102,7 +105,8 @@ char *do_resolve(struct in_addr *addr) {
 #include <resolv.h>
 
 /**
- * libresolv implementation
+ * libresolv implementation 
+ * resolver functions may not be thread safe
  */
 char* do_resolve(struct in_addr * addr) {
   char msg[PACKETSZ];

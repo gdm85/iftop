@@ -24,6 +24,8 @@
 #define HISTORY_DIVISIONS   3
 #define BARGRAPH_INTERVAL   1   /* which division used for bars. */
 
+#define HELP_TIME 2
+
 #define HELP_MESSAGE \
 "Host display:\n"\
 " r - toggle DNS host resolution \n"\
@@ -71,7 +73,10 @@ sorted_list_type screen_list;
 host_pair_line totals;
 int peaksent, peakrecv, peaktotal;
 
+#define HELP_MSG_SIZE 80
 int showhelphint = 0;
+int helptimer = 0;
+char helpmsg[HELP_MSG_SIZE];
 
 int screen_line_compare(void* a, void* b) {
     int i;
@@ -381,14 +386,7 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
     sprintf(line + left, "%-*s", L-left, service);
 }
 
-void write_in_line(int y, int x, char * s) {
-    /* Peak traffic */
-    mvaddch(y, x, ACS_RTEE);
-    addstr("  ");
-    addstr(s);
-    addstr(" ");
-    addch(ACS_LTEE);
-}
+
 
 void ui_print() {
     sorted_list_node* nn = NULL;
@@ -402,7 +400,6 @@ void ui_print() {
         line = calloc(COLS + 1, 1);
     }
 
-
     /* 
      * erase() is faster than clear().  Dunno why we switched to 
      * clear() -pdw 24/10/02
@@ -415,7 +412,6 @@ void ui_print() {
       mvaddstr(y,0,HELP_MESSAGE);
     }
     else {
-
 
       /* Screen layout: we have 2 * HISTORY_DIVISIONS 6-character wide history
        * items, and so can use COLS - 12 * HISTORY_DIVISIONS to print the two
@@ -490,10 +486,9 @@ void ui_print() {
     draw_totals(&totals);
 
 
-    if(showhelphint > 0) {
-      mvaddstr(0, 0, "Press h for help ");
+    if(showhelphint) {
+      mvaddstr(0, 0, helpmsg);
       clrtoeol();
-      showhelphint--;
     }
     
     refresh();
@@ -503,6 +498,16 @@ void ui_print() {
         ++rateidx;
         wantbiggerrate = 0;
     }
+}
+
+void ui_tick(int print) {
+  if(print) {
+    ui_print();
+  }
+  else if(showhelphint && (time(NULL) - helptimer > HELP_TIME)) {
+    showhelphint = 0;
+    ui_print();
+  }
 }
 
 void ui_init() {
@@ -524,6 +529,28 @@ void ui_init() {
 
 }
 
+void showhelp(const char * s) {
+  strncpy(helpmsg, s, HELP_MSG_SIZE);
+  showhelphint = 1;
+  helptimer = time(NULL);
+  tick(1);
+}
+
+void showportstatus() {
+  if(options.showports == OPTION_PORTS_ON) {
+    showhelp("Port display ON");
+  }
+  else if(options.showports == OPTION_PORTS_OFF) {
+    showhelp("Port display OFF");
+  }
+  else if(options.showports == OPTION_PORTS_DEST) {
+    showhelp("Port display DEST");
+  }
+  else if(options.showports == OPTION_PORTS_SRC) {
+    showhelp("Port display SOURCE");
+  }
+}
+
 void ui_loop() {
     extern sig_atomic_t foad;
     while(foad == 0) {
@@ -535,12 +562,26 @@ void ui_loop() {
                 break;
 
             case 'r':
-                options.dnsresolution = !options.dnsresolution;
+                if(options.dnsresolution) {
+                    options.dnsresolution = 0;
+                    showhelp("DNS resolution off");
+                }
+                else {
+                    options.dnsresolution = 1;
+                    showhelp("DNS resolution on");
+                }
                 tick(1);
                 break;
 
             case 'R':
-                options.portresolution = !options.portresolution;
+                if(options.portresolution) {
+                    options.portresolution = 0;
+                    showhelp("Port resolution off");
+                }
+                else {
+                    options.portresolution = 1;
+                    showhelp("Port resolution on");
+                }
                 tick(1);
                 break;
 
@@ -550,16 +591,36 @@ void ui_loop() {
                 break;
 
 	          case 'b':
-                options.showbars = !options.showbars; 
+                if(options.showbars) {
+                    options.showbars = 0;
+                    showhelp("Bars off");
+                }
+                else {
+                    options.showbars = 1;
+                    showhelp("Bars on");
+                }
                 tick(1);
                 break;
 
             case 's':
-                options.aggregate_src = !options.aggregate_src;
+                if(options.aggregate_src) {
+                    options.aggregate_src = 0;
+                    showhelp("Show source host");
+                }
+                else {
+                    options.aggregate_src = 1;
+                    showhelp("Hide source host");
+                }
                 break;
-
             case 'd':
-                options.aggregate_dest = !options.aggregate_dest;
+                if(options.aggregate_dest) {
+                    options.aggregate_dest = 0;
+                    showhelp("Show dest host");
+                }
+                else {
+                    options.aggregate_dest = 1;
+                    showhelp("Hide dest host");
+                }
                 break;
             case 'S':
                 /* Show source ports */
@@ -575,6 +636,7 @@ void ui_loop() {
                 else {
                   options.showports = OPTION_PORTS_OFF;
                 }
+                showportstatus();
                 break;
             case 'D':
                 /* Show dest ports */
@@ -590,12 +652,14 @@ void ui_loop() {
                 else {
                   options.showports = OPTION_PORTS_OFF;
                 }
+                showportstatus();
                 break;
             case 'p':
                 options.showports = 
                   (options.showports == OPTION_PORTS_OFF)
                   ? OPTION_PORTS_ON
                   : OPTION_PORTS_OFF;
+                showportstatus();
                 // Don't tick here, otherwise we get a bogus display
                 break;
             case 'P':
@@ -604,8 +668,7 @@ void ui_loop() {
             case ERR:
                 break;
             default:
-                showhelphint = 2;
-                tick(1);
+                showhelp("Press h for help");
                 break;
         }
         tick(0);
