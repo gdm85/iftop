@@ -43,7 +43,9 @@ static char *get_first_interface(void) {
     } while (size * sizeof *ifc.ifc_req <= ifc.ifc_len);
     /* Ugly. */
     for (ifr = ifc.ifc_req; (char*)ifr < (char*)ifc.ifc_req + ifc.ifc_len; ++ifr) {
-        if (strcmp(ifr->ifr_name, "lo") != 0 && strncmp(ifr->ifr_name, "dummy", 5) != 0
+        if (strcmp(ifr->ifr_name, "lo") != 0
+            && strncmp(ifr->ifr_name, "dummy", 5) != 0
+            && strncmp(ifr->ifr_name, "vmnet", 5) != 0
             && ioctl(s, SIOCGIFFLAGS, ifr) == 0 && ifr->ifr_flags & IFF_UP) {
             i = xstrdup(ifr->ifr_name);
             break;

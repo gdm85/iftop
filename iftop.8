@@ -11,14 +11,15 @@ iftop - display bandwidth usage on an interface by host
 
 .SH SYNOPSIS
 \fBiftop\fP \fB-h\fP |
-[\fB-dpb\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-n\fP \fInet\fP/\fImask\fP]
+[\fB-dpbP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-n\fP \fInet\fP/\fImask\fP]
 
 .SH DESCRIPTION
-\fBiftop\fP listens to network traffic on a named \fIinterface\fP, or \fBeth0\fP
-if none is specified, and displays a table of current bandwidth usage by pairs
-of hosts. \fBiftop\fP must be run with sufficient permissions to monitor all
-network traffic on the \fIinterface\fP; see \fBpcap\fP(3) for more information,
-but on most systems this means that it must be run as root.
+\fBiftop\fP listens to network traffic on a named \fIinterface\fP, or on the
+first interface it can find which looks like an external interface if none is
+specified, and displays a table of current bandwidth usage by pairs of hosts.
+\fBiftop\fP must be run with sufficient permissions to monitor all network
+traffic on the \fIinterface\fP; see \fBpcap\fP(3) for more information, but on
+most systems this means that it must be run as root.
 
 By default, \fBiftop\fP will look up the hostnames associated with addresses it
 finds in packets. This can cause substantial traffic of itself, and may result
