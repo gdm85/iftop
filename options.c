@@ -174,4 +174,6 @@ void options_read(int argc, char **argv) {
         }
     }
 
+    if (optind != argc)
+        fprintf(stderr, "iftop: warning: ignored arguments following options\n");
 }
