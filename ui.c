@@ -87,10 +87,10 @@ int screen_line_compare(void* a, void* b) {
 void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
 
     int i = 0;
-    int size = 1;
+    float size = 1;
 
     while(1) {
-      if(n < size * ksize || i >= UNIT_DIVISIONS - 1) {
+      if(n < size * 1000 || i >= UNIT_DIVISIONS - 1) {
         snprintf(buf, bsize, " %4.0f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
         break;
       }
