@@ -26,6 +26,7 @@ static void set_defaults() {
     options.dnsresolution = 1;
     options.promiscuous = 0;
     options.showbars = 1;
+    options.aggregate = OPTION_AGGREGATE_OFF;
 }
 
 static void die(char *msg) {

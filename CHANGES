@@ -1,6 +1,10 @@
 Change log for iftop
 $Id$
 
+0.3
+
+Fixed segfault bug.
+
 0.2 02/04/02
 
 Added -n option to analyse traffic flows across a network boundary.
