@@ -69,8 +69,11 @@ void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
     if(n >= ksize * ksize) {
        snprintf(buf, bsize, " %4.2f%s", n / (ksize * ksize), bytes ? "MB" : "M" ); 
     }
-    else if(n >= ksize) {
+    else if(n >= 10 * ksize) {
        snprintf(buf, bsize, " %4.1f%s", n / ksize, bytes ? "KB" : "K" ); 
+    }
+    else if(n >= ksize) {
+       snprintf(buf, bsize, " %4.2f%s", n / ksize, bytes ? "KB" : "K" ); 
     }
     else {
        snprintf(buf, bsize, " %4.0f%s", n, bytes ? "B" : "b"); 
@@ -219,6 +222,9 @@ void analyse_data() {
         }
         if(options.showports == OPTION_PORTS_SRC || options.showports == OPTION_PORTS_OFF) {
             ap.dst_port = 0;
+        }
+        if(options.showports == OPTION_PORTS_OFF) {
+            ap.protocol = 0;
         }
 
 	
