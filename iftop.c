@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include <net/ethernet.h>
 #include <netinet/ip.h>
 #include <pthread.h>
@@ -24,6 +26,7 @@
 char *interface = "eth0";
 char *filtercode = NULL;
 
+unsigned char if_hw_addr[6];    /* ethernet address of interface. */
 
 hash_type* history;
 time_t last_timestamp;
@@ -103,15 +106,25 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
     tick();
     
     if(ntohs(eptr->ether_type) == ETHERTYPE_IP) {
-        struct ip* iptr = (struct ip*)(packet + sizeof(struct ether_header));
+        struct ip* iptr;
         history_type* ht;
         addr_pair ap;
 
-        if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
+        iptr = (struct ip*)(packet + sizeof(struct ether_header)); /* alignment? */
+
+        if (memcmp(eptr->ether_shost, if_hw_addr, 6) == 0) {
+            /* Packet leaving this interface. */
             ap.src = iptr->ip_src;
             ap.dst = iptr->ip_dst;
-        }
-        else {
+        } else {
+            /* Assume it's a packet arriving at this interface. This is OK,
+             * since packets which don't have this interface as their source or
+             * destination should all be broadcast packets, which are
+             * incoming.
+             * XXX this results in a confusing display:
+             * 10.1.2.255    =>   foo.bar.com           0b    0b    0b
+             *               <=                         1k    1k    1k
+             * FIXME? */
             ap.src = iptr->ip_dst;
             ap.dst = iptr->ip_src;
         }
@@ -143,10 +156,35 @@ void packet_loop(void* ptr) {
     char* str = "ip";
     pcap_t* pd;
     struct bpf_program F;
+    int s;
+    struct ifreq ifr = {0};
 
+    /* First, get the address of the interface. If it isn't an ethernet
+     * interface whose address we can obtain, there's not a lot we can do. */
+    s = socket(PF_INET, SOCK_RAW, IPPROTO_ICMP); /* any sort of IP socket will do */
+    if (s == -1) {
+        perror("socket");
+        foad = 1;
+        return;
+    }
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ);
+    ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
+    if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
+        perror("ioctl(SIOCGIFHWADDR)");
+        foad = 1;
+        return;
+    }
+    close(s);
+    memcpy(if_hw_addr, ifr.ifr_hwaddr.sa_data, 6);
+    fprintf(stderr, "MAC address is: ");
+    for (s = 0; s < 6; ++s)
+        fprintf(stderr, "%02x", (unsigned int)if_hw_addr[s]);
+    fprintf(stderr, "\n");
+    
     resolver_initialise();
 
-    pd = pcap_open_live(interface, CAPTURE_LENGTH, 1, 1000, errbuf);
+    /* Open non-promiscuous since this is intended to be run on a router. */
+    pd = pcap_open_live(interface, CAPTURE_LENGTH, 0, 1000, errbuf);
     if(pd == NULL) { 
         fprintf(stderr, "pcap_open_live(%s): %s\n", interface, errbuf); 
         foad = 1;
