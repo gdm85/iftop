@@ -6,6 +6,10 @@
  *
  */
 
+#include "config.h"
+
+#ifdef HAVE_REGCOMP
+
 #include <sys/types.h>
 #include <regex.h>
 #include <stdio.h>
@@ -54,3 +58,4 @@ int screen_filter_match(char *s) {
     }
 }
 
+#endif /* HAVE_REGCOMP */

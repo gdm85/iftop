@@ -3,6 +3,8 @@
  *
  */
 
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <curses.h>
 #include <errno.h>
@@ -591,8 +593,10 @@ void ui_print() {
 
 
     if(showhelphint) {
-      mvaddstr(0, 0, helpmsg);
-      mvchgat(0, 0, strlen(helpmsg), A_REVERSE, 0, NULL);
+      mvaddstr(0, 0, " ");
+      mvaddstr(0, 1, helpmsg);
+      mvaddstr(0, 1 + strlen(helpmsg), " ");
+      mvchgat(0, 0, strlen(helpmsg) + 2, A_REVERSE, 0, NULL);
     }
     move(LINES - 1, COLS - 1);
     
@@ -855,6 +859,7 @@ void ui_loop() {
                 break;
             }
             case 'l': {
+#ifdef HAVE_REGCOMP
                 char *s;
                 dontshowdisplay = 1;
                 if ((s = edline(0, "Screen filter", options.screenfilter))) {
@@ -864,6 +869,9 @@ void ui_loop() {
                 }
                 dontshowdisplay = 0;
                 ui_print();
+#else
+                showhelp("Sorry, screen filters not supported on this platform")
+#endif
                 break;
             }
             case '!': {

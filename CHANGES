@@ -6,6 +6,7 @@ $Id$
 Added support for token ring networks
 Token ring network direction determination
     Martin Garton <Martin.Garton@DCSTRANS.COM>
+Added autoconf/automake build system
 
 0.10 29/10/02
 

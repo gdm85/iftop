@@ -6,6 +6,8 @@
 #ifndef __IFTOP_H_ /* include guard */
 #define __IFTOP_H_
 
+#include "config.h"
+
 /* 60 / 3  */
 #define HISTORY_LENGTH  20
 #define RESOLUTION 2
@@ -34,11 +36,13 @@ void ui_init(void);
 void options_read(int argc, char **argv);
 
 
-/* Make use of SIOCGIFHWADDR work on FreeBSD */
+/* Make use of SIOCGIFHWADDR work on FreeBSD and Solaris. */
 #ifndef SIOCGIFHWADDR
-#define SIOCGIFHWADDR SIOCGIFADDR
-#define ifr_hwaddr ifr_addr
+#   ifdef HAVE_SYS_SOCKIO_H
+#       include <sys/sockio.h>  /* Solaris and others?? */
+#   endif
+#   define SIOCGIFHWADDR SIOCGIFADDR
+#   define ifr_hwaddr ifr_addr
 #endif
-
 
 #endif /* __IFTOP_H_ */

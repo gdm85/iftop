@@ -7,8 +7,6 @@ $Id$
 
 * Config file.
 
-* Find someone gullible to sort out autoconf.
-
 * Which average to use for the bar graph? Show several and peaks? Colours?
 
 * Single keypress firewalling of troublesome connections, a la top(1)'s K

@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# bootstrap:
+# Build the configure script from the .in files.
+#
+# $Id$
+#
+set -x
+aclocal -I config
+# libtoolize --force --copy
+autoheader
+automake --foreign --add-missing --copy
+autoconf

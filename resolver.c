@@ -35,13 +35,37 @@ int tail;
 
 
 /* 
- * We have a choice of resolver methods. Real computers have gethostbyaddr_r,
- * which is reentrant and therefore thread safe. Other machines don't, and so
- * we can use non-reentrant gethostbyaddr and have only one resolver thread.
- * Alternatively, we can use the MIT ares asynchronous DNS library to do this.
+ * We have a choice of resolver methods. Real computers have getnameinfo or
+ * gethostbyaddr_r, which are reentrant and therefore thread safe. Other
+ * machines don't, and so we can use non-reentrant gethostbyaddr and have only
+ * one resolver thread.  Alternatively, we can use the MIT ares asynchronous
+ * DNS library to do this.
  */
 
-#if defined(USE_GETHOSTBYADDR_R)
+#if defined(USE_GETNAMEINFO)
+/**
+ * Implementation of do_resolve for platforms with getaddrinfo.
+ *
+ * This is a fairly sane function with a uniform interface which is even --
+ * shock! -- standardised by POSIX and in RFC 2553. Unfortunately systems such
+ * as NetBSD break the RFC and implement it in a non-thread-safe fashion, so
+ * for the moment, the configure script won't try to use it.
+ */
+char *do_resolve(struct in_addr *addr) {
+    struct sockaddr_in sin = {0};
+    char buf[NI_MAXHOST]; /* 1025 */
+    int res;
+    sin.sin_family = AF_INET;
+    sin.sin_addr = *addr;
+    sin.sin_port = 0;
+
+    if (getnameinfo((struct sockaddr*)&sin, sizeof sin, buf, sizeof buf, NULL, 0, NI_NAMEREQD) == 0)
+        return xstrdup(buf);
+    else
+        return NULL;
+}
+
+#elif defined(USE_GETHOSTBYADDR_R)
 /**
  * Implementation of do_resolve for platforms with working gethostbyaddr_r
  *
@@ -59,9 +83,20 @@ char* do_resolve(struct in_addr * addr) {
     /* Allocate buffer, remember to free it to avoid memory leakage.  */            
     tmphstbuf = xmalloc (hstbuflen);
 
-    while ((res = gethostbyaddr_r ((char*)addr, sizeof(struct in_addr), AF_INET,
-                                   &hostbuf, tmphstbuf, hstbuflen,
-                                   &hp, &herr)) == ERANGE) {
+    /* Some machines have gethostbyaddr_r returning an integer error code; on
+     * others, it returns a struct hostent*. */
+#ifdef GETHOSTBYADDR_R_RETURNS_INT
+    while ((res = gethostbyaddr_r((char*)addr, sizeof(struct in_addr), AF_INET,
+                                  &hostbuf, tmphstbuf, hstbuflen,
+                                  &hp, &herr)) == ERANGE)
+#else
+    /* ... also assume one fewer argument.... */
+    while ((hp = gethostbyaddr_r((char*)addr, sizeof(struct in_addr), AF_INET,
+                           &hostbuf, tmphstbuf, hstbuflen, &herr)) == NULL
+            && errno == ERANGE)
+#endif
+            {
+        
         /* Enlarge the buffer.  */
         hstbuflen *= 2;
         tmphstbuf = realloc (tmphstbuf, hstbuflen);

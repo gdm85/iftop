@@ -3,7 +3,15 @@
  *
  */
 
-#include <pcap.h>
+#include "integers.h"
+
+#if defined(HAVE_PCAP_H)
+#   include <pcap.h>
+#elif defined(HAVE_PCAP_PCAP_H)
+#   include <pcap/pcap.h>
+#else
+#   error No pcap.h
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -340,9 +348,9 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
 {
     struct ether_header *eptr;
     eptr = (struct ether_header*)packet;
-       
+
     tick(0);
-    
+
     if(ntohs(eptr->ether_type) == ETHERTYPE_IP) {
         struct ip* iptr;
         int dir = -1;
@@ -464,7 +472,7 @@ void packet_init() {
 /* packet_loop:
  * Worker function for packet capture thread. */
 void packet_loop(void* ptr) {
-    pcap_loop(pd,0,(pcap_handler)packet_handler,NULL);
+    pcap_loop(pd,-1,(pcap_handler)packet_handler,NULL);
 }
 
 

@@ -21,5 +21,13 @@ in order to compile iftop.
 FreeBSD 4.7:
 
 This version of FreeBSD lacks a proper gethostbyaddr_r function. You should
-choose an alternative name resolution technique; see comments in the Makefile.
-We recommend using ares (-DUSE_ARES).
+choose an alternative name resolution technique using the --with-resolver=...
+option to configure.
+
+Solaris:
+
+On Solaris, libpcap does not capture outgoing packets unless it is run on an
+interface in promiscuous mode. Therefore, you will need to use the -p option
+to iftop to get sensible results. Cf.
+  http://www.tcpdump.org/lists/workers/2002/02/msg00010.html
+

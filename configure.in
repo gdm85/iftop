@@ -1,0 +1,305 @@
+dnl
+dnl configure.in:
+dnl Autoconf input for iftop.
+dnl
+dnl I hate autoconf with a passion. It's an utter pain to write these bloody
+dnl things and even once you have you find yourself testing for more and more
+dnl special cases. But that's OK. Paul is going to maintain it :)
+dnl     -- Chris Lightfoot
+dnl
+dnl $Id$
+dnl
+
+dnl
+dnl Boilerplate configuration
+dnl
+
+AC_INIT(iftop.c)
+AC_CONFIG_AUX_DIR(config)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(iftop, "0.11pre1")
+
+AC_DEFINE_UNQUOTED(IFTOP_VERSION, "$VERSION", [The iftop version number])
+
+dnl Make sure we have a C compiler....
+AC_PROG_CC
+AC_HEADER_STDC
+
+dnl
+dnl Options to configure.
+dnl
+
+AC_ARG_WITH(resolver,
+    [  --with-resolver=TYPE    Technique iftop should use for name resolution. Valid
+                          options are netdb, netdb_1thread (for systems without
+                          working gethostbyaddr_r), ares for the MIT ARES
+                          asynchronous resolver library, or none if you don't
+                          need any name resolution.
+                          [default=netdb]],
+    [resolver=$withval],
+    [resolver=netdb])
+
+dnl
+dnl Fairly generic checks.
+dnl
+
+dnl Checks for system headers.
+AC_CHECK_HEADERS(sys/ioctl.h sys/time.h sys/sockio.h unistd.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(regcomp select strdup strerror strspn)
+
+AC_SEARCH_LIBS(socket, socket)
+AC_SEARCH_LIBS(log, m)
+AC_CHECK_FUNC(gethostbyname, ,
+	[AC_CHECK_LIB(nsl, gethostbyname)] )
+
+AC_SEARCH_LIBS(inet_aton, [-lsocket -lnsl])
+AC_SEARCH_LIBS(inet_pton, [-lsocket -lnsl])
+AC_CHECK_FUNCS(inet_aton inet_pton)
+
+dnl
+dnl Find integers of known physical size. This is a pain in the arse because
+dnl we can't use AC_CHECK_SIZEOF to find the original variables, since that
+dnl function doesn't permit us to include a header file. Sigh.
+dnl
+
+for type in u_int8_t u_int16_t u_int32_t ; do
+    AC_MSG_CHECKING([size of $type])
+    defn="SIZEOF_"`echo $type | tr a-z A-Z`
+    AC_TRY_RUN([
+#include <sys/types.h>
+#include <stdio.h>
+int main() {
+    $type dummy;
+    FILE *f=fopen("conftestval", "w");
+    if (!f) exit(1);
+    fprintf(f, "%d\n", sizeof($1));
+    exit(0);
+}
+        ], [
+        x=`cat conftestval`
+        eval "size_$type=$x"
+        AC_MSG_RESULT([$x])
+        ], [
+        eval "size_$type=0"
+        AC_MSG_RESULT([unknown type])
+        ])
+done
+
+dnl Groan. Have to do things this way so that autoheader can do its thing....
+AC_DEFINE_UNQUOTED(SIZEOF_U_INT8_T,  [$size_u_int8_t],  [size of u_int8_t])
+AC_DEFINE_UNQUOTED(SIZEOF_U_INT16_T, [$size_u_int16_t], [size of u_int16_t])
+AC_DEFINE_UNQUOTED(SIZEOF_U_INT32_T, [$size_u_int32_t], [size of u_int32_t])
+
+dnl If we already have these types, don't piss about any more....
+if test $size_u_int8_t != 1 -o $size_u_int16_t != 2 -o $size_u_int32_t != 4 ; then
+    do_int_types=1
+    AC_CHECK_HEADERS(
+        [stdint.h             dnl C99
+         sys/inttypes.h],     dnl Solaris
+        [do_int_types=0; break])
+
+    if test $do_int_types = 1 ; then
+        dnl No C99 int types, so figure them out from basic types.
+        AC_CHECK_SIZEOF(unsigned short int)
+        AC_CHECK_SIZEOF(unsigned int)
+        AC_CHECK_SIZEOF(unsigned long int)
+    else
+        dnl Just use the C99 ones.
+        AC_DEFINE(HAVE_C99_INTS, 1, [C99 fixed-width int types available])
+    fi
+fi
+
+dnl
+dnl Name resolution.
+dnl
+dnl This is complicated because we need some sort of reentrant mechanism for
+dnl name resolution. Naturally, UNIX vendors have come up with a variety of
+dnl incompatible schemes for this, many of which don't work at all.
+dnl
+
+dnl First, the default resolver, which uses getnameinfo or gethostbyaddr_r. If
+dnl not available, we fall back to gethostbyaddr. We could fall back to ARES,
+dnl but that's probably not available on typical machines.
+if test x$resolver = xnetdb ; then
+    dnl Best possibility is getnameinfo.
+    use_getnameinfo=0
+    AC_SEARCH_LIBS(getnameinfo, [-lnsl], [use_getnameinfo=1])
+
+    dnl XXX For the moment, don't use getnameinfo, since it isn't actually
+    dnl thread safe on, e.g., NetBSD.
+    use_getnameinfo=0
+
+    if test $use_getnameinfo = 1 ; then
+        dnl Done.
+        AC_DEFINE(USE_GETNAMEINFO, 1, [use getnameinfo for name resolution])
+    else
+        dnl Now see if we can use gethostbyaddr_r.
+        AC_SEARCH_LIBS(gethostbyaddr_r, [-lnsl], , [resolver=netdb_1thread])
+
+        dnl Still want gethostbyaddr_r....
+        if test x$resolver = xnetdb ; then
+            dnl Figure out whether we have glibc-style or Solaris-style
+            dnl gethostbyaddr_r (or neither...).
+            AC_MSG_CHECKING([how to call gethostbyaddr_r]);
+            
+            AC_TRY_RUN([`cat config/int_ghba_r.c`], [
+                    dnl 8-arg, int
+                    AC_MSG_RESULT([8 args, int return])
+                    AC_DEFINE(GETHOSTBYADDR_R_RETURNS_INT, 1,
+                        [8-argument gethostbyaddr_r returns int])
+                ], [
+                    AC_TRY_RUN([`cat config/hostentp_ghba_r.c`], [
+                            dnl 7-arg, struct hostent*
+                            AC_MSG_RESULT([7 args, struct hostent* return])
+                            AC_DEFINE(GETHOSTBYADDR_R_RETURNS_HOSTENT_P, 1,
+                                [7-argument gethostbyaddr_r returns struct hostent*])
+                        ], [
+                            dnl neither
+                            AC_MSG_RESULT([no idea; dropping back to gethostbyaddr])
+                            resolver=netdb_1thread
+                        ])
+                ])
+
+            dnl Found a gethostbyaddr_r we know how to use and which seems to
+            dnl work.
+            if test x$resolver = xnetdb ; then
+                AC_DEFINE(USE_GETHOSTBYADDR_R, 1, [use gethostbyaddr_r for name resolution])
+            fi
+        fi
+    fi
+fi
+
+dnl If we've been told to use ARES, then see if it's available. If it isn't,
+dnl fall back to gethostbyaddr, since we can probably assume that if the
+dnl machine had a working gethostbyaddr_r, the user wouldn't be pissing about
+dnl with ARES.
+if test x$resolver = xares ; then
+    dnl See if ares is to hand....
+    AC_SEARCH_LIBS(ares_init, [-lares], [
+        AC_DEFINE(USE_ARES, 1, [use ARES for name resolution])
+        ], [
+        dnl no ares
+        AC_MSG_RESULT([can't find ARES; dropping back to gethostbyaddr])
+        resolver=netdb_1thread])
+fi
+
+
+dnl Ugh. gethostbyaddr.
+if test x$resolver = xnetdb_1thread ; then
+    AC_SEARCH_LIBS(gethostbyaddr, [-lnsl], , [
+        AC_MSG_ERROR([not even gethostbyaddr is available
+  What sort of UNIX system is this, anyway?])
+        ]
+        )
+
+    dnl Oh dear, just use gethostbyaddr; but whine about it
+    AC_MSG_WARN([using single-threaded resolver with gethostbyaddr
+  Consider obtaining ARES or a machine with a working gethostbyaddr_r.])
+
+    AC_DEFINE(USE_GETHOSTBYADDR, 1, [use gethostbyaddr for name resolution])
+fi
+
+dnl Otherwise, no resolver at all. Boo hoo.
+
+
+dnl
+dnl Ensure that the machine even has libpcap. We do this late, because libpcap
+dnl calls netdb functions that might need libraries on some systems....
+dnl
+
+AC_CHECK_LIB(pcap, pcap_open_live, , [
+        AC_MSG_ERROR([can't find libpcap
+  You're not going to get very far without libpcap.])
+    ])
+
+foundpcap=0
+AC_CHECK_HEADERS([pcap.h pcap/pcap.h], [
+    foundpcap=1
+    break
+    ])
+
+if test $foundpcap = 0 ; then
+    AC_MSG_ERROR([can't find pcap.h
+  You're not going to get very far without libpcap.])
+fi
+
+dnl
+dnl Curses. Really, we need ncurses or something similarly advanced, since
+dnl we use the (apparently obscure) mvchgat function. Unfortunately, there's
+dnl a solid chance that mvchgat is a macro, so we can't just use
+dnl AC_SEARCH_LIBS....
+dnl
+
+AC_MSG_CHECKING([for a curses library containing mvchgat])
+oldLIBS=$LIBS
+for curseslib in curses ncurses ; do
+    LIBS="$oldLIBS -l$curseslib"
+    AC_TRY_LINK([
+#include <curses.h>
+        ], [
+        mvchgat(0, 0, 1, A_REVERSE, 0, NULL)
+        ], [
+        foundcurseslib=$curseslib
+        break
+        ])
+done
+
+if test x$foundcurseslib = x ; then
+    AC_MSG_RESULT([none found])
+    AC_MSG_ERROR([Curses! Foiled again!
+  (Can't find a curses library supporting mvchgat.)
+  Consider installing ncurses.])
+else
+    AC_MSG_RESULT([-l$foundcurseslib])
+fi
+
+
+dnl
+dnl POSIX threads. Different systems like different combinations of flags,
+dnl libraries, etc. We use a test program to figure this stuff out.
+dnl
+
+AC_MSG_CHECKING([how to compile a working program with POSIX threads])
+thrfail=1
+oldCFLAGS=$CFLAGS
+oldLIBS=$LIBS
+for flag in "" -mt -pthread -thread ; do
+    CFLAGS="$oldCFLAGS $flag"
+    for lib in "" -lpthread "-lpthread -lposix4" ; do
+        LIBS="$oldLIBS $lib"
+        AC_TRY_RUN([`cat config/pthread.c`], [
+            foundthrlib=$lib
+            foundthrflag=$flag
+            thrfail=0
+            break
+            ])
+    done
+    if test $thrfail = 0 ; then
+        break
+    fi
+done
+
+if test $thrfail = 1 ; then
+    AC_MSG_RESULT([no idea])
+    AC_MSG_ERROR([can't figure out how to compile with POSIX threads
+  If your system actually supports POSIX threads, this means we've messed up.])
+else
+    AC_MSG_RESULT([$foundthrflag $foundthrlib])
+fi
+
+dnl
+dnl Wahey! This might even work.
+dnl
+
+
+AC_SUBST(ac_aux_dir)
+
+AC_OUTPUT(Makefile config/Makefile)
+

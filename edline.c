@@ -88,9 +88,9 @@ char *edline(int linenum, const char *prompt, const char *initial) {
 
             case 23:    /* ^W */
                 for (i = pos; i > 0; --i)
-                    if (!isspace(str[i])) break;
+                    if (!isspace((int)str[i])) break;
                 for (; i > 0; --i)
-                    if (isspace(str[i])) break;
+                    if (isspace((int)str[i])) break;
                 if (i != pos) {
                     memmove(str + i, str + pos, strlen(str + pos) + 1);
                     pos = i;

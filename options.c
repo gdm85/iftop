@@ -4,6 +4,8 @@
  *
  */
 
+#include <sys/types.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,10 +13,16 @@
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 
 #include "iftop.h"
 #include "options.h"
+
+#if !defined(HAVE_INET_ATON) && defined(HAVE_INET_PTON)
+#   define inet_aton(a, b)  inet_pton(AF_INET, (a), (b))
+#endif
 
 options_t options;
 

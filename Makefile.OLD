@@ -11,7 +11,7 @@ VERSION = 0.11pre1
 #CC = gcc
 
 # Give the location of pcap.h here:
-CFLAGS += -I/usr/include/pcap 
+CFLAGS += -I/usr/include/pcap -g
 # CFLAGS += -I/usr/pkg/include
 # CFLAGS += -pg -a
 
@@ -19,6 +19,11 @@ CFLAGS += -I/usr/include/pcap
 # directories:
 # LDFLAGS += -L/usr/local/lib
 # LDFLAGS += -pg -a
+
+# Do you want to use curses or ncurses? Probably ncurses, unless curses
+# is ncurses on your machine.
+CURSES = ncurses
+#CURSES = curses
 
 #
 # Name resolution. Sensible systems have gethostbyaddr_r, which is reentrant
@@ -40,6 +45,12 @@ CFLAGS += -DUSE_GETHOSTBYADDR_R
 #CFLAGS += -DUSE_ARES
 
 #
+# On some machines, gethostbyaddr_r returns int; on others, struct hostent*.
+# Comment out this line if you are using one of the latter.
+#
+#CFLAGS += -DGETHOSTBYADD_R_RETURNS_INT
+
+#
 # Uncomment if you are using libresolv.
 #
 #LDLIBS += -lresolv # or /usr/lib/libresolv.a on Linux?
@@ -52,6 +63,11 @@ CFLAGS += -DUSE_GETHOSTBYADDR_R
 #CFLAGS += -I/software/include
 #LDFLAGS += -L/software/lib
 
+#
+# Solaris needs a library to make sockets go and lacks inet_aton.
+#
+LDLIBS += -lsocket -lnsl
+CFLAGS += -DFAKE_INET_ATON
 
 # PREFIX specifies the base directory for the installation.
 PREFIX = /usr/local
@@ -66,9 +82,8 @@ MANDIR = man
 
 # You shouldn't need to change anything below this point.
 CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
-LDFLAGS += -g -pthread
-LDLIBS += -lpcap -lcurses -lm
-
+LDFLAGS += -g #-pthread
+LDLIBS += -lpcap -l$(CURSES) -lm -lpthread
 
 SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c\
        options.c serv_hash.c threadprof.c edline.c screenfilter.c
@@ -82,6 +97,9 @@ OBJS = $(SRCS:.c=.o)
 
 iftop: $(OBJS) Makefile
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS) 
+
+integers.h: integers
+	./integers
 
 install: iftop
 	install -D iftop   $(PREFIX)/$(BINDIR)/iftop

@@ -1,13 +1,16 @@
 Installation instructions for iftop
 $Id$
 
-1. Modify any settings at the top of the Makefile. Look in particular at PREFIX
-   and MANDIR.
 
-2. Compile by typing make.
+iftop is now autoconf/automake-enabled. You should be able to build it on
+common platforms by typing `./configure && make'.
 
-3. Install by typing make install. You will probably want to do this step as
-   root.
+There is one gotcha, however, which is that some systems, such as FreeBSD,
+lack a working implementation of the gethostbyaddr_r(3) C library function. On
+such systems, you may want to use the --with-resolver=ares configure option to
+build a version of iftop which uses the ARES asynchronous DNS library for name
+resolution. An alternative is to use --with-resolver=netdb_1thread, which will
+make iftop run only one name resolution thread. This is not recommended.
 
-You can also use make uninstall to remove iftop and its manual page.
+For historical interest, the old iftop makefile is included in Makefile.OLD.
 
