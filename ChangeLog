@@ -1,7 +1,7 @@
 Change log for iftop
 $Id$
 
-0.13
+0.13 11/06/03
 
 * Fixed configure.in to properly specify libraries without the leading -l
 * Separated the IP/ethernet identifying routine from iftop.c into addrs_ioctl.c
