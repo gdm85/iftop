@@ -17,7 +17,7 @@ enum {
 } option_aggregate_t;
 
 typedef struct {
-    /* interface to listen on */
+    /* interface on which to listen */
     char *interface;
 
     /* pcap filter code */
