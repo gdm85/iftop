@@ -18,8 +18,8 @@ typedef enum {
 
 typedef enum {
   OPTION_PORTS_OFF,
-  OPTION_PORTS_AGGSRC,
-  OPTION_PORTS_AGGDEST,
+  OPTION_PORTS_SRC,
+  OPTION_PORTS_DEST,
   OPTION_PORTS_ON
 } option_port_t;
 

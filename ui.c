@@ -212,10 +212,10 @@ void analyse_data() {
         }
 
         /* Aggregate ports, if required */
-        if(options.showports == OPTION_PORTS_AGGSRC || options.showports == OPTION_PORTS_OFF) {
+        if(options.showports == OPTION_PORTS_DEST || options.showports == OPTION_PORTS_OFF) {
             ap.src_port = 0;
         }
-        if(options.showports == OPTION_PORTS_AGGDEST || options.showports == OPTION_PORTS_OFF) {
+        if(options.showports == OPTION_PORTS_SRC || options.showports == OPTION_PORTS_OFF) {
             ap.dst_port = 0;
         }
 
@@ -333,28 +333,28 @@ void ui_print() {
     //erase();
     move(0, 0);
     attron(A_REVERSE);
-    addstr(" Q ");
+    addstr(" q ");
     attroff(A_REVERSE);
     addstr(" quit ");
     attron(A_REVERSE);
-    addstr(" R ");
+    addstr(" r ");
     attroff(A_REVERSE);
     addstr(options.dnsresolution ? " resolver off "
                          : " resolver on  ");
     attron(A_REVERSE);
-    addstr(" B ");
+    addstr(" b ");
     attroff(A_REVERSE);
     addstr(options.showbars ? " bars off "
                          : " bars on  ");
 
     attron(A_REVERSE);
-    addstr(" S ");
+    addstr(" s ");
     attroff(A_REVERSE);
     addstr(options.aggregate == OPTION_AGGREGATE_SRC ? " aggregate off "
                          : " aggregate src ");
 
     attron(A_REVERSE);
-    addstr(" D ");
+    addstr(" d ");
     attroff(A_REVERSE);
     addstr(options.aggregate == OPTION_AGGREGATE_DEST ? " aggregate off  "
                          : " aggregate dest ");
@@ -466,36 +466,66 @@ void ui_loop() {
     extern sig_atomic_t foad;
     while(foad == 0) {
         int i;
-        i = toupper(getch());
+        i = getch();
         switch (i) {
-            case 'Q':
+            case 'q':
                 foad = 1;
                 break;
 
-            case 'R':
+            case 'r':
                 options.dnsresolution = !options.dnsresolution;
                 tick(1);
                 break;
 
-	        case 'B':
+	        case 'b':
                 options.showbars = !options.showbars; 
                 tick(1);
                 break;
 
-            case 'S':
+            case 's':
                 options.aggregate = 
                     (options.aggregate == OPTION_AGGREGATE_SRC) 
                     ? OPTION_AGGREGATE_OFF
                     : OPTION_AGGREGATE_SRC;
                 break;
 
-            case 'D':
+            case 'd':
                 options.aggregate = 
                     (options.aggregate == OPTION_AGGREGATE_DEST) 
                     ? OPTION_AGGREGATE_OFF
                     : OPTION_AGGREGATE_DEST;
                 break;
-            case 'P':
+            case 'S':
+                /* Show source ports */
+                if(options.showports == OPTION_PORTS_OFF) {
+                  options.showports = OPTION_PORTS_SRC;
+                }
+                else if(options.showports == OPTION_PORTS_DEST) {
+                  options.showports = OPTION_PORTS_ON;
+                }
+                else if(options.showports == OPTION_PORTS_ON) {
+                  options.showports = OPTION_PORTS_DEST;
+                }
+                else {
+                  options.showports = OPTION_PORTS_OFF;
+                }
+                break;
+            case 'D':
+                /* Show dest ports */
+                if(options.showports == OPTION_PORTS_OFF) {
+                  options.showports = OPTION_PORTS_DEST;
+                }
+                else if(options.showports == OPTION_PORTS_SRC) {
+                  options.showports = OPTION_PORTS_ON;
+                }
+                else if(options.showports == OPTION_PORTS_ON) {
+                  options.showports = OPTION_PORTS_SRC;
+                }
+                else {
+                  options.showports = OPTION_PORTS_OFF;
+                }
+                break;
+            case 'p':
                 options.showports = 
                   (options.showports == OPTION_PORTS_OFF)
                   ? OPTION_PORTS_ON

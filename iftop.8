@@ -58,6 +58,9 @@ Don't do hostname lookups. This setting may be altered at run time.
 Run in promiscuous mode, so that traffic which does not pass directly through
 the specified interface is also counted.
 .TP
+\fB-P\fP
+Turn on port display.
+.TP
 \fB-b\fP
 Don't display bar graphs of traffic. This setting may be altered at run time.
 .TP
@@ -128,6 +131,11 @@ By pressing \fBs\fP or \fBd\fP while \fBiftop\fP is running, all traffic
 for each source or destination will be aggregated together.  This is most
 useful when \fBiftop\fP is run in promiscuous mode, or is run on a gateway
 machine.
+
+.SH PORT DISPLAY
+
+\fBS\fP or \fBD\fP toggle the display of source and destination ports
+respectively.
 
 .SH SEE ALSO
 .BR tcpdump (8),
