@@ -15,6 +15,7 @@
 #include "iftop.h"
 #include "resolver.h"
 #include "sorted_list.h"
+#include "options.h"
 
 #define HOSTNAME_LENGTH 256
 
@@ -35,6 +36,8 @@ typedef struct host_pair_line_tag {
 extern hash_type* history;
 extern int history_pos;
 extern int history_len;
+
+extern options_t options ;
 
 void ui_finish();
 
@@ -136,8 +139,8 @@ void draw_totals(host_pair_line* totals) {
     draw_line_totals(y, totals);
 }
 
+extern history_type history_totals;
 
-int dnsresolution = 1;
 
 void ui_print() {
     hash_node_type* n = NULL;
@@ -150,7 +153,6 @@ void ui_print() {
     int i;
     sorted_list_type screen_list;
     host_pair_line totals;
-    history_type history_totals;
 
     if (!line || lcols != COLS) {
         xfree(line);
@@ -170,12 +172,11 @@ void ui_print() {
     attron(A_REVERSE);
     addstr(" R ");
     attroff(A_REVERSE);
-    addstr(dnsresolution ? " name resolution off "
+    addstr(options.dnsresolution ? " name resolution off "
                          : " name resolution on  ");
     draw_bar_scale();
 
     memset(&totals, 0, sizeof totals);
-    memset(&history_totals, 0, sizeof history_totals);
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;
@@ -195,34 +196,26 @@ void ui_print() {
             for(j = 0; j < HISTORY_DIVISIONS; j++) {
                 if(i < history_divs[j]) {
                     screen_line->recv[j] += d->recv[ii];
-                    totals.recv[j] += d->recv[ii];
-
                     screen_line->sent[j] += d->sent[ii];
-                    
-                    if(d->promisc == 1) {
-                      /* Treat all promisc traffic as incoming */
-                      totals.recv[j] += d->sent[ii];
-                    }
-                    else {
-                      totals.sent[j] += d->sent[ii];
-                    }
                 }
             }
 
-            history_totals.recv[ii] += d->recv[ii];
-            if(d->promisc == 1) {
-              /* Treat all promisc traffic as incoming */
-              history_totals.recv[ii] += d->sent[ii];
-            }
-            else {
-              history_totals.sent[ii] += d->sent[ii];
-            }
         }
 
         sorted_list_insert(&screen_list, screen_line);
     }
     
     for(i = 0; i < HISTORY_LENGTH; i++) {
+        int j;
+        int ii = (HISTORY_LENGTH + history_pos - i) % HISTORY_LENGTH;
+
+        for(j = 0; j < HISTORY_DIVISIONS; j++) {
+            if(i < history_divs[j]) {
+                totals.recv[j] += history_totals.recv[ii];
+                totals.sent[j] += history_totals.sent[ii];
+            }
+        }
+
         if(history_totals.recv[i] > peakrecv) {
             peakrecv = history_totals.recv[i];
         }
@@ -253,7 +246,7 @@ void ui_print() {
                 L = sizeof hostname;
             }
 
-            if (dnsresolution)
+            if (options.dnsresolution)
                 resolve(&screen_line->ap->src, hostname, L);
             else
                 strcpy(hostname, inet_ntoa(screen_line->ap->src));
@@ -265,7 +258,7 @@ void ui_print() {
             mvaddstr(y+1, x, " <= ");
 
             x += 4;
-            if (dnsresolution)
+            if (options.dnsresolution)
                 resolve(&screen_line->ap->dst, hostname, L);
             else
                 strcpy(hostname, inet_ntoa(screen_line->ap->dst));
@@ -348,7 +341,7 @@ void ui_loop() {
                 break;
 
             case 'R':
-                dnsresolution = !dnsresolution;
+                options.dnsresolution = !options.dnsresolution;
                 break;
         }
         tick();

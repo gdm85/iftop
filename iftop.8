@@ -31,6 +31,10 @@ in a confusing display. You may wish to suppress display of DNS traffic by
 using filter code such as \fBnot port domain\fP, or switch it off entirely,
 by using the \fB-d\fP option or by pressing \fBR\fP when the program is running.
 
+By default, \fBiftop\fP shows all IP packets that pass through the filter, and the direction of the packet is determined according to the direction the packet is moving across the interface.  Using the \fB-n\fP option it is possible to get \fBiftop\fP to show packets entering and leaving a given network.  For example, \fBiftop -n 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and out of the 10.* network.
+
+\fBiftop\fP must be run as root.
+
 Some other filter ideas:
 .TP
 \fBnot ether host ff:ff:ff:ff:ff:ff\fP
@@ -42,6 +46,7 @@ Count web traffic only, unless it is being directed through a local web cache.
 \fBicmp\fP
 How much bandwith are users wasting trying to figure out why the network is
 slow?
+
 
 .SH OPTIONS
 
@@ -62,7 +67,11 @@ Listen to packets on \fIinterface\fP.
 \fB-f\fP \fIfilter code\fP
 Use \fIfilter code\fP to select the packets to count. Only IP packets are ever
 counted, so the specified code is evaluated as \fB(\fP\fIfilter code\fP\fB) and ip\fP.
-
+.TP
+\fB-n\fP \fInet/mask\fP
+Specifies a network for traffic analysis.  If specified, iftop will only
+include packets flowing in to or out of the given network, and packet direction
+is determined relative to the network boundary, rather than to the interface.
 .SH SEE ALSO
 .BR tcpdump (8),
 .BR pcap (3),

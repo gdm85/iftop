@@ -32,8 +32,9 @@ CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
 LDFLAGS += -g 
 LDLIBS += -lpcap -lpthread -lcurses -lm
 
-SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c
-HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h
+SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c\
+       options.c
+HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h options.h
 TXTS = README CHANGES INSTALL TODO iftop.8 COPYING
 
 OBJS = $(SRCS:.c=.o)

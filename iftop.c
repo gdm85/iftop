@@ -15,28 +15,24 @@
 #include <curses.h>
 #include <signal.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "iftop.h"
 #include "addr_hash.h"
 #include "resolver.h"
 #include "ui.h"
+#include "options.h"
 
-/* Global options. */
-char *interface = "eth0";
-char *filtercode = NULL;
 
 unsigned char if_hw_addr[6];    /* ethernet address of interface. */
 
+extern options_t options;
+
 hash_type* history;
+history_type history_totals;
 time_t last_timestamp;
 int history_pos = 0;
 int history_len = 1;
 pthread_mutex_t tick_mutex;
-
-/* Open non-promiscuous by default since this is intended to be run on a
- * router. */
-int promiscuous = 0;
 
 sig_atomic_t foad;
 
@@ -52,6 +48,7 @@ static void finish(int sig) {
 void init_history() {
     history = addr_hash_create();
     last_timestamp = time(NULL);
+    memset(&history_totals, 0, sizeof history_totals);
 }
 
 history_type* history_create() {
@@ -72,7 +69,7 @@ void history_rotate() {
         if(d->last_write == history_pos) {
             addr_pair key = *(addr_pair*)(n->key);
             hash_delete(history, &key);
-	    free(d);
+            free(d);
         }
         else {
             d->recv[history_pos] = 0;
@@ -80,6 +77,10 @@ void history_rotate() {
         }
         n = next; 
     }
+
+    history_totals.sent[history_pos] = 0;
+    history_totals.recv[history_pos] = 0;
+
     if(history_len < HISTORY_LENGTH) {
         history_len++;
     }
@@ -102,52 +103,81 @@ void tick() {
     pthread_mutex_unlock(&tick_mutex);
 }
 
+int in_filter_net(struct in_addr addr) {
+    int ret;
+    ret = ((addr.s_addr & options.netfiltermask.s_addr) == options.netfilternet.s_addr);
+    return ret;
+}
+
 static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const char* packet)
 {
     struct ether_header *eptr;
+    int direction = 0; /* incoming */
     eptr = (struct ether_header*)packet;
-	
+       
     tick();
     
     if(ntohs(eptr->ether_type) == ETHERTYPE_IP) {
         struct ip* iptr;
         history_type* ht;
         addr_pair ap;
-	int promisc = 0;
 
         iptr = (struct ip*)(packet + sizeof(struct ether_header)); /* alignment? */
+        if(options.netfilter == 0) { 
+            /*
+             * Net filter is off, so assign direction based on MAC address
+             */
 
-        if(memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
-            /* Packet leaving this interface. */
-            ap.src = iptr->ip_src;
-            ap.dst = iptr->ip_dst;
-        } 
-        else if(memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
-            ap.src = iptr->ip_dst;
-            ap.dst = iptr->ip_src;
-        }
-	/*
-	 * This packet is not from or to this interface.  Therefore assume
-	 * it was picked up in promisc mode.
-	 */
-        else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
-            ap.src = iptr->ip_src;
-            ap.dst = iptr->ip_dst;
-	    promisc = 1;
+            if(memcmp(eptr->ether_shost, if_hw_addr, 6) == 0 ) {
+                /* Packet leaving this interface. */
+                ap.src = iptr->ip_src;
+                ap.dst = iptr->ip_dst;
+                direction = 1;
+            } 
+            else if(memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
+                ap.src = iptr->ip_dst;
+                ap.dst = iptr->ip_src;
+            }
+           /*
+            * This packet is not from or to this interface.  Therefore assume
+            * it was picked up in promisc mode, and account it as incoming.
+            */
+            else if(iptr->ip_src.s_addr < iptr->ip_dst.s_addr) {
+                ap.src = iptr->ip_src;
+                ap.dst = iptr->ip_dst;
+            }
+            else {
+                ap.src = iptr->ip_dst;
+                ap.dst = iptr->ip_src;
+            }
         }
         else {
-            ap.src = iptr->ip_dst;
-            ap.dst = iptr->ip_src;
-	    promisc = 1;
+            /* 
+             * Net filter on, assign direction according to netmask 
+             */ 
+            if(in_filter_net(iptr->ip_src) & !in_filter_net(iptr->ip_dst)) {
+                /* out of network */
+                ap.src = iptr->ip_src;
+                ap.dst = iptr->ip_dst;
+                direction = 1;
+            }
+            else if(in_filter_net(iptr->ip_dst) & !in_filter_net(iptr->ip_src)) {
+                /* into network */
+                ap.src = iptr->ip_dst;
+                ap.dst = iptr->ip_src;
+            }
+            else {
+                /* drop packet */
+                return ;
+            }
         }
 
-
-	/* Add the address to be resolved */
+        /* Add the addresses to be resolved */
         resolve(&iptr->ip_dst, NULL, 0);
+        resolve(&iptr->ip_src, NULL, 0);
 
         if(hash_find(history, &ap, (void**)&ht) == HASH_STATUS_KEY_NOT_FOUND) {
             ht = history_create();
-	    ht->promisc = promisc;
             hash_insert(history, &ap, ht);
         }
 
@@ -158,6 +188,14 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
         }
         else {
             ht->recv[history_pos] += ntohs(iptr->ip_len);
+        }
+
+        if(direction == 0) {
+            /* incoming */
+            history_totals.recv[history_pos] += ntohs(iptr->ip_len);
+        }
+        else {
+            history_totals.sent[history_pos] += ntohs(iptr->ip_len);
         }
 
     }
@@ -181,7 +219,7 @@ void packet_loop(void* ptr) {
         foad = 1;
         return;
     }
-    strncpy(ifr.ifr_name, interface, IFNAMSIZ);
+    strncpy(ifr.ifr_name, options.interface, IFNAMSIZ);
     ifr.ifr_hwaddr.sa_family = AF_UNSPEC;
     if (ioctl(s, SIOCGIFHWADDR, &ifr) == -1) {
         perror("ioctl(SIOCGIFHWADDR)");
@@ -197,15 +235,15 @@ void packet_loop(void* ptr) {
     
     resolver_initialise();
 
-    pd = pcap_open_live(interface, CAPTURE_LENGTH, promiscuous, 1000, errbuf);
+    pd = pcap_open_live(options.interface, CAPTURE_LENGTH, options.promiscuous, 1000, errbuf);
     if(pd == NULL) { 
-        fprintf(stderr, "pcap_open_live(%s): %s\n", interface, errbuf); 
+        fprintf(stderr, "pcap_open_live(%s): %s\n", options.interface, errbuf); 
         foad = 1;
         return;
     }
-    if (filtercode) {
-        str = xmalloc(strlen(filtercode) + sizeof "() and ip");
-        sprintf(str, "(%s) and ip", filtercode);
+    if (options.filtercode) {
+        str = xmalloc(strlen(options.filtercode) + sizeof "() and ip");
+        sprintf(str, "(%s) and ip", options.filtercode);
     }
     if (pcap_compile(pd, &F, str, 1, 0) == -1) {
         fprintf(stderr, "pcap_compile(%s): %s\n", str, pcap_geterr(pd));
@@ -217,76 +255,21 @@ void packet_loop(void* ptr) {
         foad = 1;
         return;
     }
-    if (filtercode)
+    if (options.filtercode)
         xfree(str);
     printf("Begin loop\n");
     pcap_loop(pd,0,(pcap_handler)handle_packet,NULL);
     printf("end loop\n");
 }
 
-/* usage:
- * Print usage information. */
-void usage(FILE *fp) {
-    fprintf(fp,
-"iftop: display bandwidth usage on an interface by host\n"
-"\n"
-"Synopsis: iftop -h | [-d] [-p] [-i interface] [-f filter code]\n"
-"\n"
-"   -h                  display this message\n"
-"   -d                  don't do hostname lookups\n"
-"   -p                  run in promiscuous mode (show traffic between other\n"
-"                       hosts on the same network segment)\n"
-"   -i interface        listen on named interface (default: eth0)\n"
-"   -f filter code      use filter code to select packets to count\n"
-"                       (default: none, but only IP packets are counted)\n"
-"\n"
-"iftop, version " IFTOP_VERSION "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com>\n"
-            );
-}
 
 /* main:
  * Entry point. See usage(). */
-char optstr[] = "+i:f:dhp";
 int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {0};
-    extern int dnsresolution;   /* in ui.c */
-    int opt;
 
-    opterr = 0;
-    while ((opt = getopt(argc, argv, optstr)) != -1) {
-        switch (opt) {
-            case 'h':
-                usage(stdout);
-                return 0;
-
-            case 'd':
-                dnsresolution = 0;
-                break;
-
-            case 'i':
-                interface = optarg;
-                break;
-
-            case 'f':
-                filtercode = optarg;
-                break;
-
-            case 'p':
-                promiscuous = 1;
-                break;
-
-            case '?':
-                fprintf(stderr, "iftop: unknown option -%c\n", optopt);
-                usage(stderr);
-                return 1;
-
-            case ':':
-                fprintf(stderr, "iftop: option -%c requires an argument\n", optopt);
-                usage(stderr);
-                return 1;
-        }
-    }
+    options_read(argc, argv);
     
     sa.sa_handler = finish;
     sigaction(SIGINT, &sa, NULL);

@@ -12,9 +12,6 @@ $Id$
 
 * Aggregate traffic by source host / dest host rather than just by host pair.
 
-* For promiscuous mode, give a way to define which packets are regarded as
-  `inside' and which `outside' the network.
-
 * Cummulative byte counters.
 
 * Configurable sort criteria.

@@ -74,19 +74,14 @@ void resolver_worker(void* ptr) {
             /*  Check for errors.  */
             if (res || hp == NULL) {
                 /* failed */
-                //printf("[ Did not resolve %s ]\n", inet_ntoa(addr));
                 /* Leave the unresolved IP in the hash */
             }
             else {
                 /* success */
                 char* hostname;
-                //printf("[ Resolved: %s ]\n", hp->h_name);
                 if(hash_find(ns_hash, &addr, (void**)&hostname) == HASH_STATUS_OK) {
                     hash_delete(ns_hash, &addr);
                     xfree(hostname);
-                }
-                else {
-                    //printf("[ Warning: Could not find hash entry for key: %s ]\n", inet_ntoa(addr));
                 }
                 hostname = strdup(hp->h_name);
                 hash_insert(ns_hash, &addr, (void*)hostname);
