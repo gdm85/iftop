@@ -317,7 +317,7 @@ static void handle_llc_packet(const struct llc* llc, int dir) {
               handle_ip_packet(ip, dir);
             }
             break;
-          default:
+          default:;
             /* Not a lot we can do */
         }
     }
