@@ -49,13 +49,13 @@ slow?
 
 When running, \fBiftop\fP uses the whole screen to display network usage. At
 the top of the display is a reminder of keys which control \fBiftop\fP in
-operation. Below that is a logarithmic scale for the `bar chart' visual display
-of traffic.
+operation. Below that is a logarithmic scale for the bar graph which gives a
+visual indication of traffic.
 
 The main part of the display lists, for each pair of hosts, the rate at which
 data has been sent and received over the preceding 2, 10 and 40 second
-intervals. The direction of data flow is indicated by arrows, <= and =>. In
-addition, a simple bar graph shows the 10s average. For instance,
+intervals. The direction of data flow is indicated by arrows, <= and =>. For
+instance,
 .nf
 
 foo.example.com  =>  bar.example.com      1K   500b   100b
@@ -67,8 +67,8 @@ shows, on the first line, traffic from \fBfoo.example.com\fP to
 \fBbar.example.com\fP; in the preceding 2 seconds, this averaged 1Kbit/s,
 around half that amount over the preceding 10s, and a fifth of that over the
 whole of the last 40s. During each of those intervals, the data sent in the
-other direction was about 2Mbin/s. On the actual display, part of each line
-would be inverted to give a visual indication of the 10s average of traffic.
+other direction was about 2Mbit/s. On the actual display, part of each line
+is inverted to give a visual indication of the 10s average of traffic.
 You might expect to see something like this where host \fBfoo\fP is making
 repeated HTTP requests to \fBbar\fP, which is sending data back which saturates
 a 2Mbit/s link.
@@ -87,10 +87,10 @@ total:  3.1K    TX: 0.3M  peaks:  64b totals:  64b    30b   10b
 The first column of numbers shows the total rate of received plus transmitted
 traffic over the last 2s, and its peak value over the past 40s. The next column
 shows the total amount of traffic observed during this session,
-\fIin bytes, not bits\fP.  The next column shows the peaks in received and transmitted
-traffic, and the remaining colums show the 2, 10 and 40 second averages. As
-with the per-host displays, the top line shows transmitted and the bottom line
-received traffic.
+\fIin bytes, not bits\fP.  The next column shows the peaks in received and
+transmitted traffic, and the remaining colums show the 2, 10 and 40 second
+averages. As with the per-host displays, the top line shows transmitted and the
+bottom line received traffic.
 
 .SH OPTIONS
 
