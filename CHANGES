@@ -9,6 +9,7 @@ Minor fix to netmask handling (specifying /32 was broken)
 Updated RPM spec file 
     Iain Lea <iain@bricbrac.de>
 Added pause functionality (P)
+Changed behaviour of source/dest traffic aggregation
 
 0.7 02/10/02
 
