@@ -28,13 +28,13 @@ MANDIR = man
 
 # You shouldn't need to change anything below this point.
 VERSION = 0.1
-CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(IFTOPVERSION)\""
+CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
 LDFLAGS += -g 
 LDLIBS += -lpcap -lpthread -lcurses -lm
 
 SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c
 HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h
-TXTS = README INSTALL TODO iftop.8
+TXTS = README CHANGES INSTALL TODO iftop.8
 
 OBJS = $(SRCS:.c=.o)
 

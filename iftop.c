@@ -240,7 +240,7 @@ void usage(FILE *fp) {
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
 "\n"
-"iftop, $Id$\n"
+"iftop, version " IFTOP_VERSION "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com>\n"
             );
 }
 
