@@ -44,12 +44,14 @@ hash_status_enum hash_delete(hash_type* hash_table, void* key) {
     if (!p) return HASH_STATUS_KEY_NOT_FOUND;
 
     /* p designates node to delete, remove it from list */
-    if (p0)
+    if (p0) {
         /* not first node, p0 points to previous node */
         p0->next = p->next;
-    else
+    }
+    else {
         /* first node on chain */
         hash_table->table[bucket] = p->next;
+    }
 
     hash_table->delete_key(p->key);
     free (p);
@@ -62,9 +64,13 @@ hash_status_enum hash_find(hash_type* hash_table, void* key, void **rec) {
    /*******************************
     *  find node containing data  *
     *******************************/
-    p = hash_table->table[hash_table->hash(key)];
-    while (p && !hash_table->compare(p->key, key)) 
+    int bucket = hash_table->hash(key);
+
+    p = hash_table->table[bucket];
+
+    while (p && !hash_table->compare(p->key, key))  {
         p = p->next;
+    }
     if (!p) return HASH_STATUS_KEY_NOT_FOUND;
     *rec = p->rec;
     return HASH_STATUS_OK;

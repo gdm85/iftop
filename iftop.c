@@ -96,13 +96,13 @@ void tick(int print) {
     t = time(NULL);
     if(t - last_timestamp >= RESOLUTION) {
         //printf("TICKING\n");
-	analyse_data();
+        analyse_data();
         ui_print();
         history_rotate();
         last_timestamp = t;
     }
     else if(print) {
-	ui_print();
+        ui_print();
     }
 
     pthread_mutex_unlock(&tick_mutex);
@@ -187,7 +187,7 @@ static void handle_packet(char* args, const struct pcap_pkthdr* pkthdr,const cha
             hash_insert(history, &ap, ht);
         }
 
-	len = ntohs(iptr->ip_len);
+        len = ntohs(iptr->ip_len);
 
         /* Update record */
         ht->last_write = history_pos;

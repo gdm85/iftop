@@ -28,7 +28,7 @@ int hash(void* key) {
             + (addr & 0xFF000000 >> 24)) % 0xFF;
 
     addr = (long)ap->dst.s_addr;
-    hash += ((addr & 0x000000FF)
+    hash = ( hash + (addr & 0x000000FF)
             + (addr & 0x0000FF00 >> 8)
             + (addr & 0x00FF0000 >> 16)
             + (addr & 0xFF000000 >> 24)) % 0xFF;
