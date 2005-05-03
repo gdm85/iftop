@@ -18,6 +18,12 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
+#if defined __FreeBSD__ || defined __OpenBSD__
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <net/if_dl.h>
+#endif
+
 #include "iftop.h"
 
 /*
@@ -65,7 +71,41 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
     got_hw_addr = 1;
   }
 #else
+#if defined __FreeBSD__ || defined __OpenBSD__
+  {
+    int sysctlparam[6] = {CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST, 0};
+    int needed = 0;
+    char *buf = NULL;
+    struct if_msghdr *msghdr = NULL;
+    sysctlparam[5] = if_nametoindex(interface);
+    if (sysctlparam[5] == 0) {
+      fprintf(stderr, "Error getting hardware address for interface: %s\n", interface);
+      goto ENDHWADDR;
+    }
+    if (sysctl(sysctlparam, 6, NULL, &needed, NULL, 0) < 0) {
+      fprintf(stderr, "Error getting hardware address for interface: %s\n", interface);
+      goto ENDHWADDR;
+    }
+    if ((buf = malloc(needed)) == NULL) {
+      fprintf(stderr, "Error getting hardware address for interface: %s\n", interface);
+      goto ENDHWADDR;
+    }
+    if (sysctl(sysctlparam, 6, buf, &needed, NULL, 0) < 0) {
+      fprintf(stderr, "Error getting hardware address for interface: %s\n", interface);
+      free(buf);
+      goto ENDHWADDR;
+    }
+    msghdr = (struct if_msghdr *) buf;
+    memcpy(if_hw_addr, LLADDR((struct sockaddr_dl *)(buf + sizeof(struct if_msghdr) - sizeof(struct if_data) + sizeof(struct if_data))), 6);
+    free(buf);
+    got_hw_addr = 1;
+
+  ENDHWADDR:
+    1; /* compiler whines if there is a label at the end of a block...*/
+  }
+#else
   fprintf(stderr, "Cannot obtain hardware address on this platform\n");
+#endif
 #endif
   
   /* Get the IP address of the interface */
