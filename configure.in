@@ -9,7 +9,15 @@ dnl     -- Chris Lightfoot
 dnl
 dnl $Id$
 dnl
-
+dnl To regenerate everything from source, do:
+dnl    autoheader
+dnl    aclocal
+dnl    automake
+dnl    autoconf
+dnl Now you should have good sources to make into a tarball and distribute.
+dnl    ./configure     (perhaps with some arguments)
+dnl    make
+dnl Tested with Automake 1.4 and autoconf 2.59.
 dnl
 dnl Boilerplate configuration
 dnl
@@ -34,15 +42,23 @@ dnl Options to configure.
 dnl
 
 AC_ARG_WITH(resolver,
-    [  --with-resolver=TYPE    Technique iftop should use for name resolution. Valid
-                          options are netdb, netdb_1thread (for systems without
-                          working gethostbyaddr_r), ares for the MIT ARES
-                          asynchronous resolver library, forking for the REALLY
-                          SUCKY forking resolver, or none if you don't need any
-                          name resolution.
-                          [default=netdb]],
+    [  --with-resolver=TYPE    Technique iftop should use for name resolution.  
+                          Valid options are:
+			  netdb          use gethostbyaddr_r in multiple
+			                 threads.
+			  netdb_1thread  use gethostbyaddr_r and
+					 assume it is not reentrant.
+			  ares           use the MIT ARES asynchronous
+					 resolver library.
+			  forking        use the REALLY SUCKY forking resolver.
+			  guess          run experiments to guess a
+					 reasonable value.  Only works if you
+					 aren't cross-compiling.  This
+					 is the default.  guess will
+					 either select netdb or netdb_1thread.
+			  none           don't do name resolution.],
     [resolver=$withval],
-    [resolver=netdb])
+    [resolver=guess])
 
 AC_ARG_WITH(libpcap,
     [  --with-libpcap=WHERE    Where the libpcap packet-capture library is found.
@@ -151,7 +167,12 @@ dnl
 dnl First, the default resolver, which uses getnameinfo or gethostbyaddr_r. If
 dnl not available, we fall back to gethostbyaddr. We could fall back to ARES,
 dnl but that's probably not available on typical machines.
-if test x$resolver = xnetdb ; then
+
+dnl If we've been asked to guess, remember that fact in specified_resolver.
+dnl From this point on, resolver is our preferred resolver given the
+dnl experiments we've done so far, or "guess" if we have no idea.
+specified_resolver=$resolver
+if test x$specified_resolver = xguess ; then
     dnl Best possibility is getnameinfo.
     use_getnameinfo=0
     AC_SEARCH_LIBS(getnameinfo, [nsl], [use_getnameinfo=1])
@@ -164,75 +185,101 @@ if test x$resolver = xnetdb ; then
         dnl Done.
         AC_DEFINE(USE_GETNAMEINFO, 1, [use getnameinfo for name resolution])
     else
-        dnl Now see if we can use gethostbyaddr_r.
-        AC_SEARCH_LIBS(gethostbyaddr_r, [nsl], , [resolver=forking])
+	dnl Best hope is netdb, which presently means gethostbyaddr_r.
+	resolver=netdb
+    fi
+fi
 
-        dnl Still want gethostbyaddr_r....
-        if test x$resolver = xnetdb ; then
-            dnl Figure out whether we have glibc-style or Solaris-style
-            dnl gethostbyaddr_r (or neither...).
-            AC_MSG_CHECKING([how to call gethostbyaddr_r]);
-            
-            AC_TRY_RUN([`cat config/int_ghba_r.c`], [
-                    dnl 8-arg, int
-                    AC_MSG_RESULT([8 args, int return])
-                    AC_DEFINE(GETHOSTBYADDR_R_RETURNS_INT, 1,
-                        [8-argument gethostbyaddr_r returns int])
-                ], [
-                    AC_TRY_RUN([`cat config/hostentp_ghba_r.c`], [
-                            dnl 7-arg, struct hostent*
-                            AC_MSG_RESULT([7 args, struct hostent* return])
-                            AC_DEFINE(GETHOSTBYADDR_R_RETURNS_HOSTENT_P, 1,
-                                [7-argument gethostbyaddr_r returns struct hostent*])
-                        ], [
-                            dnl neither
-                            AC_MSG_RESULT([no idea; dropping back to the forking resolver])
-                            resolver=forking
-                        ])
-                ])
+if test x$resolver = xnetdb ; then
+    dnl Can use gethostbyaddr_r?
+    AC_SEARCH_LIBS(gethostbyaddr_r, [nsl], , [resolver=guess])
+    if test x$resolver = xguess && test x$specified_resolver != xguess ; then
+       dnl They wanted gethostbyaddr_r, but they can't have it, so stop.
+       AC_MSG_ERROR([no library defines gethostbyaddr_r])
+    fi
+fi
 
-            dnl Found a gethostbyaddr_r we know how to use and which seems to
-            dnl work.
-            if test x$resolver = xnetdb ; then
-                AC_DEFINE(USE_GETHOSTBYADDR_R, 1, [use gethostbyaddr_r for name resolution])
-            fi
+dnl We still might do gethostbyaddr_r.  Figure out whether we have
+dnl glibc-style or Solaris-style gethostbyaddr_r (or neither...).
+dnl Separate determining how to call gethostbyaddr_r from testing
+dnl whether it works so we can support cross-compilation.            
+if test x$resolver = xnetdb ; then
+    AC_MSG_CHECKING([how to call gethostbyaddr_r])
+    dnl Try 7 arguments returning a struct hostent*.
+    AC_LINK_IFELSE(AC_LANG_SOURCE([`cat config/hostentp_ghba_r.c`]),
+                   [AC_MSG_RESULT([7 args])
+		    ghba_args=8
+	            AC_DEFINE(GETHOSTBYADDR_R_RETURNS_HOSTENT_P, 1,
+                    [7-argument gethostbyaddr_r returns struct hostent*])], [
+    dnl Try 8 arguments returning an int.
+    AC_LINK_IFELSE(AC_LANG_SOURCE([`cat config/int_ghba_r.c`]),
+                   [AC_MSG_RESULT([8 args, int return])
+		    ghba_args=8
+	            AC_DEFINE(GETHOSTBYADDR_R_RETURNS_INT, 1,
+                    [8-argument gethostbyaddr_r returns int])], [
+    dnl Neither.
+    AC_MSG_RESULT([don't know how])
+    resolver=guess])])
+    if test x$resolver = xguess && test x$specified_resolver != xguess ; then
+       dnl They wanted gethostbyaddr_r, but they can't have it, so stop.
+       AC_MSG_ERROR([gethostbyaddr_r has no known calling convention])
+    fi
+fi
+
+dnl If we still want to do gethostbyaddr_r, and we aren't
+dnl cross-compiling, test it.
+if test x$resolver = xnetdb ; then
+    if test x$ghba_args = x8 ; then
+       testfile=int_ghba_r
+    else
+       testfile=hostentp_ghba_r
+    fi
+    AC_MSG_CHECKING(gethostbyaddr_r usability)
+    AC_RUN_IFELSE([`cat config/$testfile.c`],
+                  [AC_MSG_RESULT([yes])],
+		  [AC_MSG_RESULT([no])
+		   resolver=guess],
+		  [AC_MSG_RESULT([can't test because we are cross-compiling])])
+    if test x$resolver = xguess ; then
+        if test x$specified_resolver = xguess ; then
+           AC_MSG_RESULT([gethostbyaddr_r doesn't work, so we'll try something else])
+        else
+           dnl They wanted gethostbyaddr_r, but it doesn't work, so stop.
+           AC_MSG_ERROR([gethostbyaddr_r doesn't work])
         fi
     fi
 fi
 
-dnl If we've been told to use ARES, then see if it's available. If it isn't,
-dnl fall back to gethostbyaddr, since we can probably assume that if the
-dnl machine had a working gethostbyaddr_r, the user wouldn't be pissing about
-dnl with ARES.
+dnl We found a gethostbyaddr_r we know how to use and which seems to
+dnl work.
+if test x$resolver = xnetdb ; then
+    AC_DEFINE(USE_GETHOSTBYADDR_R, 1, [use gethostbyaddr_r for name resolution])
+fi
+
+dnl They may have asked for ares.
 if test x$resolver = xares ; then
     dnl See if ares is to hand....
     AC_SEARCH_LIBS(ares_init, [ares], [
         AC_DEFINE(USE_ARES, 1, [use ARES for name resolution])
         ], [
-        dnl no ares
-        AC_MSG_RESULT([can't find ARES; dropping back to the forking resolver])
-        resolver=forking])
+        dnl They asked for ares, but we can't give it to them, so stop.
+        AC_MSG_ERROR([can't find ARES.  Re-run configure and ask for a different resolver.])])
 fi
 
+dnl Last thing to try if we haven't decided yet is netdb_1thread.
+if test x$resolver = xguess ; then
+   resolver=netdb_1thread
+fi
 
 dnl Ugh. Both the single-threaded and the forking resolvers use gethostbyaddr.
 if test x$resolver = xnetdb_1thread || test x$resolver = xforking ; then
     AC_SEARCH_LIBS(gethostbyaddr, [nsl], , [
-        AC_MSG_ERROR([not even gethostbyaddr is available
-  What sort of UNIX system is this, anyway?
-  
-  You will have to recompile with no name resolution at all.
-])
-
-        ]
-        )
+        AC_MSG_ERROR([gethostbyaddr is not available.  You will have to 
+  recompile with no name resolution at all.])])
 
     if test x$resolver = xnetdb_1thread ; then
-        dnl Oh dear, just use gethostbyaddr; but whine about it
-    
         AC_MSG_WARN([using single-threaded resolver with gethostbyaddr
   Consider obtaining ARES or a machine with a working gethostbyaddr_r.])
-
         AC_DEFINE(USE_GETHOSTBYADDR, 1, [use gethostbyaddr for name resolution])
     else
         AC_DEFINE(USE_FORKING_RESOLVER, 1, [use a REALLY SUCKY forking resolver for name resolution])
@@ -332,7 +379,7 @@ dnl POSIX threads. Different systems like different combinations of flags,
 dnl libraries, etc. We use a test program to figure this stuff out.
 dnl
 
-AC_MSG_CHECKING([how to compile a working program with POSIX threads])
+AC_MSG_CHECKING([POSIX threads compilation])
 thrfail=1
 oldCFLAGS=$CFLAGS
 oldLIBS=$LIBS
@@ -340,7 +387,7 @@ for flag in "" -mt -pthread -thread ; do
     CFLAGS="$oldCFLAGS $flag"
     for lib in "" -lpthread "-lpthread -lposix4" ; do
         LIBS="$oldLIBS $lib"
-        AC_TRY_RUN([`cat config/pthread.c`], [
+        AC_LINK_IFELSE(AC_LANG_SOURCE([`cat config/pthread.c`]), [
             foundthrlib=$lib
             foundthrflag=$flag
             thrfail=0
@@ -356,9 +403,15 @@ if test $thrfail = 1 ; then
     AC_MSG_RESULT([no idea])
     AC_MSG_ERROR([can't figure out how to compile with POSIX threads
   If your system actually supports POSIX threads, this means we've messed up.])
-else
-    AC_MSG_RESULT([$foundthrflag $foundthrlib])
 fi
+
+AC_MSG_RESULT([CFLAGS=$foundthrflag and LIBS=$foundthrlib])
+AC_MSG_CHECKING([POSIX threads usability])
+AC_RUN_IFELSE([`cat config/pthread.c`],
+	      [AC_MSG_RESULT([yes])],
+              [AC_MSG_ERROR(
+	       [it fails.  We probably guessed the wrong CFLAGS.])],
+	      [AC_MSG_RESULT([can't test because we are cross-compiling])])
 
 dnl
 dnl Are we on a system (like Solaris) that requires promiscuous mode in order to
@@ -374,7 +427,8 @@ solaris*) enable_default_promiscuous="yes" ;;
 esac
 
 AC_ARG_ENABLE(default-promiscuous,
-	[--enable-default-promiscuous If enabled, iftop will operate in promiscuous mode to capture outgoing packets])
+	[  --enable-default-promiscuous If enabled, iftop will operate in promiscuous mode 
+                          to capture outgoing packets])
 
 AC_MSG_RESULT([$enable_default_promiscuous])
 

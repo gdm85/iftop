@@ -1045,6 +1045,7 @@ void ui_loop() {
                 break;
             }
             case '!': {
+#ifndef NO_SYSTEM
                 char *s;
                 dontshowdisplay = 1;
                 if ((s = edline(0, "Command", "")) && s[strspn(s, " \t")]) {
@@ -1073,6 +1074,9 @@ void ui_loop() {
                     xfree(s);
                 }
                 dontshowdisplay = 0;
+#else
+                showhelp("Sorry, subshells have been disabled.");
+#endif
                 break;
             }
             case 'T':
