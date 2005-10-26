@@ -19,7 +19,7 @@ int serv_hash_compare(void* a, void* b) {
 
 int serv_hash_hash(void* key) {
     ip_service* serv = (ip_service*)key;
-    return serv->protocol;
+    return serv->protocol % hash_table_size;
 }
 
 void* serv_hash_copy_key(void* orig) {
