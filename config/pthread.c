@@ -40,7 +40,7 @@ int main(void) {
     struct timespec deadline = {0};
     if ((res = pthread_mutex_lock(&mtx)) != 0
         || (res = pthread_create(&thr, NULL, worker_thread, NULL)) != 0) {
-        fprintf(stderr, "%s\n", strerror(res));   
+        fprintf(stderr, "%s\n", strerror(res));
         return -1;
     }
 
