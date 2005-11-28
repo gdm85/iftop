@@ -314,7 +314,7 @@ char *do_resolve(struct in_addr *addr) {
     if (!workerinfo) {
         int p[2];
 
-        if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, p) == -1)
+        if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, p) == -1)
             return NULL;
 
         workerinfo = xmalloc(sizeof *workerinfo);
@@ -341,7 +341,7 @@ char *do_resolve(struct in_addr *addr) {
         || read(workerinfo->fd, name, NAMESIZE) != NAMESIZE) {
         /* Something went wrong. Just kill the child and get on with it. */
         kill(workerinfo->child, SIGKILL);
-        wait();
+        wait(NULL);
         close(workerinfo->fd);
         xfree(workerinfo);
         pthread_setspecific(worker_key, NULL);
