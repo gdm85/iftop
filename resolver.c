@@ -13,6 +13,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "ns_hash.h"
 #include "iftop.h"
