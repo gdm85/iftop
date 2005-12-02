@@ -46,7 +46,7 @@ extern options_t options ;
 
 int is_cfgdirective_valid(const char *s) {
     char **t;
-    for (t = config_directives; t != NULL; ++t)
+    for (t = config_directives; *t != NULL; ++t)
         if (strcmp(s, *t) == 0) return 1;
     return 0;
 }
