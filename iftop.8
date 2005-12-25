@@ -29,9 +29,9 @@ by using the \fB-n\fP option or by pressing \fBR\fP when the program is running.
 
 By default, \fBiftop\fP counts all IP packets that pass through the filter, and
 the direction of the packet is determined according to the direction the packet
-is moving across the interface.  Using the \fB-N\fP option it is possible to
+is moving across the interface.  Using the \fB-F\fP option it is possible to
 get \fBiftop\fP to show packets entering and leaving a given network.  For
-example, \fBiftop -N 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and
+example, \fBiftop -F 10.0.0.0/255.0.0.0\fP will analyse packets flowing in and
 out of the 10.* network.
 
 Some other filter ideas:
@@ -87,7 +87,7 @@ single number specifying the number of bits set in the netmask, such as /24.
 .TP
 \fB-c\fP \fIconfig file\fP
 Specifies an alternate config file.  If not specified, iftop will use
-\fB~/.iftopc\fP if it exists.  See below for a description of config files
+\fB~/.iftoprc\fP if it exists.  See below for a description of config files
 
 .SH DISPLAY
 
@@ -257,12 +257,12 @@ frozen.  In this case some captured information is not being shown to
 you, but is included in the totals.
 
 A more subtle explanation comes about when running in promiscuous mode
-without specifying a \fB-N\fP option.  In this case there is no easy way
+without specifying a \fB-F\fP option.  In this case there is no easy way
 to assign the direction of traffic between two third parties.  For the purposes
 of the main display this is done in an arbitrary fashion (by ordering of IP
 addresses), but for the sake of totals all traffic between other hosts is
 accounted as incoming, because that's what it is from the point of view of your
-interface.  The \fB-N\fP option allows you to specify an arbitrary network
+interface.  The \fB-F\fP option allows you to specify an arbitrary network
 boundary, and to show traffic flowing across it.
 
 \fBPeak totals don't add up\fP
