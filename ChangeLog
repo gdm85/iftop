@@ -5,8 +5,28 @@ Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
 0.17
-* Fixed segfault bug in config file handling.
 * Added support for ppp interfaces on FreeBSD (and others using DLT_PPP)
+
+* Fixed segfault bug in config file handling.
+* Fixes to man page
+    William Robinet <william.robinet@conostix.com>
+
+* Fix for hash table memory handling bug (caused segfaults on Mac OS X)
+* Header fixes for Mac OS X
+    Ken McLeod <thecloud@apple.com>
+
+* Fixes for compile time errors apparent on Mac OS 10.4.3
+    Georg Schwarz <georg.schwarz@freenet.de>
+
+* Improvements to configure to support cross-compilation
+* Addition of "NO_SYSTEM" compiler flag to prevent subshell execution
+    Tim Freeman <tim@fungible.com>
+
+* Fix to get hardware address on FreeBSD and OpenBSD
+    Nicolas Bernard <n.bernard@worldonline.fr>
+
+* Added 802.1q VLAN support
+    Jacek Konieczny <jajcus@bnet.pl>
 
 0.16 28/02/04
 * Added support for DLT_NULL
