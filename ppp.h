@@ -57,5 +57,3 @@
 #define PPP_BACP	0xc02b	/* Bandwidth Allocation Control Protocol */
 #define PPP_BAP		0xc02d	/* BAP */
 #define PPP_MP		0xc03d	/* Multi-Link */
-
-extern struct tok ppptype2str[];
