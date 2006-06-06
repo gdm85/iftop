@@ -4,6 +4,9 @@ $Id$
 Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
+* Display top scale in bytes when measuring in bytes
+    Marcin Kryczek <mkay@gentoo.org>
+
 0.17
 * Added support for ppp interfaces on FreeBSD (and others using DLT_PPP)
 
