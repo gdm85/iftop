@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "iftop.h"
 #include "counter_hash.h"
@@ -44,6 +45,7 @@
 #include "ethertype.h"
 #include "cfgfile.h"
 #include "ppp.h"
+#include "time.h"
 
 
 /* ethernet address of interface. */
@@ -58,11 +60,14 @@ extern options_t options;
 
 hash_type* counters;
 time_t last_timestamp;
+long last_day = 0;
 pthread_mutex_t tick_mutex;
 
 pcap_t* pd; /* pcap descriptor */
 struct bpf_program pcap_filter;
 pcap_handler packet_handler;
+
+FILE*fout = NULL;
 
 
 
@@ -90,25 +95,58 @@ counter_type* counter_create() {
     return c;
 }
 
+void close_log_file(void) {
+    if(fout) {
+        fclose(fout);
+    }
+    fout = NULL;
+}
+
+void open_log_file(void) {
+    char  filename[255];
+    time_t t;
+    t = time(NULL);
+    strftime(filename, 255, "/var/bandwidth/bw-%Y%m%d",localtime(&t)); 
+    fout = fopen(filename, "w+");
+    if(fout == NULL) {
+        fprintf(stderr, "Could not open log file: %s", strerror(errno));
+    }
+
+}
+
+void print_counter(struct in_addr * ip, counter_type * n) {
+    if(!fout) {
+        open_log_file();
+    }
+    fprintf(fout,"%d %s %lld %lld\n",time(NULL),inet_ntoa((struct in_addr)*ip),n->sent,n->recv);
+}
+
+
 void tick(int print) {
     time_t t;
     hash_node_type * hn = NULL;
     counter_type* n;
-
-    pthread_mutex_lock(&tick_mutex);
+    struct tm* tt;
+    long day;
    
     t = time(NULL);
+
     if(t - last_timestamp >= DUMP_RESOLUTION) {
+	tt = localtime(&t);
+	day = tt->tm_yday + tt->tm_year * 366;
+	if(day != last_day) {
+	    close_log_file();
+	    open_log_file();
+	}
+    last_day = day;
+
         last_timestamp = t;
         while(hash_next_item(counters, &hn) == HASH_STATUS_OK) {
           n = (counter_type*)hn->rec;
-          printf("%s %lld %lld\n",inet_ntoa(*(struct in_addr*)hn->key),n->sent,n->recv);
+	  print_counter((struct in_addr*)hn->key, n);
         }
     }
-    else {
-    }
 
-    pthread_mutex_unlock(&tick_mutex);
 }
 
 int in_filter_net(struct in_addr addr) {
@@ -125,11 +163,6 @@ int ip_addr_match(struct in_addr addr) {
 static void handle_ip_packet(struct ip* iptr, int hw_dir)
 {
     int direction = 0; /* incoming */
-    /*
-    union {
-	void **void_pp;
-    } u_ht = { &ht };
-    */
     counter_type * counter;
     int len;
     struct in_addr local_addr;
@@ -160,6 +193,8 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     if(hash_find(counters, &local_addr, (void**)&counter) == HASH_STATUS_KEY_NOT_FOUND) {
         counter = counter_create();
         hash_insert(counters, &local_addr, counter);
+        print_counter(&local_addr, counter);
+        fflush(fout);
     }
 
     len = ntohs(iptr->ip_len);
@@ -171,7 +206,13 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     else {
         counter->sent += len; 
     }
-    
+    if(counter->recv > 2147483648ULL || counter->sent > 2147483648ULL) {
+        print_counter(&local_addr, counter);
+        counter->recv = counter->sent = 0;
+        print_counter(&local_addr, counter);
+        fflush(stdout);
+    }
+
 }
 
 static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)

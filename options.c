@@ -327,6 +327,7 @@ void options_read_args(int argc, char **argv) {
         }
     }
 
+
     if (optind != argc) {
         fprintf(stderr, "iftop: found arguments following options\n");
         fprintf(stderr, "*** some options have changed names since v0.9 ***\n");
