@@ -11,6 +11,7 @@
 /* 40 / 2  */
 #define HISTORY_LENGTH  20
 #define RESOLUTION 2
+#define DUMP_RESOLUTION 15
 
 typedef struct {
     long recv[HISTORY_LENGTH];
@@ -27,10 +28,6 @@ void *xcalloc(size_t n, size_t m);
 void *xrealloc(void *w, size_t n);
 char *xstrdup(const char *s);
 void xfree(void *v);
-
-/* ui.c */
-void analyse_data(void);
-void ui_init(void);
 
 /* options.c */
 void options_read(int argc, char **argv);

@@ -22,8 +22,8 @@ CFLAGS += -I/usr/include/pcap -g
 
 # Do you want to use curses or ncurses? Probably ncurses, unless curses
 # is ncurses on your machine.
-CURSES = ncurses
-#CURSES = curses
+# CURSES = -lncurses
+#CURSES = -lcurses
 
 #
 # Name resolution. Sensible systems have gethostbyaddr_r, which is reentrant
@@ -66,7 +66,7 @@ CFLAGS += -DUSE_GETHOSTBYADDR_R
 #
 # Solaris needs a library to make sockets go and lacks inet_aton.
 #
-LDLIBS += -lsocket -lnsl
+#LDLIBS += -lsocket -lnsl
 CFLAGS += -DFAKE_INET_ATON
 
 # PREFIX specifies the base directory for the installation.
@@ -83,23 +83,32 @@ MANDIR = man
 # You shouldn't need to change anything below this point.
 CFLAGS  += -g -Wall "-DIFTOP_VERSION=\"$(VERSION)\""
 LDFLAGS += -g #-pthread
-LDLIBS += -lpcap -l$(CURSES) -lm -lpthread
+LDLIBS += -lpcap $(CURSES) -lm -lpthread
 
-SRCS = iftop.c addr_hash.c hash.c ns_hash.c resolver.c ui.c util.c sorted_list.c\
-       options.c serv_hash.c threadprof.c edline.c screenfilter.c
+COMMON_SRCS = addr_hash.c hash.c ns_hash.c util.c sorted_list.c\
+       options.c serv_hash.c threadprof.c screenfilter.c cfgfile.c stringmap.c addrs_ioctl.c
+IFTOP_ONLY_SRCS = iftop.c ui.c stringmap.c
+IFTOPDUMP_ONLY_SRCS = iftop-dump.c counter_hash.c
+SRCS = $(COMMON_SRCS) $(IFTOPDUMP_ONLY_SRCS) $(IFTOP_ONLY_SRCS)
+IFTOP_SRCS = $(IFTOP_ONLY_SRCS)  $(COMMON_SRCS)
+IFTOPDUMP_SRCS = $(IFTOPDUMP_ONLY_SRCS) $(COMMON_SRCS)
 HDRS = addr_hash.h hash.h iftop.h ns_hash.h resolver.h sorted_list.h ui.h options.h sll.h\
        serv_hash.h threadprof.h ether.h ip.h tcp.h screenfilter.h token.h llc.h \
        extract.h ethertype.h
 TXTS = README CHANGES INSTALL TODO iftop.8 COPYING
 SPECFILE = iftop.spec iftop.spec.in
 
-OBJS = $(SRCS:.c=.o)
+IFTOP_OBJS = $(IFTOP_SRCS:.c=.o)
+IFTOPDUMP_OBJS = $(IFTOPDUMP_SRCS:.c=.o)
 
-iftop: $(OBJS) Makefile
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS) 
+iftop: $(IFTOP_OBJS) Makefile
+	$(CC) $(LDFLAGS) -o $@ $(IFTOP_OBJS) $(LDLIBS) 
 
-integers.h: integers
-	./integers
+iftop-dump: $(IFTOPDUMP_OBJS) Makefile
+	$(CC) $(LDFLAGS) -o $@ $(IFTOPDUMP_OBJS) $(LDLIBS) 
+
+#integers.h: integers
+#	./integers
 
 install: iftop
 	install -D iftop   $(PREFIX)/$(BINDIR)/iftop
