@@ -38,7 +38,7 @@
 " s - toggle show source host            h - toggle this help display\n"\
 " d - toggle show destination host       b - toggle bar graph display\n"\
 " t - cycle line display mode            B - cycle bar graph average\n"\
-"                                        T - toggle cummulative line totals\n"\
+"                                        T - toggle cumulative line totals\n"\
 "Port display:                           j/k - scroll display\n"\
 " N - toggle service resolution          f - edit filter code\n"\
 " S - toggle show source port            l - set screen filter\n"\
@@ -58,8 +58,8 @@
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 #define UNIT_DIVISIONS 4
-char* unit_bits[UNIT_DIVISIONS] =  { "b", "Kb", "Mb", "Gb"};
-char* unit_bytes[UNIT_DIVISIONS] =  { "B", "KB", "MB", "GB"};
+char* unit_bits[UNIT_DIVISIONS] =  { "b", "kb", "Mb", "Gb"};
+char* unit_bytes[UNIT_DIVISIONS] =  { "B", "kB", "MB", "GB"};
 
 typedef struct host_pair_line_tag {
     addr_pair ap;
@@ -693,7 +693,7 @@ void ui_print() {
     mvaddstr(y+2, 0, "TOTAL: ");
 
     /* Cummulative totals */
-    mvaddstr(y, 16, "cumm: ");
+    mvaddstr(y, 16, "cum: ");
 
     readable_size(history_totals.total_sent, line, 10, 1024, 1);
     mvaddstr(y, 22, line);
@@ -1082,10 +1082,10 @@ void ui_loop() {
             case 'T':
                 options.show_totals = !options.show_totals;
                 if(options.show_totals) {
-                    showhelp("Show cummulative totals");
+                    showhelp("Show cumulative totals");
                 }
                 else {
-                    showhelp("Hide cummulative totals");
+                    showhelp("Hide cumulative totals");
                 }
                 ui_print();
                 break;
