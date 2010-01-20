@@ -15,6 +15,8 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
     Max Alekseyev <relf@os2.ru> (via Debian)
 * Fix for crash on arm.
     Joey Hess <joeyh@debian.org> (via Debian)
+* Fixed behaviour of "-b" option.
+    Author: Eric Cooper <ecc@cmu.edu> (via Debian)
 
 0.17 12/02/06
 * Display top scale in bytes when measuring in bytes

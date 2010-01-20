@@ -302,7 +302,7 @@ void options_read_args(int argc, char **argv) {
                 break;
 
             case 'b':
-                config_set_string("show-bars", "true");
+                config_set_string("show-bars", "false");
                 break;
 
             case 'B':
