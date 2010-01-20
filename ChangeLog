@@ -11,6 +11,10 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
     A. Costa <agcosta@gis.net> (via Debian)
 * Fix for armeb specific bug
     Lennert Buytenhek <buytenh+debian@wantstofly.org> (via Debian)
+* Fix frozen order drives line totals crazy.
+    Max Alekseyev <relf@os2.ru> (via Debian)
+* Fix for crash on arm.
+    Joey Hess <joeyh@debian.org> (via Debian)
 
 0.17 12/02/06
 * Display top scale in bytes when measuring in bytes
