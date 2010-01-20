@@ -25,7 +25,7 @@ By default, \fBiftop\fP will look up the hostnames associated with addresses it
 finds in packets. This can cause substantial traffic of itself, and may result
 in a confusing display. You may wish to suppress display of DNS traffic by
 using filter code such as \fBnot port domain\fP, or switch it off entirely,
-by using the \fB-n\fP option or by pressing \fBR\fP when the program is running.
+by using the \fB-n\fP option or by pressing \fBr\fP when the program is running.
 
 By default, \fBiftop\fP counts all IP packets that pass through the filter, and
 the direction of the packet is determined according to the direction the packet
@@ -43,7 +43,7 @@ Ignore ethernet broadcast packets.
 Count web traffic only, unless it is being directed through a local web cache.
 .TP
 \fBicmp\fP
-How much bandwith are users wasting trying to figure out why the network is
+How much bandwidth are users wasting trying to figure out why the network is
 slow?
 
 .SH OPTIONS
@@ -229,13 +229,13 @@ Sets which column is used to sort the display.
 Controls the appearance of each item in the display.
 .TP
 \fBshow-totals:\fP \fI(yes|no)\fP
-Shows cummulative total for each item.
+Shows cumulative total for each item.
 .TP
 \fBlog-scale:\fP \fI(yes|no)\fP
 Use a logarithmic scale for bar graphs.
 .TP
 \fBmax-bandwidth:\fP \fIbw\fP
-Fixes the maximum for the bar graph scale to \fIbw\fP, e.g. "10M"
+Fixes the maximum for the bar graph scale to \fIbw\fP, e.g. "10M". Note that the value has to always be in bits, regardless if the option to display in bytes has been chosen.
 .TP
 \fBnet-filter:\fP \fInet/mask\fP
 Defines an IP network boundary for determining packet direction.

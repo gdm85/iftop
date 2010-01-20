@@ -7,6 +7,8 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 0.18
 * Various typos in the UI
     Gerben Roest <g.roest@grepit.nl>
+* Documentation fixes
+    A. Costa <agcosta@gis.net> (via Debian)
 
 0.17 12/02/06
 * Display top scale in bytes when measuring in bytes
