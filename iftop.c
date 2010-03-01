@@ -302,6 +302,7 @@ static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     handle_ip_packet((struct ip*)packet, -1);
 }
 
+#ifdef DLT_PFLOG
 static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
 	register u_int length = pkthdr->len;
@@ -314,6 +315,7 @@ static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* p
 	packet += hdrlen;
 	handle_ip_packet((struct ip*)packet, length);
 }
+#endif
 
 static void handle_llc_packet(const struct llc* llc, int dir) {
 
@@ -533,9 +535,11 @@ void packet_init() {
     if(dlt == DLT_EN10MB) {
         packet_handler = handle_eth_packet;
     }
+#ifdef DLT_PFLOG
     else if (dlt == DLT_PFLOG) {
 		packet_handler = handle_pflog_packet;
     }
+#endif
     else if(dlt == DLT_RAW || dlt == DLT_NULL) {
         packet_handler = handle_raw_packet;
     } 
