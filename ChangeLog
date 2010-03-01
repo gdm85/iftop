@@ -16,7 +16,9 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Fix for crash on arm.
     Joey Hess <joeyh@debian.org> (via Debian)
 * Fixed behaviour of "-b" option.
-    Author: Eric Cooper <ecc@cmu.edu> (via Debian)
+    Eric Cooper <ecc@cmu.edu> (via Debian)
+* Support for PFLOG Interfaces
+    Richard Tóth <risko@iklub.sk>
 
 0.17 12/02/06
 * Display top scale in bytes when measuring in bytes
