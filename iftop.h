@@ -32,5 +32,17 @@ void xfree(void *v);
 /* options.c */
 void options_read(int argc, char **argv);
 
+struct pfloghdr {
+      unsigned char		length;
+      unsigned char		af;
+      unsigned char		action;
+      unsigned char		reason;
+      char				ifname[16];
+      char				ruleset[16];
+      unsigned int		rulenr;
+      unsigned int		subrulenr;
+      unsigned char		dir;
+      unsigned char		pad[3];
+};
 
 #endif /* __IFTOP_H_ */

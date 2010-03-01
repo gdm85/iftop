@@ -19,6 +19,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/bpf.h>
 
 #include <pthread.h>
 #include <curses.h>
@@ -301,6 +302,19 @@ static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     handle_ip_packet((struct ip*)packet, -1);
 }
 
+static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
+{
+	register u_int length = pkthdr->len;
+	u_int hdrlen;
+	const struct pfloghdr *hdr;
+	
+	hdr = (struct pfloghdr *)packet;
+	hdrlen = BPF_WORDALIGN(hdr->length);
+	length -= hdrlen;
+	packet += hdrlen;
+	handle_ip_packet((struct ip*)packet, length);
+}
+
 static void handle_llc_packet(const struct llc* llc, int dir) {
 
     struct ip* ip = (struct ip*)((void*)llc + sizeof(struct llc));
@@ -518,6 +532,9 @@ void packet_init() {
     dlt = pcap_datalink(pd);
     if(dlt == DLT_EN10MB) {
         packet_handler = handle_eth_packet;
+    }
+    else if (dlt == DLT_PFLOG) {
+		packet_handler = handle_pflog_packet;
     }
     else if(dlt == DLT_RAW || dlt == DLT_NULL) {
         packet_handler = handle_raw_packet;
