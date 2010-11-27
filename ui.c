@@ -97,10 +97,30 @@ int dontshowdisplay = 0;
  */
 int screen_line_bandwidth_compare(host_pair_line* aa, host_pair_line* bb, int start_div) {
     int i;
-    for(i = start_div; i < HISTORY_DIVISIONS; i++) {
-        if(aa->recv[i] + aa->sent[i] != bb->recv[i] + bb->sent[i]) {
-            return(aa->recv[i] + aa->sent[i] < bb->recv[i] + bb->sent[i]);
+    switch(options.linedisplay) {
+      case OPTION_LINEDISPLAY_ONE_LINE_SENT:
+	for(i = start_div; i < HISTORY_DIVISIONS; i++) {
+	    if(aa->sent[i] != bb->sent[i]) {
+	        return(aa->sent[i] < bb->sent[i]);
+	    }
         }
+        break;
+      case OPTION_LINEDISPLAY_ONE_LINE_RECV:
+	for(i = start_div; i < HISTORY_DIVISIONS; i++) {
+	    if(aa->recv[i] != bb->recv[i]) {
+	        return(aa->recv[i] < bb->recv[i]);
+	    }
+        }
+        break;
+      case OPTION_LINEDISPLAY_TWO_LINE:
+      case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
+        /* fallback to the combined sent+recv that also act as fallback for sent/recv */
+	break;
+    }
+    for(i = start_div; i < HISTORY_DIVISIONS; i++) {
+	if(aa->recv[i] + aa->sent[i] != bb->recv[i] + bb->sent[i]) {
+	    return(aa->recv[i] + aa->sent[i] < bb->recv[i] + bb->sent[i]);
+	}
     }
     return 1;
 }
