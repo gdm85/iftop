@@ -11,6 +11,19 @@
 int compare(void* a, void* b) {
     addr_pair* aa = (addr_pair*)a;
     addr_pair* bb = (addr_pair*)b;
+
+    if (aa->af != bb->af)
+        return 0;
+
+    if (aa->af == AF_INET6) {
+       return (IN6_ARE_ADDR_EQUAL(&aa->src6, &bb->src6)
+               && aa->src_port == bb->src_port
+               && IN6_ARE_ADDR_EQUAL(&aa->dst6, &bb->dst6)
+               && aa->dst_port == bb->dst_port
+               && aa->protocol == bb->protocol);
+    }
+
+    /* AF_INET or unknown. */
     return (aa->src.s_addr == bb->src.s_addr 
             && aa->src_port == bb->src_port
             && aa->dst.s_addr == bb->dst.s_addr
@@ -18,25 +31,42 @@ int compare(void* a, void* b) {
             && aa->protocol == bb->protocol);
 }
 
+static int __inline__ hash_uint32(uint32_t n) {
+    return ((n & 0x000000FF)
+            + ((n & 0x0000FF00) >> 8)
+            + ((n & 0x00FF0000) >> 16)
+            + ((n & 0xFF000000) >> 24));
+}
+
 int hash(void* key) {
     int hash;
-    long addr;
     addr_pair* ap = (addr_pair*)key;
-        
-    addr = (long)ap->src.s_addr;
 
-    hash = ((addr & 0x000000FF)
-            + (addr & 0x0000FF00 >> 8)
-            + (addr & 0x00FF0000 >> 16)
-            + (addr & 0xFF000000 >> 24)
-            + ap->src_port) % 0xFF;
+    if (ap->af == AF_INET6) {
+        uint32_t* addr6 = ap->src6.s6_addr32;
 
-    addr = (long)ap->dst.s_addr;
-    hash = ( hash + (addr & 0x000000FF)
-            + (addr & 0x0000FF00 >> 8)
-            + (addr & 0x00FF0000 >> 16)
-            + (addr & 0xFF000000 >> 24)
-            + ap->dst_port) % 0xFF;
+        hash = ( hash_uint32(addr6[0])
+                + hash_uint32(addr6[1])
+                + hash_uint32(addr6[2])
+                + hash_uint32(addr6[3])
+                + ap->src_port) % 0xFF;
+
+        addr6 = ap->dst6.s6_addr32;
+        hash = ( hash + hash_uint32(addr6[0])
+                + hash_uint32(addr6[1])
+                + hash_uint32(addr6[2])
+                + hash_uint32(addr6[3])
+                + ap->dst_port) % 0xFF;
+    } else {
+        in_addr_t addr = ap->src.s_addr;
+
+        hash = ( hash_uint32(addr)
+                + ap->src_port) % 0xFF;
+
+        addr = ap->dst.s_addr;
+        hash = ( hash + hash_uint32(addr)
+                + ap->dst_port) % 0xFF;
+    }
 
     return hash;
 }

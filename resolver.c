@@ -25,7 +25,7 @@
 
 #define RESOLVE_QUEUE_LENGTH 20
 
-struct in_addr resolve_queue[RESOLVE_QUEUE_LENGTH];
+struct in6_addr resolve_queue[RESOLVE_QUEUE_LENGTH];
 
 pthread_cond_t resolver_queue_cond;
 pthread_mutex_t resolver_queue_mutex;
@@ -55,18 +55,48 @@ extern options_t options;
  * as NetBSD break the RFC and implement it in a non-thread-safe fashion, so
  * for the moment, the configure script won't try to use it.
  */
-char *do_resolve(struct in_addr *addr) {
-    struct sockaddr_in sin = {0};
+char *do_resolve(struct in6_addr *addr) {
+    struct sockaddr_in sin;
+    struct sockaddr_in6 sin6;
     char buf[NI_MAXHOST]; /* 1025 */
-    int res;
-    sin.sin_family = AF_INET;
-    sin.sin_addr = *addr;
-    sin.sin_port = 0;
+    int res, af;
+    uint32_t* probe;
 
-    if (getnameinfo((struct sockaddr*)&sin, sizeof sin, buf, sizeof buf, NULL, 0, NI_NAMEREQD) == 0)
-        return xstrdup(buf);
-    else
-        return NULL;
+    memset(&sin, '\0', sizeof(sin));
+    memset(&sin6, '\0', sizeof(sin6));
+
+    /* If the upper three (network byte order) uint32-parts
+     * are null, then there ought to be an IPv4 address here.
+     * Any such IPv6 would have to be 'xxxx::'. Neglectable? */
+    probe = (uint32_t *) addr;
+    af = (probe[1] || probe[2] || probe[3]) ? AF_INET6 : AF_INET;
+
+    switch (af) {
+        case AF_INET:
+            sin.sin_family = af;
+            sin.sin_port = 0;
+            memcpy(&sin.sin_addr, addr, sizeof(sin.sin_addr));
+
+            if (getnameinfo((struct sockaddr*)&sin, sizeof sin,
+                            buf, sizeof buf, NULL, 0, NI_NAMEREQD) == 0)
+                return xstrdup(buf);
+            else
+                return NULL;
+            break;
+        case AF_INET6:
+            sin6.sin6_family = af;
+            sin6.sin6_port = 0;
+            memcpy(&sin6.sin6_addr, addr, sizeof(sin6.sin6_addr));
+
+            if (getnameinfo((struct sockaddr*)&sin6, sizeof sin6,
+                            buf, sizeof buf, NULL, 0, NI_NAMEREQD) == 0)
+                return xstrdup(buf);
+            else
+                return NULL;
+            break;
+        default:
+            return NULL;
+    }
 }
 
 #elif defined(USE_GETHOSTBYADDR_R)
@@ -376,7 +406,7 @@ void resolver_worker(void* ptr) {
         /* Keep resolving until the queue is empty */
         while(head != tail) {
             char * hostname;
-            struct in_addr addr = resolve_queue[tail];
+            struct in6_addr addr = resolve_queue[tail];
 
             /* mutex always locked at this point */
 
@@ -427,7 +457,7 @@ void resolver_initialise() {
 
 }
 
-void resolve(struct in_addr* addr, char* result, int buflen) {
+void resolve(int af, struct in6_addr* addr, char* result, int buflen) {
     char* hostname;
     union {
 	char **ch_pp;
@@ -443,11 +473,17 @@ void resolve(struct in_addr* addr, char* result, int buflen) {
             /* Found => already resolved, or on the queue */
         }
         else {
-            hostname = strdup(inet_ntoa(*addr));
+            hostname = xmalloc(INET6_ADDRSTRLEN);
+            inet_ntop(af, addr, hostname, INET6_ADDRSTRLEN);
             hash_insert(ns_hash, addr, hostname);
 
             if(((head + 1) % RESOLVE_QUEUE_LENGTH) == tail) {
                 /* queue full */
+            }
+            else if((af == AF_INET6)
+                        && (IN6_IS_ADDR_LINKLOCAL(addr)
+                            || IN6_IS_ADDR_SITELOCAL(addr))) {
+                /* Link-local and site-local stay numerical. */
             }
             else {
                 resolve_queue[head] = *addr;

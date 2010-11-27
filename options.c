@@ -30,7 +30,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:nNF:hpbBPm:c:";
+char optstr[] = "+i:f:nNF:G:lhpbBPm:c:";
 
 /* Global options. */
 
@@ -118,6 +118,10 @@ void options_set_defaults() {
     options.netfilter = 0;
     inet_aton("10.0.1.0", &options.netfilternet);
     inet_aton("255.255.255.0", &options.netfiltermask);
+    options.netfilter6 = 0;
+    inet_pton(AF_INET6, "fe80::", &options.netfilter6net);	/* Link-local */
+    inet_pton(AF_INET6, "ffff::", &options.netfilter6mask);
+    options.link_local = 0;
     options.dnsresolution = 1;
     options.portresolution = 1;
 #ifdef NEED_PROMISCUOUS_FOR_OUTGOING
@@ -237,7 +241,8 @@ static void usage(FILE *fp) {
     fprintf(fp,
 "iftop: display bandwidth usage on an interface by host\n"
 "\n"
-"Synopsis: iftop -h | [-npbBP] [-i interface] [-f filter code] [-N net/mask]\n"
+"Synopsis: iftop -h | [-npblBP] [-i interface] [-f filter code]\n"
+"                               [-F net/mask] [-G net6/mask6]\n"
 "\n"
 "   -h                  display this message\n"
 "   -n                  don't do hostname lookups\n"
@@ -249,7 +254,9 @@ static void usage(FILE *fp) {
 "   -i interface        listen on named interface\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
-"   -F net/mask         show traffic flows in/out of network\n"
+"   -F net/mask         show traffic flows in/out of IPv4 network\n"
+"   -G net6/mask6       show traffic flows in/out of IPv6 network\n"
+"   -l                  display and count link-local IPv6 traffic (default: off)\n"
 "   -P                  show ports as well as hosts\n"
 "   -m limit            sets the upper limit for the bandwidth scale\n"
 "   -c config file      specifies an alternative configuration file\n"
@@ -285,6 +292,10 @@ void options_read_args(int argc, char **argv) {
                 config_set_string("filter-code", optarg);
                 break;
 
+            case 'l':
+                config_set_string("link-local", "true");
+                break;
+
             case 'p':
                 config_set_string("promiscuous", "true");
                 break;
@@ -297,6 +308,10 @@ void options_read_args(int argc, char **argv) {
                 config_set_string("net-filter", optarg);
                 break;
             
+            case 'G':
+                config_set_string("net-filter6", optarg);
+                break;
+
             case 'm':
                 config_set_string("max-bandwidth", optarg);
                 break;
@@ -438,6 +453,8 @@ int options_config_get_net_filter() {
     if(s) {
         char* mask;
 
+        options.netfilter = 0;
+
         mask = strchr(s, '/');
         if (mask == NULL) {
             fprintf(stderr, "Could not parse net/mask: %s\n", s);
@@ -455,7 +472,7 @@ int options_config_get_net_filter() {
             int n;
             n = atoi(mask);
             if (n > 32) {
-                fprintf(stderr, "Invalid netmask: %s\n", s);
+                fprintf(stderr, "Invalid netmask length: %s\n", mask);
             }
             else {
                 if(n == 32) {
@@ -470,17 +487,86 @@ int options_config_get_net_filter() {
                   options.netfiltermask.s_addr = htonl(~mm);
                 }
             }
+            options.netfilter = 1;
         } 
-        else if (inet_aton(mask, &options.netfiltermask) == 0) {
-            fprintf(stderr, "Invalid netmask: %s\n", s);
+        else {
+            if (inet_aton(mask, &options.netfiltermask) != 0)
+                options.netfilter = 1;
+            else {
+                fprintf(stderr, "Invalid netmask: %s\n", s);
+                return 0;
+            }
         }
         options.netfilternet.s_addr = options.netfilternet.s_addr & options.netfiltermask.s_addr;
-        options.netfilter = 1;
         return 1;
     }
     return 0;
 }
 
+/*
+ * Read the net filter IPv6 option.  
+ */
+int options_config_get_net_filter6() {
+    char* s;
+    int j;
+
+    s = config_get_string("net-filter6");
+    if(s) {
+        char* mask;
+
+        options.netfilter6 = 0;
+
+        mask = strchr(s, '/');
+        if (mask == NULL) {
+            fprintf(stderr, "Could not parse IPv6 net/prefix: %s\n", s);
+            return 0;
+        }
+        *mask = '\0';
+        mask++;
+        if (inet_pton(AF_INET6, s, &options.netfilter6net) == 0) {
+            fprintf(stderr, "Invalid IPv6 network address: %s\n", s);
+            return 0;
+        }
+        /* Accept prefix lengths and address expressions. */
+        if (mask[strspn(mask, "0123456789")] == '\0') {
+            /* Whole string is numeric */
+            unsigned int n;
+
+            n = atoi(mask);
+            if (n > 128 || n < 1) {
+                fprintf(stderr, "Invalid IPv6 prefix length: %s\n", mask);
+            }
+            else {
+                int bl, rem;
+                const uint32_t mm = 0xffffffff;
+                uint32_t part = mm;
+
+                bl = n / 32;
+                rem = n % 32;
+                part <<= 32 - rem;
+                for (j=0; j < bl; ++j)
+                    options.netfilter6mask.s6_addr32[j] = htonl(mm);
+                if (rem > 0)
+                    options.netfilter6mask.s6_addr32[bl] = htonl(part);
+                options.netfilter6 = 1;
+            }
+        }
+        else {
+            if (inet_pton(AF_INET6, mask, &options.netfilter6mask) != 0)
+                options.netfilter6 = 1;
+            else {
+                fprintf(stderr, "Invalid IPv6 netmask: %s\n", s);
+                return 0;
+            }
+        }
+        /* Prepare any comparison by masking the provided filtered net. */
+        for (j=0; j < 4; ++j)
+            options.netfilter6net.s6_addr32[j] &= options.netfilter6mask.s6_addr32[j];
+
+        return 1;
+    }
+    return 0;
+}
 
 void options_make() {
     options_config_get_string("interface", &options.interface);
@@ -499,5 +585,7 @@ void options_make() {
     options_config_get_bw_rate("max-bandwidth", &options.max_bandwidth);
     options_config_get_enum("port-display", showports_enumeration, (int*)&options.showports);
     options_config_get_string("screen-filter", &options.screenfilter);
+    options_config_get_bool("link-local", &options.link_local);
     options_config_get_net_filter();
+    options_config_get_net_filter6();
 };

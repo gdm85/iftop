@@ -14,6 +14,6 @@
 
 void resolver_initialise(void);
 
-void resolve(struct in_addr* addr, char* result, int buflen);
+void resolve(int af, struct in6_addr* addr, char* result, int buflen);
 
 #endif /* __RESOLVER_H_ */

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in_systm.h>
@@ -14,29 +15,36 @@
 #define hash_table_size 256
 
 int ns_hash_compare(void* a, void* b) {
-    struct in_addr* aa = (struct in_addr*)a;
-    struct in_addr* bb = (struct in_addr*)b;
-    return (aa->s_addr == bb->s_addr);
+    struct in6_addr* aa = (struct in6_addr*)a;
+    struct in6_addr* bb = (struct in6_addr*)b;
+    return IN6_ARE_ADDR_EQUAL(aa, bb);
+}
+
+static int __inline__ hash_uint32(uint32_t n) {
+    return ((n & 0x000000FF)
+            + ((n & 0x0000FF00) >> 8)
+            + ((n & 0x00FF0000) >> 16)
+            + ((n & 0xFF000000) >> 24));
 }
 
 int ns_hash_hash(void* key) {
     int hash;
-    long addr;
-        
-    addr = (long)((struct in_addr*)key)->s_addr;
+    uint32_t* addr6 = ((struct in6_addr *) key)->s6_addr32;
 
-    hash = ((addr & 0x000000FF)
-            + (addr & 0x0000FF00 >> 8)
-            + (addr & 0x00FF0000 >> 16)
-            + (addr & 0xFF000000 >> 24)) % 0xFF;
+    hash = ( hash_uint32(addr6[0])
+            + hash_uint32(addr6[1])
+            + hash_uint32(addr6[2])
+            + hash_uint32(addr6[3])) % 0xFF;
 
     return hash;
 }
 
 void* ns_hash_copy_key(void* orig) {
-    struct in_addr* copy;
+    struct in6_addr* copy;
+
     copy = xmalloc(sizeof *copy);
-    *copy = *(struct in_addr*)orig;
+    memcpy(copy, orig, sizeof *copy);
+
     return copy;
 }
 

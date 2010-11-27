@@ -78,6 +78,13 @@ typedef struct {
     struct in_addr netfilternet;
     struct in_addr netfiltermask;
 
+    int netfilter6;
+    struct in6_addr netfilter6net;
+    struct in6_addr netfilter6mask;
+
+    /* Account for link-local traffic. */
+    int link_local;
+
     char *config_file;
     int config_file_specified;
 

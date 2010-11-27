@@ -53,11 +53,11 @@ void stringmap_delete_free(stringmap S) {
 }
 
 /* stringmap_insert:
- * Insert into S an item having key k and value d. Returns an existing key
- * or NULL if it was inserted. 
+ * Insert into S an item having key k and value d. Returns a pointer to
+ * the existing item value, or NULL if a new item was created. 
  */
 item *stringmap_insert(stringmap S, const char *k, const item d) {
-    if (!S) return 0;
+    if (!S) return NULL;
     if (S->key == NULL) {
         S->key = xstrdup(k);
         S->d   = d;

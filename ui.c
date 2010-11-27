@@ -109,19 +109,19 @@ int screen_line_bandwidth_compare(host_pair_line* aa, host_pair_line* bb, int st
  * Compare two screen lines based on hostname / IP.  Fall over to compare by
  * bandwidth.
  */
-int screen_line_host_compare(struct in_addr* a, struct in_addr* b, host_pair_line* aa, host_pair_line* bb) {
+int screen_line_host_compare(void* a, void* b, host_pair_line* aa, host_pair_line* bb) {
     char hosta[HOSTNAME_LENGTH], hostb[HOSTNAME_LENGTH];
     int r;
 
     /* This isn't overly efficient because we resolve again before 
        display. */
     if (options.dnsresolution) {
-        resolve(a, hosta, HOSTNAME_LENGTH);
-        resolve(b, hostb, HOSTNAME_LENGTH);
+        resolve(aa->ap.af, a, hosta, HOSTNAME_LENGTH);
+        resolve(bb->ap.af, b, hostb, HOSTNAME_LENGTH);
     }
     else {
-        strcpy(hosta, inet_ntoa(*a));
-        strcpy(hostb, inet_ntoa(*b));
+        inet_ntop(aa->ap.af, a, hosta, sizeof(hosta));
+        inet_ntop(bb->ap.af, b, hostb, sizeof(hostb));
     }
 
     r = strcmp(hosta, hostb);
@@ -149,10 +149,10 @@ int screen_line_compare(void* a, void* b) {
       return screen_line_bandwidth_compare(aa, bb, 2);
     }
     else if(options.sort == OPTION_SORT_SRC) {
-      return screen_line_host_compare(&(aa->ap.src), &(bb->ap.src), aa, bb);
+      return screen_line_host_compare(&(aa->ap.src6), &(bb->ap.src6), aa, bb);
     }
     else if(options.sort == OPTION_SORT_DEST) {
-      return screen_line_host_compare(&(aa->ap.dst), &(bb->ap.dst), aa, bb);
+      return screen_line_host_compare(&(aa->ap.dst6), &(bb->ap.dst6), aa, bb);
     }
 
     return 1;
@@ -487,10 +487,10 @@ void analyse_data() {
 
         /* Aggregate hosts, if required */
         if(options.aggregate_src) {
-            ap.src.s_addr = 0;
+            memset(&ap.src6, '\0', sizeof(ap.src6));
         }
         if(options.aggregate_dest) {
-            ap.dst.s_addr = 0;
+            memset(&ap.dst6, '\0', sizeof(ap.dst6));
         }
 
         /* Aggregate ports, if required */
@@ -535,7 +535,7 @@ void analyse_data() {
 
 }
 
-void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned int protocol, int L) {
+void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol, int L) {
     char hostname[HOSTNAME_LENGTH];
     char service[HOSTNAME_LENGTH];
     char* s_name;
@@ -546,14 +546,15 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
 
     ip_service skey;
     int left;
-    if(addr->s_addr == 0) {
+
+    if(IN6_IS_ADDR_UNSPECIFIED(addr)) {
         sprintf(hostname, " * ");
     }
     else {
         if (options.dnsresolution)
-            resolve(addr, hostname, L);
+            resolve(af, addr, hostname, L);
         else
-            strcpy(hostname, inet_ntoa(*addr));
+            inet_ntop(af, addr, hostname, sizeof(hostname));
     }
     left = strlen(hostname);
 
@@ -637,8 +638,15 @@ void ui_print() {
                     L = HOSTNAME_LENGTH;
                 }
 
-                sprint_host(host1, &(screen_line->ap.src), screen_line->ap.src_port, screen_line->ap.protocol, L);
-                sprint_host(host2, &(screen_line->ap.dst), screen_line->ap.dst_port, screen_line->ap.protocol, L);
+                sprint_host(host1, screen_line->ap.af,
+                            &(screen_line->ap.src6),
+                            screen_line->ap.src_port,
+                            screen_line->ap.protocol, L);
+                sprint_host(host2, screen_line->ap.af,
+                            &(screen_line->ap.dst6),
+                            screen_line->ap.dst_port,
+                            screen_line->ap.protocol, L);
+
                 if(!screen_filter_match(host1) && !screen_filter_match(host2)) {
                   continue;
                 }

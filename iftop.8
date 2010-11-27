@@ -11,8 +11,8 @@ iftop - display bandwidth usage on an interface by host
 
 .SH SYNOPSIS
 \fBiftop\fP \fB-h\fP |
-[\fB-nNpbBP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-F\fP \fInet\fP/\fImask\fP]
-
+[\fB-nNpblBP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-F\fP \fInet\fP/\fImask\fP]
+[\fB-G\fP \fInet6\fP/\fImask6\fP]
 .SH DESCRIPTION
 \fBiftop\fP listens to network traffic on a named \fIinterface\fP, or on the
 first interface it can find which looks like an external interface if none is
@@ -65,6 +65,10 @@ the specified interface is also counted.
 \fB-P\fP
 Turn on port display.
 .TP
+\fB-l\fP
+Display and count datagrams addressed to or from link-local IPv6 addresses.
+The default is not to display that address category.
+.TP
 \fB-b\fP
 Don't display bar graphs of traffic. 
 .TP
@@ -79,11 +83,16 @@ Use \fIfilter code\fP to select the packets to count. Only IP packets are ever
 counted, so the specified code is evaluated as \fB(\fP\fIfilter code\fP\fB) and ip\fP.
 .TP
 \fB-F\fP \fInet\fP/\fImask\fP
-Specifies a network for traffic analysis.  If specified, iftop will only
+Specifies an IPv4 network for traffic analysis.  If specified, iftop will only
 include packets flowing in to or out of the given network, and packet direction
 is determined relative to the network boundary, rather than to the interface.
 You may specify \fImask\fP as a dotted quad, such as /255.255.255.0, or as a
 single number specifying the number of bits set in the netmask, such as /24.
+.TP
+\fB-G\fP \fInet6\fP/\fImask6\fP
+Specifies an IPv6 network for traffic analysis. The value of \fImask6\fP can be
+given as a prefix length or as a numerical address string for more compound
+bitmasking.
 .TP
 \fB-c\fP \fIconfig file\fP
 Specifies an alternate config file.  If not specified, iftop will use
@@ -213,6 +222,9 @@ Puts the interface into promiscuous mode.
 \fBport-display:\fP \fI(off|source-only|destination-only|on)\fP
 Controls display of port numbers.
 .TP
+\fBlink-local:\fP \fI(yes|no)\fP
+Determines displaying of link-local IPv6 addresses.
+.TP
 \fBhide-source:\fP \fI(yes|no)\fP
 Hides source host names.
 .TP
@@ -239,6 +251,9 @@ Fixes the maximum for the bar graph scale to \fIbw\fP, e.g. "10M". Note that the
 .TP
 \fBnet-filter:\fP \fInet/mask\fP
 Defines an IP network boundary for determining packet direction.
+.TP
+\fBnet-filter6:\fP \fInet6/mask6\fP
+Defines an IPv6 network boundary for determining packet direction.
 .TP
 \fBscreen-filter:\fP \fIregexp\fP
 Sets a regular expression to filter screen output.

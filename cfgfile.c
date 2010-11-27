@@ -36,6 +36,8 @@ char * config_directives[] = {
 	"log-scale", 
 	"max-bandwidth",
 	"net-filter", 
+	"net-filter6", 
+        "link-local",
 	"port-display", 
 	NULL
 };
