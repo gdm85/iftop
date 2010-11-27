@@ -230,8 +230,13 @@ void config_set_string(const char *directive, const char* s) {
     stringmap S;
 
     S = stringmap_find(config, directive);
-    if (S) stringmap_delete_free(S);
-    stringmap_insert(config, directive, item_ptr(xstrdup(s)));
+    if (S) {
+      xfree(S->d.v);
+      S->d = item_ptr(xstrdup(s));
+    }
+    else {
+      stringmap_insert(config, directive, item_ptr(xstrdup(s)));
+    }
 }
 
 int read_config(char *file, int whinge_on_error) {
