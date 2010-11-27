@@ -1074,7 +1074,7 @@ void ui_loop() {
                 break;
             }
             case '!': {
-#ifndef NO_SYSTEM
+#ifdef ALLOW_SUBSHELL
                 char *s;
                 dontshowdisplay = 1;
                 if ((s = edline(0, "Command", "")) && s[strspn(s, " \t")]) {
