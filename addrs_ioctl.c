@@ -132,6 +132,9 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr, 
         if (strcmp(ifa->ifa_name, interface))
            continue; /* Not our interface. */
 
+        if (ifa->ifa_addr == NULL)
+           continue; /* Skip NULL interface address. */
+
         if ( (ifa->ifa_addr->sa_family != AF_INET)
               && (ifa->ifa_addr->sa_family != AF_INET6) )
            continue; /* AF_PACKET is beyond our scope. */
