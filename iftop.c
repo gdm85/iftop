@@ -5,13 +5,6 @@
 
 #include "integers.h"
 
-#if defined(HAVE_PCAP_H)
-#   include <pcap.h>
-#elif defined(HAVE_PCAP_PCAP_H)
-#   include <pcap/pcap.h>
-#else
-#   error No pcap.h
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -20,6 +13,13 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/bpf.h>
+#if defined(HAVE_PCAP_H)
+#   include <pcap.h>
+#elif defined(HAVE_PCAP_PCAP_H)
+#   include <pcap/pcap.h>
+#else
+#   error No pcap.h
+#endif
 
 #include <pthread.h>
 #include <curses.h>
