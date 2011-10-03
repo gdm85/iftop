@@ -561,8 +561,8 @@ int options_config_get_net_filter6() {
             }
         }
         /* Prepare any comparison by masking the provided filtered net. */
-        for (j=0; j < 4; ++j)
-            options.netfilter6net.s6_addr32[j] &= options.netfilter6mask.s6_addr32[j];
+        for (j=0; j < 16; ++j)
+            options.netfilter6net.s6_addr[j] &= options.netfilter6mask.s6_addr[j];
 
         return 1;
     }
