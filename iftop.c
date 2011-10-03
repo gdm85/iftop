@@ -12,7 +12,8 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <net/bpf.h>
+/* include <net/bpf.h> -- this was added by the PFLOG patch but seems
+ * superfluous and breaks on Slackware */
 #if defined(HAVE_PCAP_H)
 #   include <pcap.h>
 #elif defined(HAVE_PCAP_PCAP_H)
