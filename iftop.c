@@ -449,7 +449,7 @@ static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* p
 }
 #endif
 
-static void handle_loopback_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
+static void handle_null_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     handle_ip_packet((struct ip*)(packet + 4), -1);
 }
@@ -691,8 +691,13 @@ void packet_init() {
         packet_handler = handle_raw_packet;
     } 
     else if(dlt == DLT_NULL) {
-        packet_handler = handle_loopback_packet;
+        packet_handler = handle_null_packet;
     } 
+#ifdef DLT_LOOP
+    else if(dlt == DLT_LOOP) {
+        packet_handler = handle_null_packet;
+    }
+#endif
     else if(dlt == DLT_IEEE802) {
         packet_handler = handle_tokenring_packet;
     }
