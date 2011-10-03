@@ -352,7 +352,7 @@ dnl
 
 AC_MSG_CHECKING([for a curses library containing mvchgat])
 oldLIBS=$LIBS
-for curseslib in curses ncurses ; do
+for curseslib in ncursesw curses ncurses ; do
     LIBS="$oldLIBS -l$curseslib"
     AC_TRY_LINK([
 #include <curses.h>

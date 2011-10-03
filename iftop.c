@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 
 #include "iftop.h"
 #include "addr_hash.h"
@@ -762,6 +763,8 @@ void packet_loop(void* ptr) {
 int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {};
+
+    setlocale(LC_ALL, "");
 
     /* TODO: tidy this up */
     /* read command line options and config file */   
