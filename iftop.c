@@ -81,8 +81,12 @@ static void finish(int sig) {
 
 
 
-/* Only need ethernet (plus optional 4 byte VLAN) and IP headers (48) + first 2 bytes of tcp/udp header */
+/* Only need ethernet (plus optional 4 byte VLAN) and IP headers (48) + first 2
+ * bytes of tcp/udp header */
 /* Increase with a further 20 to account for IPv6 header length.  */
+/* IEEE 802.11 radiotap throws in a variable length header plus 8 (radiotap
+ * header header) plus 30 (802.11 MAC) plus 40 (IPv6) = 78, plus whatever's in
+ * the radiotap payload */
 #define CAPTURE_LENGTH 92
 
 void init_history() {
@@ -230,8 +234,8 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     int direction = 0; /* incoming */
     history_type* ht;
     union {
-	history_type **ht_pp;
-	void **void_pp;
+      history_type **ht_pp;
+      void **void_pp;
     } u_ht = { &ht };
     addr_pair ap;
     unsigned int len = 0;
@@ -446,7 +450,7 @@ static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* p
 	hdrlen = BPF_WORDALIGN(hdr->length);
 	length -= hdrlen;
 	packet += hdrlen;
-	handle_ip_packet((struct ip*)packet, length);
+	handle_ip_packet((struct ip*)packet, -1);
 }
 #endif
 
@@ -600,6 +604,20 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     }
 }
 
+#ifdef DLT_IEEE802_11_RADIO
+/*
+ * Packets with a bonus radiotap header.
+ * See http://www.gsp.com/cgi-bin/man.cgi?section=9&topic=ieee80211_radiotap
+ */
+static void handle_radiotap_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
+{
+    /* 802.11 MAC header is = 30 bytes */
+    /* We could try harder to figure out hardware direction from the MAC header */
+    handle_ip_packet((struct ip*)(packet + ((struct radiotap_header *)packet)->it_len + 30),-1);
+}
+
+
+#endif
 
 /* set_filter_code:
  * Install some filter code. Returns NULL on success or an error message on
@@ -697,6 +715,11 @@ void packet_init() {
 #ifdef DLT_LOOP
     else if(dlt == DLT_LOOP) {
         packet_handler = handle_null_packet;
+    }
+#endif
+#ifdef DLT_IEEE802_11_RADIO
+    else if(dlt == DLT_IEEE802_11_RADIO) {
+        packet_handler = handle_radiotap_packet;
     }
 #endif
     else if(dlt == DLT_IEEE802) {
