@@ -242,7 +242,7 @@ static void usage(FILE *fp) {
     fprintf(fp,
 "iftop: display bandwidth usage on an interface by host\n"
 "\n"
-"Synopsis: iftop -h | [-npblBP] [-i interface] [-f filter code]\n"
+"Synopsis: iftop -h | [-npblNBP] [-i interface] [-f filter code]\n"
 "                               [-F net/mask] [-G net6/mask6]\n"
 "\n"
 "   -h                  display this message\n"
