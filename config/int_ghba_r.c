@@ -6,6 +6,7 @@
 
 static const char rcsid[] = "$Id$";
 
+#include <sys/socket.h>
 #include <sys/types.h>
 
 #include <errno.h>

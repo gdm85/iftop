@@ -81,6 +81,14 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 
+dnl At least FeeBSD doesn't define s6_addr32 in user-land code, with a
+dnl note saying this is not standard
+AC_CHECK_DECL([s6_addr32],
+	[],
+	[AC_DEFINE([s6_addr32], [__u6_addr.__u6_addr32],
+	 [Define to a way to access the inner bytes of an ip6 address.])],
+	[#include <netinet/in.h>])
+
 dnl
 dnl Are we on a system that uses the STREAMS low-level DLPI interface?
 dnl
