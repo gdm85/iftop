@@ -1,6 +1,10 @@
 Things to do for iftop
 $Id$
 
+* Revert old FreeBSD patch, install new one
+
+* Re-fix import order for Mac OS X
+
 * Add configurable offset for DLT_RAW
 
 * IP types other than v4?

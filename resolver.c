@@ -37,22 +37,6 @@ int tail;
 
 extern options_t options;
 
-int guess_af(struct in6_addr *addr)
-{
-    /* If the upper three (network byte order) uint32-parts
-     * are null, then there ought to be an IPv4 address here.
-     * Any such IPv6 would have to be 'xxxx::'. Neglectable? */
-    uint32_t* probe;
-    int af;
-
-    probe = (uint32_t *) addr;
-    return (probe[1] || probe[2] || probe[3]) ? AF_INET6 : AF_INET;
-}
-
-socklen_t aflength(int af)
-{
-    return af == AF_INET6 ? sizeof(struct in6_addr) : sizeof(struct in_addr);
-}
 
 /* 
  * We have a choice of resolver methods. Real computers have getnameinfo or
@@ -76,11 +60,18 @@ char *do_resolve(struct in6_addr *addr) {
     struct sockaddr_in6 sin6;
     char buf[NI_MAXHOST]; /* 1025 */
     int res, af;
+    uint32_t* probe;
 
     memset(&sin, '\0', sizeof(sin));
     memset(&sin6, '\0', sizeof(sin6));
 
-    switch (guess_af(addr)) {
+    /* If the upper three (network byte order) uint32-parts
+     * are null, then there ought to be an IPv4 address here.
+     * Any such IPv6 would have to be 'xxxx::'. Neglectable? */
+    probe = (uint32_t *) addr;
+    af = (probe[1] || probe[2] || probe[3]) ? AF_INET6 : AF_INET;
+
+    switch (af) {
         case AF_INET:
             sin.sin_family = af;
             sin.sin_port = 0;
@@ -115,29 +106,26 @@ char *do_resolve(struct in6_addr *addr) {
  * Some implementations of libc choose to implement gethostbyaddr_r as
  * a non thread-safe wrapper to gethostbyaddr.  An interesting choice...
  */
-char* do_resolve(struct in6_addr * addr) {
+char* do_resolve(struct in_addr * addr) {
     struct hostent hostbuf, *hp;
     size_t hstbuflen = 1024;
     char *tmphstbuf;
     int res;
     int herr;
-    int af;
     char * ret = NULL;
 
     /* Allocate buffer, remember to free it to avoid memory leakage.  */            
     tmphstbuf = xmalloc (hstbuflen);
 
-    af = guess_af(addr);
-
     /* Some machines have gethostbyaddr_r returning an integer error code; on
      * others, it returns a struct hostent*. */
 #ifdef GETHOSTBYADDR_R_RETURNS_INT
-    while ((res = gethostbyaddr_r((char*)addr, aflength(af), af,
+    while ((res = gethostbyaddr_r((char*)addr, sizeof(struct in_addr), AF_INET,
                                   &hostbuf, tmphstbuf, hstbuflen,
                                   &hp, &herr)) == ERANGE)
 #else
     /* ... also assume one fewer argument.... */
-    while ((hp = gethostbyaddr_r((char*)addr, aflength(af), af,
+    while ((hp = gethostbyaddr_r((char*)addr, sizeof(struct in_addr), AF_INET,
                            &hostbuf, tmphstbuf, hstbuflen, &herr)) == NULL
             && errno == ERANGE)
 #endif
@@ -171,11 +159,9 @@ char *do_resolve(struct in6_addr *addr) {
     static pthread_mutex_t ghba_mtx = PTHREAD_MUTEX_INITIALIZER;
     char *s = NULL;
     struct hostent *he;
-    int af;
-    af = guess_af(addr);
 
     pthread_mutex_lock(&ghba_mtx);
-    he = gethostbyaddr((char*)addr, aflength(af), af);
+    he = gethostbyaddr((char*)addr, sizeof *addr, AF_INET);
     if (he)
         s = xstrdup(he->h_name);
     pthread_mutex_unlock(&ghba_mtx);
@@ -313,7 +299,7 @@ char *do_resolve(struct in6_addr * addr) {
 #elif defined(USE_FORKING_RESOLVER)
 
 /**
- * Resolver which forks a process, then uses gethostbyaddr.
+ * Resolver which forks a process, then uses gethostbyname.
  */
 
 #include <signal.h>
