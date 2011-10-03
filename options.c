@@ -46,7 +46,8 @@ static char *bad_interface_names[] = {
             "gif",     /* psuedo-device generic tunnel interface */
             "dummy",
             "vmnet",
-            NULL        /* last entry must be NULL */
+            "wmaster", /* wmaster0 is an internal-use interface for mac80211, a Linux WiFi API. */
+            NULL       /* last entry must be NULL */
         };
 
 config_enumeration_type sort_enumeration[] = {
