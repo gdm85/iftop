@@ -449,6 +449,11 @@ static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* p
 }
 #endif
 
+static void handle_loopback_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
+{
+    handle_ip_packet((struct ip*)(packet + 4), -1);
+}
+
 static void handle_llc_packet(const struct llc* llc, int dir) {
 
     struct ip* ip = (struct ip*)((void*)llc + sizeof(struct llc));
@@ -682,8 +687,11 @@ void packet_init() {
 		packet_handler = handle_pflog_packet;
     }
 #endif
-    else if(dlt == DLT_RAW || dlt == DLT_NULL) {
+    else if(dlt == DLT_RAW) {
         packet_handler = handle_raw_packet;
+    } 
+    else if(dlt == DLT_NULL) {
+        packet_handler = handle_loopback_packet;
     } 
     else if(dlt == DLT_IEEE802) {
         packet_handler = handle_tokenring_packet;
