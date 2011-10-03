@@ -163,7 +163,7 @@ void options_set_defaults() {
 }
 
 static void die(char *msg) {
-    fprintf(stderr, msg);
+    fprintf(stderr, "%s", msg);
     exit(1);
 }
 
@@ -538,18 +538,19 @@ int options_config_get_net_filter6() {
             }
             else {
                 int bl, rem;
-                const uint32_t mm = 0xffffffff;
-                uint32_t part = mm;
+                const uint8_t mm = 0xff;
+                uint8_t part = mm;
 
-                bl = n / 32;
-                rem = n % 32;
-                part <<= 32 - rem;
+                bl = n / 8;
+                rem = n % 8;
+                part <<= 8 - rem;
                 for (j=0; j < bl; ++j)
-                    options.netfilter6mask.s6_addr32[j] = htonl(mm);
+                    options.netfilter6mask.s6_addr[j] = mm;
+
                 if (rem > 0)
-                    options.netfilter6mask.s6_addr32[bl] = htonl(part);
+                    options.netfilter6mask.s6_addr[bl] = part;
                 options.netfilter6 = 1;
-            }
+              }
         }
         else {
             if (inet_pton(AF_INET6, mask, &options.netfilter6mask) != 0)

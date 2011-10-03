@@ -43,7 +43,7 @@ int hash(void* key) {
     addr_pair* ap = (addr_pair*)key;
 
     if (ap->af == AF_INET6) {
-        uint32_t* addr6 = ap->src6.s6_addr32;
+        uint32_t* addr6 = (uint32_t*)ap->src6.s6_addr;
 
         hash = ( hash_uint32(addr6[0])
                 + hash_uint32(addr6[1])
@@ -51,7 +51,7 @@ int hash(void* key) {
                 + hash_uint32(addr6[3])
                 + ap->src_port) % 0xFF;
 
-        addr6 = ap->dst6.s6_addr32;
+        addr6 = (uint32_t*)ap->dst6.s6_addr;
         hash = ( hash + hash_uint32(addr6[0])
                 + hash_uint32(addr6[1])
                 + hash_uint32(addr6[2])

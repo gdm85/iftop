@@ -328,11 +328,11 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
         /* First reduce the participating addresses using the netfilter prefix.
          * We need scratch pads to do this.
          */
-        for (j=0; j < 4; ++j) {
-            scribdst.s6_addr32[j] = ip6tr->ip6_dst.s6_addr32[j]
-                                        & options.netfilter6mask.s6_addr32[j];
-            scribsrc.s6_addr32[j] = ip6tr->ip6_src.s6_addr32[j]
-                                        & options.netfilter6mask.s6_addr32[j];
+        for (j=0; j < 16; ++j) {
+            scribdst.s6_addr[j] = ip6tr->ip6_dst.s6_addr[j]
+                                        & options.netfilter6mask.s6_addr[j];
+            scribsrc.s6_addr[j] = ip6tr->ip6_src.s6_addr[j]
+                                        & options.netfilter6mask.s6_addr[j];
         }
 
         /* Now look for any hits. */

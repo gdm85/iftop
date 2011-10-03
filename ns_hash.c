@@ -29,7 +29,7 @@ static int __inline__ hash_uint32(uint32_t n) {
 
 int ns_hash_hash(void* key) {
     int hash;
-    uint32_t* addr6 = ((struct in6_addr *) key)->s6_addr32;
+    uint32_t* addr6 = (uint32_t*)((struct in6_addr *) key)->s6_addr;
 
     hash = ( hash_uint32(addr6[0])
             + hash_uint32(addr6[1])
