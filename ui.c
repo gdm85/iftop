@@ -221,6 +221,8 @@ static struct {
     };
 static int rateidx = 0, wantbiggerrate;
 
+static int rateidx_init = 0;
+
 static int get_bar_interval(float bandwidth) {
     int i = 10;
     if(bandwidth > 100000000) {
@@ -245,8 +247,14 @@ static int get_bar_length(const int rate) {
     float l;
     if (rate <= 0)
         return 0;
-    if (rate > scale[rateidx].max)
-        wantbiggerrate = 1;
+    if (rate > scale[rateidx].max) {
+      wantbiggerrate = 1;
+      if(! rateidx_init) {
+	while(rate > scale[rateidx_init++].max) {
+	}
+	rateidx = rateidx_init;
+      }
+    }
     if(options.log_scale) {
         l = log(rate) / log(get_max_bandwidth());
     }
@@ -762,8 +770,8 @@ void ui_print() {
 
     /* Bar chart auto scale */
     if (wantbiggerrate && options.max_bandwidth == 0) {
-        ++rateidx;
-        wantbiggerrate = 0;
+      ++rateidx;
+      wantbiggerrate = 0;
     }
 }
 
