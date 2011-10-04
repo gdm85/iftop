@@ -34,6 +34,25 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Improved behaviour of sort in sent/recv only mode
     Damián Viano <des@debian.org>
 
+* FreeBSD compilation fix 
+* IPv6 reverse resolution
+    Frédéric Perrin <frederic.perrin@resel.fr>
+
+* Improved IPv6 code (removed s6_addr32 dependency)
+* Fixed support for DLT_NULL
+    Scott Bertilson <ssb@umn.edu>
+
+* Typo in usage message
+* Workaround for PuTTY issue (https://bugzilla.redhat.com/show_bug.cgi?id=546032)
+    Robert Scheck <robert@fedoraproject.org>
+
+* Attempt to detect if interface is actually up when doing autodetection.
+* Fixed segfault when selecting interfaces with empty MAC address (e.g. gprs
+  interface on Nokia N900)
+    Graham Ings <graham@nerve.org.za>
+
+* Avoid autodetecting wmaster interfaces
+* Experimental support for IEEE802_11 radiotap interfaces (DLT 127)
 * Fixed segfault / hang when supplying multiple -i options
 
 
