@@ -86,9 +86,10 @@ static void finish(int sig) {
  * bytes of tcp/udp header */
 /* Increase with a further 20 to account for IPv6 header length.  */
 /* IEEE 802.11 radiotap throws in a variable length header plus 8 (radiotap
- * header header) plus 30 (802.11 MAC) plus 40 (IPv6) = 78, plus whatever's in
+ * header header) plus 34 (802.11 MAC) plus 40 (IPv6) = 78, plus whatever's in
  * the radiotap payload */
-#define CAPTURE_LENGTH 92
+/*#define CAPTURE_LENGTH 92 */
+#define CAPTURE_LENGTH 256
 
 void init_history() {
     history = addr_hash_create();
@@ -612,9 +613,9 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
  */
 static void handle_radiotap_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
-    /* 802.11 MAC header is = 30 bytes */
+    /* 802.11 MAC header is = 34 bytes (not sure if that's universally true) */
     /* We could try harder to figure out hardware direction from the MAC header */
-    handle_ip_packet((struct ip*)(packet + ((struct radiotap_header *)packet)->it_len + 30),-1);
+    handle_ip_packet((struct ip*)(packet + ((struct radiotap_header *)packet)->it_len + 34),-1);
 }
 
 
