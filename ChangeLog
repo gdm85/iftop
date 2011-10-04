@@ -49,7 +49,7 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Attempt to detect if interface is actually up when doing autodetection.
 * Fixed segfault when selecting interfaces with empty MAC address (e.g. gprs
   interface on Nokia N900)
-    Graham Ings <graham@nerve.org.za>
+    Graham Inggs <graham@nerve.org.za>
 
 * Avoid autodetecting wmaster interfaces
 * Experimental support for IEEE802_11 radiotap interfaces (DLT 127)
