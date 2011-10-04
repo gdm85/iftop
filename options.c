@@ -87,8 +87,10 @@ static int is_bad_interface_name(char *i) {
  * interface or one of the interface types listed in bad_interface_names. */
 static char *get_first_interface(void) {
     struct if_nameindex * nameindex;
+    struct ifreq ifr;
     char *i = NULL;
     int j = 0;
+    int s;
     /* Use if_nameindex(3) instead? */
 
     nameindex = if_nameindex();
@@ -96,10 +98,15 @@ static char *get_first_interface(void) {
         return NULL;
     }
 
+    s = socket(AF_INET, SOCK_DGRAM, 0); /* any sort of IP socket will do */
+
     while(nameindex[j].if_index != 0) {
         if (strcmp(nameindex[j].if_name, "lo") != 0 && !is_bad_interface_name(nameindex[j].if_name)) {
-            i = xstrdup(nameindex[j].if_name);
-            break;
+            strncpy(ifr.ifr_name, nameindex[j].if_name, sizeof(ifr.ifr_name));
+            if ((s == -1) || (ioctl(s, SIOCGIFFLAGS, &ifr) != -1) || (ifr.ifr_flags & IFF_UP)) {
+                i = xstrdup(nameindex[j].if_name);
+                break;
+            }
         }
         j++;
     }
