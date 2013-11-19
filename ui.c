@@ -563,7 +563,7 @@ void analyse_data() {
 
 }
 
-void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol, int L) {
+void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol, int L, int unspecified_as_star) {
     char hostname[HOSTNAME_LENGTH];
     char service[HOSTNAME_LENGTH];
     char* s_name;
@@ -575,7 +575,7 @@ void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, 
     ip_service skey;
     int left;
 
-    if(IN6_IS_ADDR_UNSPECIFIED(addr)) {
+    if(IN6_IS_ADDR_UNSPECIFIED(addr) && unspecified_as_star) {
         sprintf(hostname, " * ");
     }
     else {
@@ -599,9 +599,16 @@ void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, 
     else {
       service[0] = '\0';
     }
-
-
-    sprintf(line, "%-*s", L, hostname);
+    
+    /* If we're showing IPv6 addresses with a port number, put them in square
+     * brackets. */
+    if(port == 0 || af == AF_INET || L < 2) {
+      sprintf(line, "%-*s", L, hostname);
+    }
+    else {
+      sprintf(line, "[%-.*s]", L-2, hostname);
+      left += 2;
+    }
     if(left > (L - strlen(service))) {
         left = L - strlen(service);
         if(left < 0) {
@@ -669,11 +676,11 @@ void ui_print() {
                 sprint_host(host1, screen_line->ap.af,
                             &(screen_line->ap.src6),
                             screen_line->ap.src_port,
-                            screen_line->ap.protocol, L);
+                            screen_line->ap.protocol, L, options.aggregate_src);
                 sprint_host(host2, screen_line->ap.af,
                             &(screen_line->ap.dst6),
                             screen_line->ap.dst_port,
-                            screen_line->ap.protocol, L);
+                            screen_line->ap.protocol, L, options.aggregate_dest);
 
                 if(!screen_filter_match(host1) && !screen_filter_match(host2)) {
                   continue;
