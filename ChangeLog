@@ -5,6 +5,24 @@ Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
 1.0
+
+* Remove blinking cursor from UI
+    Gerrit Renker <renker@ualberta.ca>
+
+* Treat multicast packets as incoming, rather than incoming (IPv4) or not at
+  all (IPv6).
+    Andreas Schwab <schwab@linux-m68k.org>
+
+* Minor fixes to the man page
+    Markus Koschany <apo@gambaru.de>
+
+* Added text output mode (-t option)
+    Roman Hoog Antink <rha@open.ch> (originally by Patrik Bless)
+
+* Fix for memory leak when DNS resolution is turned off
+  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=677141
+    Olivier Allard-Jacquin <olivieraj@free.fr>
+
 * Various typos in the UI
     Gerben Roest <g.roest@grepit.nl>
 
@@ -29,6 +47,7 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Support for IPv6
 * Fix for performance issue with address hashing
 * Fix for failing link address detection for GNU/kfreebsd
+* Multiple portability fixes
     Mats Erik Andersson <mats.andersson@gisladisker.se>
 
 * Improved behaviour of sort in sent/recv only mode
@@ -44,6 +63,10 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 
 * Typo in usage message
 * Workaround for PuTTY issue (https://bugzilla.redhat.com/show_bug.cgi?id=546032)
+* Updates to licence text (change in FSF address)
+* Avoid an assertion failure if an "invalid" (as in outside of IPv4 or IPv6)
+  address family is encountered (Red Hat bugs #839750, #847124, #868065, #961236
+  and #1007434)
     Robert Scheck <robert@fedoraproject.org>
 
 * Attempt to detect if interface is actually up when doing autodetection.
@@ -54,7 +77,7 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Avoid autodetecting wmaster interfaces
 * Experimental support for IEEE802_11 radiotap interfaces (DLT 127)
 * Fixed segfault / hang when supplying multiple -i options
-
+* Added missing docs for -m option.
 
 0.17 12/02/06
 * Display top scale in bytes when measuring in bytes
