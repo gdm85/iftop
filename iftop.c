@@ -140,7 +140,6 @@ void tick(int print) {
    
     t = time(NULL);
     if(t - last_timestamp >= RESOLUTION) {
-        //printf("TICKING\n");
         analyse_data();
         ui_print();
         history_rotate();
@@ -574,9 +573,9 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     tick(0);
 
     if(ether_type == ETHERTYPE_8021Q) {
-	struct vlan_8021q_header* vptr;
-	vptr = (struct vlan_8021q_header*)payload;
-	ether_type = ntohs(vptr->ether_type);
+        struct vlan_8021q_header* vptr;
+        vptr = (struct vlan_8021q_header*)payload;
+        ether_type = ntohs(vptr->ether_type);
         payload += sizeof(struct vlan_8021q_header);
     }
 
@@ -592,11 +591,11 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
             dir = 1;
         }
         else if(have_hw_addr && memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 ) {
-	    /* packet entering this i/f */
-	    dir = 0;
-	}
-	else if (memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
-	  /* broadcast packet, count as incoming */
+            /* packet entering this i/f */
+            dir = 0;
+        }
+        else if (memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
+            /* broadcast packet, count as incoming */
             dir = 0;
         }
 
