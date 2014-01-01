@@ -305,6 +305,14 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
             assign_addr_pair(&ap, iptr, 1);
             direction = 0;
         }
+        else if (IP_V(iptr) == 4 && IN_MULTICAST(iptr->ip_dst.s_addr)) {
+            assign_addr_pair(&ap, iptr, 1);
+            direction = 0;
+        }
+        else if (IP_V(iptr) == 6 && IN6_IS_ADDR_MULTICAST(&ip6tr->ip6_dst)) {
+            assign_addr_pair(&ap, iptr, 1);
+            direction = 0;
+        }
         /*
          * Cannot determine direction from hardware or IP levels.  Therefore 
          * assume that it was a packet between two other machines, assign
@@ -323,6 +331,8 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
             direction = 0;
         }
         /* Drop other uncertain packages. */
+        else
+            return;
     }
 
     if(IP_V(iptr) == 4 && options.netfilter != 0) {
