@@ -25,6 +25,7 @@ typedef	unsigned long	ulong;
 #include	<sys/dlpi.h>
 #include	<sys/signal.h>
 #include	<stdio.h>
+#include	<stdlib.h>
 #include	<string.h>
 #include	"dlcommon.h"
 
@@ -462,7 +463,7 @@ char	*bufp;
 		err("dlphysaddrack:  short response ctl.len:  %d", ctl.len);
 }
 
-static void
+void
 sigalrm()
 {
 	(void) err("sigalrm:  TIMEOUT");

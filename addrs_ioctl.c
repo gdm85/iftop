@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 
 #if defined __FreeBSD__ || defined __OpenBSD__ || defined __APPLE__ \
-      || ( defined __GNUC__ && ! defined __linux__ )
+      || ( defined __GLIBC__ && ! defined __linux__ )
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <net/if_dl.h>
@@ -81,7 +81,7 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr, 
   }
 #else
 #if defined __FreeBSD__ || defined __OpenBSD__ || defined __APPLE__ \
-      || ( defined __GNUC__ && ! defined __linux__ )
+      || ( defined __GLIBC__ && ! defined __linux__ )
   {
     int sysctlparam[6] = {CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST, 0};
     size_t needed = 0;

@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
-#include <curses.h>
+#include <ncurses.h>
 #include <errno.h>
 #include <string.h>
 #include <math.h>

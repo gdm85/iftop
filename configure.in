@@ -355,7 +355,7 @@ oldLIBS=$LIBS
 for curseslib in ncursesw curses ncurses ; do
     LIBS="$oldLIBS -l$curseslib"
     AC_TRY_LINK([
-#include <curses.h>
+#include <$curseslib.h>
         ], [
         mvchgat(0, 0, 1, A_REVERSE, 0, NULL)
         ], [
