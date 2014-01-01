@@ -432,6 +432,7 @@ void ui_curses_init() {
     (void) nonl();         /* tell curses not to do NL->CR/NL on output */
     (void) cbreak();       /* take input chars one at a time, no wait for \n */
     (void) noecho();       /* don't echo input */
+    (void) curs_set(0);    /* hide blinking cursor in ui */
     halfdelay(2);
 }
 
