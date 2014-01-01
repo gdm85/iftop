@@ -30,7 +30,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:nNF:G:lhpbBPm:c:";
+char optstr[] = "+i:f:nNF:G:lhpbBPm:c:s:tL:o:";
 
 /* Global options. */
 
@@ -55,7 +55,7 @@ config_enumeration_type sort_enumeration[] = {
 	{ "10s", OPTION_SORT_DIV2 },
 	{ "40s", OPTION_SORT_DIV3 },
 	{ "source", OPTION_SORT_SRC },
-	{ "destination", OPTION_SORT_SRC },
+	{ "destination", OPTION_SORT_DEST },
 	{ NULL, -1 }
 };
 
@@ -155,6 +155,9 @@ void options_set_defaults() {
     options.max_bandwidth = 0; /* auto */
     options.log_scale = 0;
     options.bar_interval = 1;
+    options.timed_output = 0;
+    options.no_curses = 0;
+    options.num_lines = 10;
 
     /* Figure out the name for the config file */
     s = getenv("HOME");
@@ -268,6 +271,18 @@ static void usage(FILE *fp) {
 "   -P                  show ports as well as hosts\n"
 "   -m limit            sets the upper limit for the bandwidth scale\n"
 "   -c config file      specifies an alternative configuration file\n"
+"   -t                  use text interface without ncurses\n"
+"\n"
+"   Sorting orders:\n"
+"   -o 2s                Sort by first column (2s traffic average)\n"
+"   -o 10s               Sort by second column (10s traffic average) [default]\n"
+"   -o 40s               Sort by third column (40s traffic average)\n"
+"   -o source            Sort by source address\n"
+"   -o destination       Sort by destination address\n"
+"\n"
+"   The following options are only available in combination with -t\n"
+"   -s num              print one single text output afer num seconds, then quit\n"
+"   -L num              number of lines to print\n"
 "\n"
 "iftop, version " IFTOP_VERSION "\n"
 "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com> and contributors\n"
@@ -330,6 +345,22 @@ void options_read_args(int argc, char **argv) {
 
             case 'B':
                 config_set_string("use-bytes", "true");
+                break;
+
+            case 's':
+                config_set_string("timed-output", optarg);
+                break;
+
+            case 't':
+                config_set_string("no-curses", "true");
+                break;
+
+            case 'L':
+                config_set_string("num-lines", optarg);
+                break;
+
+            case 'o':
+                config_set_string("sort", optarg);
                 break;
 
             case 'c':
@@ -595,6 +626,9 @@ void options_make() {
     options_config_get_enum("port-display", showports_enumeration, (int*)&options.showports);
     options_config_get_string("screen-filter", &options.screenfilter);
     options_config_get_bool("link-local", &options.link_local);
+    options_config_get_int("timed-output", &options.timed_output);
+    options_config_get_bool("no-curses", &options.no_curses);
+    options_config_get_int("num-lines", &options.num_lines);
     options_config_get_net_filter();
     options_config_get_net_filter6();
 };

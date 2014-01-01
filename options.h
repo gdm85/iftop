@@ -56,6 +56,9 @@ typedef struct {
     int aggregate_dest;
     int paused;
     int showhelp;
+    int timed_output;
+    int no_curses;
+    int num_lines;
     int bandwidth_in_bytes;
     option_sort_t sort;
 

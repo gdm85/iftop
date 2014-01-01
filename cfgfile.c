@@ -39,6 +39,9 @@ char * config_directives[] = {
 	"net-filter6", 
         "link-local",
 	"port-display", 
+	"timed-output",
+	"no-curses",
+	"num-lines",
 	NULL
 };
 
