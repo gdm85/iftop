@@ -74,7 +74,7 @@ dnl Fairly generic checks.
 dnl
 
 dnl Checks for system headers.
-AC_CHECK_HEADERS(sys/ioctl.h sys/time.h sys/sockio.h unistd.h)
+AC_CHECK_HEADERS([sgtty.h sys/ioctl.h sys/time.h sys/sockio.h termio.h termios.h unistd.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
