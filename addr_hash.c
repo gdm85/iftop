@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "addr_hash.h"
 #include "hash.h"
 #include "iftop.h"

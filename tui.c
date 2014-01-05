@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #if defined(HAVE_TERMIOS_H)

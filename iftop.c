@@ -49,12 +49,13 @@
 #include "ethertype.h"
 #include "cfgfile.h"
 #include "ppp.h"
+#include "addrs_ioctl.h"
 
 #include <netinet/ip6.h>
 
 /* ethernet address of interface. */
 int have_hw_addr = 0;
-unsigned char if_hw_addr[6];    
+char if_hw_addr[6];    
 
 /* IP address of interface */
 int have_ip_addr = 0;
@@ -498,9 +499,9 @@ static void handle_llc_packet(const struct llc* llc, int dir) {
     if(llc->ssap == LLCSAP_SNAP && llc->dsap == LLCSAP_SNAP
        && llc->llcui == LLC_UI) {
         u_int32_t orgcode;
-        register u_short et;
+        u_int16_t et;
         orgcode = EXTRACT_24BITS(&llc->llc_orgcode[0]);
-        et = EXTRACT_16BITS(&llc->llc_ethertype[0]);
+        et = (llc->llc_ethertype[0] << 8) + llc->llc_ethertype[1];
         switch(orgcode) {
           case OUI_ENCAP_ETHER:
           case OUI_CISCO_90:
@@ -679,7 +680,6 @@ char *set_filter_code(const char *filter) {
 void packet_init() {
     char errbuf[PCAP_ERRBUF_SIZE];
     char *m;
-    int s;
     int i;
     int dlt;
     int result;

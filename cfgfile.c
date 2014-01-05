@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "stringmap.h"
 #include "iftop.h"
@@ -169,7 +170,6 @@ int config_get_int(const char *directive, int *value) {
  * failure, or 0 if no value was found. */
 int config_get_float(const char *directive, float *value) {
     stringmap S;
-    item *I;
     char *s, *t;
 
     if (!value) return -1;
@@ -245,7 +245,5 @@ void config_set_string(const char *directive, const char* s) {
 }
 
 int read_config(char *file, int whinge_on_error) {
-    void* o;
-
     return read_config_file(file, whinge_on_error);
 }
