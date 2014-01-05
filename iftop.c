@@ -145,7 +145,7 @@ void tick(int print) {
     if(t - last_timestamp >= RESOLUTION) {
         analyse_data();
         if (options.no_curses) {
-          if (!options.timed_output || options.timed_output && t - first_timestamp >= options.timed_output) {
+          if (!options.timed_output || (options.timed_output && t - first_timestamp >= options.timed_output)) {
             tui_print();
             if (options.timed_output) {
               finish(SIGINT);
