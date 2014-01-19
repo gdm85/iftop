@@ -215,7 +215,6 @@ static void usage(FILE *fp) {
 "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com> and contributors\n"
             );
 }
-#endif  /* Obsolete code? */
 
 void options_read_args(int argc, char **argv) {
     int opt;

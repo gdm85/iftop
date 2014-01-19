@@ -177,11 +177,11 @@ int in_filter_net(struct in_addr addr) {
     return ret;
 }
 
-int __inline__ ip_addr_match(struct in_addr addr) {
+static int __inline__ ip_addr_match(struct in_addr addr) {
     return addr.s_addr == if_ip_addr.s_addr;
 }
 
-int __inline__ ip6_addr_match(struct in6_addr *addr) {
+static int __inline__ ip6_addr_match(struct in6_addr *addr) {
     return IN6_ARE_ADDR_EQUAL(addr, &if_ip6_addr);
 }
 

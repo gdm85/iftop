@@ -22,7 +22,7 @@ dnl
 dnl Boilerplate configuration
 dnl
 
-AC_INIT([iftop], [1.0pre2], [pdw@ex-parrot.com], [http://www.ex-parrot.com/pdw/iftop/])
+AC_INIT([iftop], [1.0pre4], [pdw@ex-parrot.com], [iftop], [http://www.ex-parrot.com/pdw/iftop/])
 
 AC_CONFIG_AUX_DIR(config)
 
