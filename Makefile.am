@@ -27,7 +27,7 @@ iftop_SOURCES = addr_hash.c edline.c hash.c iftop.c ns_hash.c \
 
 
 
-noinst_HEADERS = addr_hash.h ether.h ethertype.h extract.h hash.h iftop.h \
+noinst_HEADERS = addr_hash.h addrs_ioctl.h ether.h ethertype.h extract.h hash.h iftop.h \
                  integers.h ip.h llc.h ns_hash.h options.h resolver.h \
                  screenfilter.h serv_hash.h sll.h sorted_list.h tcp.h \
                  threadprof.h token.h ui_common.h ui.h tui.h dlcommon.h stringmap.h \
