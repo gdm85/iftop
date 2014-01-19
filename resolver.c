@@ -107,10 +107,10 @@ char *do_resolve(struct addr_storage *addr) {
  * a non thread-safe wrapper to gethostbyaddr.  An interesting choice...
  */
 char* do_resolve(struct addr_storage *addr) {
-    struct hostent hostbuf, *hp;
+    struct hostent hostbuf, *hp = NULL;
     size_t hstbuflen = 1024;
     char *tmphstbuf;
-    int res;
+    int res = 0;
     int herr;
     char * ret = NULL;
 

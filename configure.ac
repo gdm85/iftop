@@ -1,5 +1,5 @@
 dnl
-dnl configure.in:
+dnl configure.ac:
 dnl Autoconf input for iftop.
 dnl
 dnl I hate autoconf with a passion. It's an utter pain to write these bloody
@@ -17,21 +17,19 @@ dnl    autoconf
 dnl Now you should have good sources to make into a tarball and distribute.
 dnl    ./configure     (perhaps with some arguments)
 dnl    make
-dnl Tested with Automake 1.4 and autoconf 2.59.
+dnl Tested with automake 1.9.6-1.14 and autoconf 2.59-2.69.
 dnl
 dnl Boilerplate configuration
 dnl
 
-AC_INIT(iftop.c)
+AC_INIT([iftop], [1.0pre2], [pdw@ex-parrot.com], [http://www.ex-parrot.com/pdw/iftop/])
 
 AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_SYSTEM
 
-AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(iftop, "1.0pre3")
-
-AC_DEFINE_UNQUOTED(IFTOP_VERSION, "$VERSION", [The iftop version number])
+AC_CONFIG_HEADERS([config.h])
+AM_INIT_AUTOMAKE
 
 dnl Make sure we have a C compiler....
 AC_PROG_CC
@@ -107,7 +105,7 @@ dnl
 
 for type in u_int8_t u_int16_t u_int32_t ; do
     AC_MSG_CHECKING([size of $type])
-    AC_RUN_IFELSE([
+    AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <sys/types.h>
 #include <stdio.h>
 int main() {
@@ -117,7 +115,7 @@ int main() {
     fprintf(f, "%d\n", sizeof($1));
     exit(0);
 }
-    ], [
+    ])], [
         x=`cat conftestval`
         eval "size_$type=$x"
         AC_MSG_RESULT([$x])
@@ -206,13 +204,13 @@ dnl whether it works so we can support cross-compilation.
 if test x$resolver = xnetdb ; then
     AC_MSG_CHECKING([how to call gethostbyaddr_r])
     dnl Try 7 arguments returning a struct hostent*.
-    AC_LINK_IFELSE(AC_LANG_SOURCE([`cat config/hostentp_ghba_r.c`]),
+    AC_LINK_IFELSE([AC_LANG_SOURCE([`cat config/hostentp_ghba_r.c`])],
                    [AC_MSG_RESULT([7 args])
 		    ghba_args=8
 	            AC_DEFINE(GETHOSTBYADDR_R_RETURNS_HOSTENT_P, 1,
                     [7-argument gethostbyaddr_r returns struct hostent*])], [
     dnl Try 8 arguments returning an int.
-    AC_LINK_IFELSE(AC_LANG_SOURCE([`cat config/int_ghba_r.c`]),
+    AC_LINK_IFELSE([AC_LANG_SOURCE([`cat config/int_ghba_r.c`])],
                    [AC_MSG_RESULT([8 args, int return])
 		    ghba_args=8
 	            AC_DEFINE(GETHOSTBYADDR_R_RETURNS_INT, 1,
@@ -235,7 +233,7 @@ if test x$resolver = xnetdb ; then
        testfile=hostentp_ghba_r
     fi
     AC_MSG_CHECKING(gethostbyaddr_r usability)
-    AC_RUN_IFELSE([`cat config/$testfile.c`],
+    AC_RUN_IFELSE([AC_LANG_SOURCE([`cat config/$testfile.c`])],
                   [AC_MSG_RESULT([yes])],
 		  [AC_MSG_RESULT([no])
 		   resolver=guess],
@@ -387,7 +385,7 @@ for flag in "" -mt -pthread -thread ; do
     CFLAGS="$oldCFLAGS $flag"
     for lib in "" -lpthread "-lpthread -lposix4" ; do
         LIBS="$oldLIBS $lib"
-        AC_LINK_IFELSE(AC_LANG_SOURCE([`cat config/pthread.c`]), [
+        AC_LINK_IFELSE([AC_LANG_SOURCE([`cat config/pthread.c`])], [
             foundthrlib=$lib
             foundthrflag=$flag
             thrfail=0
@@ -407,7 +405,7 @@ fi
 
 AC_MSG_RESULT([CFLAGS=$foundthrflag and LIBS=$foundthrlib])
 AC_MSG_CHECKING([POSIX threads usability])
-AC_RUN_IFELSE([`cat config/pthread.c`],
+AC_RUN_IFELSE([AC_LANG_SOURCE([`cat config/pthread.c`])],
 	      [AC_MSG_RESULT([yes])],
               [AC_MSG_ERROR(
 	       [it fails.  We probably guessed the wrong CFLAGS.])],
@@ -444,7 +442,7 @@ AC_SUBST(ac_aux_dir)
 
 AC_OUTPUT(Makefile config/Makefile)
 
-if echo $VERSION | grep 'pre' ; then 
+if echo $PACKAGE_VERSION | grep 'pre' > /dev/null ; then 
 	AC_MSG_WARN([
 ******************************************************************************
 

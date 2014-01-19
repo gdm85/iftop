@@ -211,10 +211,11 @@ static void usage(FILE *fp) {
 "   -s num              print one single text output afer num seconds, then quit\n"
 "   -L num              number of lines to print\n"
 "\n"
-"iftop, version " IFTOP_VERSION "\n"
+"iftop, version " PACKAGE_VERSION "\n"
 "copyright (c) 2002 Paul Warren <pdw@ex-parrot.com> and contributors\n"
             );
 }
+#endif  /* Obsolete code? */
 
 void options_read_args(int argc, char **argv) {
     int opt;

@@ -3,6 +3,8 @@
  *
  */
 
+#include "config.h"
+
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -49,7 +51,7 @@
 " > - sort by dest name\n"\
 " o - freeze current order\n"\
 "\n"\
-"iftop, version " IFTOP_VERSION 
+"iftop, version " PACKAGE_VERSION
 
 
 extern hash_type* history;
