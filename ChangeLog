@@ -14,6 +14,8 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
     Andreas Schwab <schwab@linux-m68k.org>
 
 * Minor fixes to the man page
+* Man page documentation of -t mode.
+* Compile time warning fixes.
     Markus Koschany <apo@gambaru.de>
 
 * Added text output mode (-t option)
@@ -67,6 +69,9 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 * Avoid an assertion failure if an "invalid" (as in outside of IPv4 or IPv6)
   address family is encountered (Red Hat bugs #839750, #847124, #868065, #961236
   and #1007434)
+* enable building iftop with more recent versions of autoconf/automake
+* patch to remove compile time warnings
+* Fix to avoid system call in text mode wherever possible.
     Robert Scheck <robert@fedoraproject.org>
 
 * Attempt to detect if interface is actually up when doing autodetection.
