@@ -1,11 +1,13 @@
 Change log for iftop
-$Id$
 
 Attributions apply to all preceding items up to the next blank line.
 Unattributed items are by Paul Warren and Chris Lightfoot.
 
 
 1.0
+
+* Clean up libpcap on exit
+    Brian Russell <brian.russell@brocade.com>
 
 * Remove blinking cursor from UI
     Gerrit Renker <renker@ualberta.ca>
