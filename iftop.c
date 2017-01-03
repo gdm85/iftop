@@ -839,6 +839,8 @@ int main(int argc, char **argv) {
     }
 
     pthread_cancel(thread);
+    pthread_join(thread, NULL);
+    pcap_close(pd);
 
     ui_finish();
     
