@@ -7,23 +7,6 @@ iftop must be run as root.
 
 KNOWN ISSUES
 
-RedHat 7.2:
-
-There is a bug in the version of ncurses distibuted with RedHat 7.2 that
-will cause iftop to segfault.  The RPM in RedHat's Rawhide distribution
-fixes this.
-
-Slackware 8.1:
-
-You may need to upgrade your libpcap (by updating the tcpdump package) 
-in order to compile iftop.
-
-FreeBSD 4.7:
-
-This version of FreeBSD lacks a proper gethostbyaddr_r function. You should
-choose an alternative name resolution technique using the --with-resolver=...
-option to configure.
-
 Solaris:
 
 On Solaris, iftop has to run in promiscuous mode in order to capture
