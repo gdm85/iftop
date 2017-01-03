@@ -442,23 +442,3 @@ AC_SUBST(ac_aux_dir)
 
 AC_OUTPUT(Makefile config/Makefile)
 
-if echo $PACKAGE_VERSION | grep 'pre' > /dev/null ; then 
-	AC_MSG_WARN([
-******************************************************************************
-
-This is a pre-release version.  Pre-releases are subject to limited 
-announcements, and therefore limited circulation, as a means of testing
-the more widely circulated final releases.  
-
-Please do not be surprised if this release is broken, and if it is broken, do
-not assume that someone else has spotted it.  Instead, please drop a note on
-the mailing list, or a brief email to me on pdw@ex-parrot.com
-
-Thank you for taking the time to be the testing phase of this development
-process.
-
-Paul Warren
-
-******************************************************************************
-])
-fi
