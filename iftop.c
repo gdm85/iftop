@@ -55,7 +55,7 @@
 
 /* ethernet address of interface. */
 int have_hw_addr = 0;
-char if_hw_addr[6];    
+u_int8_t if_hw_addr[6];
 
 /* IP address of interface */
 int have_ip_addr = 0;

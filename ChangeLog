@@ -6,6 +6,9 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 
 1.0
 
+* Fix MAC address display
+    Kevin Darbyshire-Bryant <kevin@darbyshire-bryant.me.uk>
+
 * Clean up libpcap on exit
     Brian Russell <brian.russell@brocade.com>
 

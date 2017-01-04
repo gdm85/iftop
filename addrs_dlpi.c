@@ -50,7 +50,7 @@ extern char *strncat2(char *dest, char *src, int n);
  */
 
 int
-get_addrs_dlpi(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
+get_addrs_dlpi(char *interface, u_int8_t if_hw_addr[], struct in_addr *if_ip_addr)
 {
   int got_hw_addr = 0;
   int got_ip_addr = 0;
