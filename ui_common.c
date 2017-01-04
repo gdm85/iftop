@@ -263,9 +263,6 @@ void analyse_data() {
 	} u_screen_line = { &screen_line };
         addr_pair ap;
         int i;
-        int tsent, trecv;
-        tsent = trecv = 0;
-
 
         ap = *(addr_pair*)n->key;
 
