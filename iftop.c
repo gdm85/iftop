@@ -146,7 +146,7 @@ void tick(int print) {
     if(t - last_timestamp >= RESOLUTION) {
         analyse_data();
         if (options.no_curses) {
-          if (!options.timed_output || (options.timed_output && t - first_timestamp >= options.timed_output)) {
+          if (!options.timed_output || (t - first_timestamp >= options.timed_output)) {
             tui_print();
             if (options.timed_output) {
               finish(SIGINT);
@@ -546,7 +546,6 @@ static void handle_tokenring_packet(unsigned char* args, const struct pcap_pkthd
 
 static void handle_ppp_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
-	register u_int length = pkthdr->len;
 	register u_int caplen = pkthdr->caplen;
 	u_int proto;
 
@@ -558,11 +557,9 @@ static void handle_ppp_packet(unsigned char* args, const struct pcap_pkthdr* pkt
             return;
 
 		packet += 2;
-		length -= 2;
 
 		proto = EXTRACT_16BITS(packet);
 		packet += 2;
-		length -= 2;
 
         if(proto == PPP_IP || proto == ETHERTYPE_IP || proto == ETHERTYPE_IPV6) {
             handle_ip_packet((struct ip*)packet, -1);
