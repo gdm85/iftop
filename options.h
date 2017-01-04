@@ -34,6 +34,12 @@ typedef enum {
   OPTION_LINEDISPLAY_ONE_LINE_SENT
 } option_linedisplay_t;
 
+typedef enum {
+  OPTION_BW_BITS,
+  OPTION_BW_BYTES,
+  OPTION_BW_PKTS,
+} option_bw_unit_t;
+
 /* 
  * This structure has to be defined in the same order as the config 
  * directives in cfgfile.c.  Clearly this is EBW.
@@ -59,7 +65,7 @@ typedef struct {
     int timed_output;
     int no_curses;
     int num_lines;
-    int bandwidth_in_bytes;
+    option_bw_unit_t bandwidth_unit;
     option_sort_t sort;
 
     int bar_interval;

@@ -431,14 +431,22 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     }
 
     /* Do accounting. */
-    switch (IP_V(iptr)) {
-      case 4:
-          len = ntohs(iptr->ip_len);
-          break;
-      case 6:
-          len = ntohs(ip6tr->ip6_plen) + 40;
-      default:
-          break;
+    switch (options.bandwidth_unit) {
+      case OPTION_BW_BITS:
+      case OPTION_BW_BYTES:
+	  switch (IP_V(iptr)) {
+	    case 4:
+		len = ntohs(iptr->ip_len);
+		break;
+	    case 6:
+		len = ntohs(ip6tr->ip6_plen) + 40;
+	    default:
+		break;
+	  }
+	  break;
+      case OPTION_BW_PKTS:
+	  len = 1;
+	  break;
     }
 
     /* Update record */

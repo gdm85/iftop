@@ -153,7 +153,7 @@ static void draw_bar_scale(int* y) {
             char s[40], *p;
             int x;
             /* This 1024 vs 1000 stuff is just plain evil */
-            readable_size(i, s, sizeof s, options.log_scale ? 1000 : 1024, options.bandwidth_in_bytes);
+            readable_size(i, s, sizeof s, options.log_scale ? 1000 : 1024, options.bandwidth_unit);
             p = s + strspn(s, " ");
             x = get_bar_length(i * 8);
             mvaddch(*y + 1, x, ACS_BTEE);
@@ -177,13 +177,13 @@ static void draw_bar_scale(int* y) {
     }
 }
 
-void draw_line_total(float sent, float recv, int y, int x, option_linedisplay_t linedisplay, int bytes) {
+void draw_line_total(float sent, float recv, int y, int x, option_linedisplay_t linedisplay, option_bw_unit_t unit) {
     char buf[10];
     float n = 0;
     switch(linedisplay) {
         case OPTION_LINEDISPLAY_TWO_LINE:
-          draw_line_total(sent, recv, y, x, OPTION_LINEDISPLAY_ONE_LINE_SENT, bytes);
-          draw_line_total(sent, recv, y+1, x, OPTION_LINEDISPLAY_ONE_LINE_RECV, bytes);
+          draw_line_total(sent, recv, y, x, OPTION_LINEDISPLAY_ONE_LINE_SENT, unit);
+          draw_line_total(sent, recv, y+1, x, OPTION_LINEDISPLAY_ONE_LINE_RECV, unit);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_SENT:
           n = sent;
@@ -196,7 +196,7 @@ void draw_line_total(float sent, float recv, int y, int x, option_linedisplay_t 
           break;
     }
     if(linedisplay != OPTION_LINEDISPLAY_TWO_LINE) {
-        readable_size(n, buf, 10, 1024, bytes);
+        readable_size(n, buf, 10, 1024, unit);
         mvaddstr(y, x, buf);
     }
 }
@@ -214,7 +214,7 @@ void draw_line_totals(int y, host_pair_line* line, option_linedisplay_t linedisp
     int x = (COLS - 8 * HISTORY_DIVISIONS);
 
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-        draw_line_total(line->sent[j], line->recv[j], y, x, linedisplay, options.bandwidth_in_bytes);
+        draw_line_total(line->sent[j], line->recv[j], y, x, linedisplay, options.bandwidth_unit);
         x += 8;
     }
     
@@ -247,7 +247,7 @@ void draw_totals(host_pair_line* totals) {
     draw_line_totals(y, totals, OPTION_LINEDISPLAY_TWO_LINE);
     y += 2;
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-        readable_size((totals->sent[j] + totals->recv[j]) , buf, 10, 1024, options.bandwidth_in_bytes);
+        readable_size((totals->sent[j] + totals->recv[j]) , buf, 10, 1024, options.bandwidth_unit);
         mvaddstr(y, x, buf);
         x += 8;
     }
@@ -262,6 +262,7 @@ void ui_print() {
     static char *line;
     static int lcols;
     int y = 0;
+    option_bw_unit_t cumunit;
 
     if (dontshowdisplay)
         return;
@@ -375,25 +376,31 @@ void ui_print() {
     /* Cummulative totals */
     mvaddstr(y, 16, "cum: ");
 
-    readable_size(history_totals.total_sent, line, 10, 1024, 1);
+    /* Previous versions of iftop always displayed totals in bytes, even when
+       use-bytes = false. Stay compatible when the default unit hasn't been
+       changed. */
+    cumunit = options.bandwidth_unit;
+    if (cumunit == OPTION_BW_BITS)
+      cumunit = OPTION_BW_BYTES;
+    readable_size(history_totals.total_sent, line, 10, 1024, cumunit);
     mvaddstr(y, 22, line);
 
-    readable_size(history_totals.total_recv, line, 10, 1024, 1);
+    readable_size(history_totals.total_recv, line, 10, 1024, cumunit);
     mvaddstr(y+1, 22, line);
 
-    readable_size(history_totals.total_recv + history_totals.total_sent, line, 10, 1024, 1);
+    readable_size(history_totals.total_recv + history_totals.total_sent, line, 10, 1024, cumunit);
     mvaddstr(y+2, 22, line);
 
     /* peak traffic */
     mvaddstr(y, 32, "peak: ");
 
-    readable_size(peaksent / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
+    readable_size(peaksent / RESOLUTION, line, 10, 1024, options.bandwidth_unit);
     mvaddstr(y, 39, line);
 
-    readable_size(peakrecv / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
+    readable_size(peakrecv / RESOLUTION, line, 10, 1024, options.bandwidth_unit);
     mvaddstr(y+1, 39, line);
 
-    readable_size(peaktotal / RESOLUTION, line, 10, 1024, options.bandwidth_in_bytes);
+    readable_size(peaktotal / RESOLUTION, line, 10, 1024, options.bandwidth_unit);
     mvaddstr(y+2, 39, line);
 
     mvaddstr(y, COLS - 8 * HISTORY_DIVISIONS - 8, "rates:");

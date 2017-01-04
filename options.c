@@ -30,7 +30,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:nNF:G:lhpbBPm:c:s:tL:o:";
+char optstr[] = "+i:f:nNF:G:lhpbBu:Pm:c:s:tL:o:";
 
 /* Global options. */
 
@@ -72,6 +72,13 @@ config_enumeration_type showports_enumeration[] = {
 	{ "source-only", OPTION_PORTS_SRC },
 	{ "destination-only", OPTION_PORTS_DEST },
 	{ "on", OPTION_PORTS_ON },
+	{ NULL, -1 }
+};
+
+config_enumeration_type bandwidth_unit_enumeration[] = {
+	{ "bits", OPTION_BW_BITS },
+	{ "bytes", OPTION_BW_BYTES },
+	{ "packets", OPTION_BW_PKTS },
 	{ NULL, -1 }
 };
 
@@ -145,7 +152,7 @@ void options_set_defaults() {
     options.aggregate_dest = 0;
     options.paused = 0;
     options.showhelp = 0;
-    options.bandwidth_in_bytes = 0;
+    options.bandwidth_unit = OPTION_BW_BITS;
     options.sort = OPTION_SORT_DIV2;
     options.screenfilter = NULL;
     options.freezeorder = 0;
@@ -188,7 +195,8 @@ static void usage(FILE *fp) {
 "   -p                  run in promiscuous mode (show traffic between other\n"
 "                       hosts on the same network segment)\n"
 "   -b                  don't display a bar graph of traffic\n"
-"   -B                  Display bandwidth in bytes\n"
+"   -B                  display bandwidth in bytes\n"
+"   -a                  display bandwidth in packets\n"
 "   -i interface        listen on named interface\n"
 "   -f filter code      use filter code to select packets to count\n"
 "                       (default: none, but only IP packets are counted)\n"
@@ -271,8 +279,12 @@ void options_read_args(int argc, char **argv) {
                 break;
 
             case 'B':
-                config_set_string("use-bytes", "true");
+                config_set_string("bandwidth-unit", "bytes");
                 break;
+
+	    case 'u':
+		config_set_string("bandwidth-unit", optarg);
+		break;
 
             case 's':
                 config_set_string("timed-output", optarg);
@@ -366,6 +378,23 @@ int options_config_get_promiscuous() {
             options.promiscuous_but_choosy = 0;
         }
         return 1;
+    }
+    return 0;
+}
+
+int options_config_get_bw_unit() {
+    int i;
+
+    if (options_config_get_enum("bandwidth-unit", bandwidth_unit_enumeration,
+				(int*)&options.bandwidth_unit))
+	return 1;
+    /* compatibility with use-bytes / -B */
+    if (options_config_get_bool("use-bytes", &i)) {
+	if (i)
+	    options.bandwidth_unit = OPTION_BW_BYTES;
+	else
+	    options.bandwidth_unit = OPTION_BW_BITS;
+	return 1;
     }
     return 0;
 }
@@ -544,7 +573,7 @@ void options_make() {
     options_config_get_promiscuous();
     options_config_get_bool("hide-source", &options.aggregate_src);
     options_config_get_bool("hide-destination", &options.aggregate_dest);
-    options_config_get_bool("use-bytes", &options.bandwidth_in_bytes);
+    options_config_get_bw_unit();
     options_config_get_enum("sort", sort_enumeration, (int*)&options.sort);
     options_config_get_enum("line-display", linedisplay_enumeration, (int*)&options.linedisplay);
     options_config_get_bool("show-totals", &options.show_totals);

@@ -43,6 +43,6 @@ hash_type* service_hash;
 void analyse_data(void);
 void screen_list_init(void);
 void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol, int L, int unspecified_as_star);
-void readable_size(float, char*, int, int, int);
+void readable_size(float, char*, int, int, option_bw_unit_t);
 
 #endif /* __UI_COMMON_H_ */

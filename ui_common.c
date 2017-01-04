@@ -21,8 +21,11 @@
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
 
 #define UNIT_DIVISIONS 4
-char* unit_bits[UNIT_DIVISIONS] =  { "b", "Kb", "Mb", "Gb"};
-char* unit_bytes[UNIT_DIVISIONS] =  { "B", "KB", "MB", "GB"};
+char* unit_disp[][UNIT_DIVISIONS] = {
+  [OPTION_BW_BITS]  = { "b", "Kb", "Mb", "Gb"},
+  [OPTION_BW_BYTES] = { "B", "KB", "MB", "GB"},
+  [OPTION_BW_PKTS]  = { "p", "Kp", "Mp", "GB"},
+};
 
 extern hash_type* history;
 extern int history_pos;
@@ -121,29 +124,34 @@ int screen_line_compare(void* a, void* b) {
 /*
  * Format a data size in human-readable format
  */
-void readable_size(float n, char* buf, int bsize, int ksize, int bytes) {
+void readable_size(float n, char* buf, int bsize, int ksize,
+		   option_bw_unit_t unit) {
 
     int i = 0;
     float size = 1;
 
     /* Convert to bits? */
-    if(bytes == 0) { 
+    if (unit == OPTION_BW_BITS) { 
       n *= 8;
     }
 
+    /* Force power of ten for pps */
+    if (unit == OPTION_BW_PKTS)
+      ksize = 1000;
+
     while(1) {
       if(n < size * 1000 || i >= UNIT_DIVISIONS - 1) {
-        snprintf(buf, bsize, " %4.0f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
+        snprintf(buf, bsize, " %4.0f%s", n / size, unit_disp[unit][i]); 
         break;
       }
       i++;
       size *= ksize;
       if(n < size * 10) {
-        snprintf(buf, bsize, " %4.2f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
+        snprintf(buf, bsize, " %4.2f%s", n / size, unit_disp[unit][i]); 
         break;
       }
       else if(n < size * 100) {
-        snprintf(buf, bsize, " %4.1f%s", n / size, bytes ? unit_bytes[i] : unit_bits[i]); 
+        snprintf(buf, bsize, " %4.1f%s", n / size, unit_disp[unit][i]); 
         break;
       }
   }

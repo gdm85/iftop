@@ -87,7 +87,7 @@ void tui_print() {
     /* Send rate per connection */
     printf("%4d %s%s", l, host1, " =>");
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-      readable_size(screen_line->sent[j], buf0_10, 10, 1024, options.bandwidth_in_bytes);
+      readable_size(screen_line->sent[j], buf0_10, 10, 1024, options.bandwidth_unit);
       printf(" %10s", buf0_10);
     }
     /* Cumulative sent data per connection */
@@ -97,7 +97,7 @@ void tui_print() {
     /* Receive rate per connection */
     printf("     %s%s", host2, " <=");
     for(j = 0; j < HISTORY_DIVISIONS; j++) {
-      readable_size(screen_line->recv[j], buf0_10, 10, 1024, options.bandwidth_in_bytes);
+      readable_size(screen_line->recv[j], buf0_10, 10, 1024, options.bandwidth_unit);
       printf(" %10s", buf0_10);
     }
     /* Cumulative received data per connection */
@@ -115,21 +115,21 @@ void tui_print() {
   snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Total send rate:");
   printf("%s ", labellong);
   for(j = 0; j < HISTORY_DIVISIONS; j++) {
-    readable_size((((host_pair_line *)&totals)->sent[j]) , buf0_10, 10, 1024, options.bandwidth_in_bytes);
+    readable_size(((host_pair_line *)&totals)->sent[j], buf0_10, 10, 1024, options.bandwidth_unit);
     printf("%10s%c", buf0_10, j == HISTORY_DIVISIONS - 1 ? '\n' : ' ');
   }
 
   snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Total receive rate:");
   printf("%s ", labellong);
   for(j = 0; j < HISTORY_DIVISIONS; j++) {
-    readable_size((((host_pair_line *)&totals)->recv[j]) , buf0_10, 10, 1024, options.bandwidth_in_bytes);
+    readable_size(((host_pair_line *)&totals)->recv[j], buf0_10, 10, 1024, options.bandwidth_unit);
     printf("%10s%c", buf0_10, j == HISTORY_DIVISIONS - 1 ? '\n' : ' ');
   }
 
   snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Total send and receive rate:");
   printf("%s ", labellong);
   for(j = 0; j < HISTORY_DIVISIONS; j++) {
-    readable_size((((host_pair_line *)&totals)->sent[j] + ((host_pair_line *)&totals)->recv[j]) , buf0_10, 10, 1024, options.bandwidth_in_bytes);
+    readable_size(((host_pair_line *)&totals)->sent[j] + ((host_pair_line *)&totals)->recv[j], buf0_10, 10, 1024, options.bandwidth_unit);
     printf("%10s%c", buf0_10, j == HISTORY_DIVISIONS - 1 ? '\n' : ' ');
   }
 
@@ -141,9 +141,9 @@ void tui_print() {
 
   /* Peak traffic */
   snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Peak rate (sent/received/total):");
-  readable_size(peaksent / RESOLUTION, buf0_10, 10, 1024, options.bandwidth_in_bytes);
-  readable_size(peakrecv / RESOLUTION, buf1_10, 10, 1024, options.bandwidth_in_bytes);
-  readable_size(peaktotal / RESOLUTION, buf2_10, 10, 1024, options.bandwidth_in_bytes);
+  readable_size(peaksent / RESOLUTION, buf0_10, 10, 1024, options.bandwidth_unit);
+  readable_size(peakrecv / RESOLUTION, buf1_10, 10, 1024, options.bandwidth_unit);
+  readable_size(peaktotal / RESOLUTION, buf2_10, 10, 1024, options.bandwidth_unit);
   printf("%s %10s %10s %10s\n", labellong, buf0_10, buf1_10, buf2_10);
 
   /* Cumulative totals */

@@ -11,7 +11,7 @@ iftop - display bandwidth usage on an interface by host
 
 .SH SYNOPSIS
 \fBiftop\fP \fB-h\fP |
-[\fB-nNpblBP\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-F\fP \fInet\fP/\fImask\fP]
+[\fB-nNpblP\fP] [\fB-u\fP \fIunit\fP] [\fB-i\fP \fIinterface\fP] [\fB-f\fP \fIfilter code\fP] [\fB-F\fP \fInet\fP/\fImask\fP]
 [\fB-G\fP \fInet6\fP/\fImask6\fP]
 .SH DESCRIPTION
 \fBiftop\fP listens to network traffic on a named \fIinterface\fP, or on the
@@ -75,8 +75,11 @@ Don't display bar graphs of traffic.
 \fB-m\fP \fIlimit\fP
 Set the upper limit for the bandwidth scale.  Specified as a number with a 'K', 'M' or 'G' suffix.
 .TP
+\fB-u\fP \fIbits\fP|\fIbytes\fP|\fIpackets\fP
+Display bandwidth rates in the given unit (per second).
+.TP
 \fB-B\fP
-Display bandwidth rates in bytes/sec rather than bits/sec.
+Synonym for \fB-u\fP \fIbits\fP.
 .TP
 \fB-i\fP \fIinterface\fP
 Listen to packets on \fIinterface\fP.
@@ -236,8 +239,11 @@ Hides source host names.
 \fBhide-destination:\fP \fI(yes|no)\fP
 Hides destination host names.
 .TP
+\fBbandwidth-unit:\fP \fI(bits|bytes|packets)\fP
+Use the specified unit for bandwidth display. The default is bits.
+.TP
 \fBuse-bytes:\fP \fI(yes|no)\fP
-Use bytes for bandwidth display, rather than bits.
+\fBuse-bytes: yes\fP is a synonym of \fBbandwidth-unit: packets\fP.
 .TP
 \fBsort:\fP \fI(2s|10s|40s|source|destination)\fP
 Sets which column is used to sort the display.
