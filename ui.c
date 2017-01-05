@@ -53,6 +53,9 @@
 "\n"\
 "iftop, version " PACKAGE_VERSION
 
+#define COLOR_SENT 1
+#define COLOR_RECV 2
+#define COLOR_BOTH 3
 
 extern hash_type* history;
 extern int history_pos;
@@ -201,12 +204,13 @@ void draw_line_total(float sent, float recv, int y, int x, option_linedisplay_t 
     }
 }
 
-void draw_bar(float n, int y) {
+void draw_bar(float n, int y, short colorpair) {
     int L;
+    colorpair = has_colors() ? colorpair : 0; /* set 0 if terminal is not color capable*/
     mvchgat(y, 0, -1, A_NORMAL, 0, NULL);
     L = get_bar_length(8 * n);
     if (L > 0)
-        mvchgat(y, 0, L + 1, A_REVERSE, 0, NULL);
+        mvchgat(y, 0, L + 1, A_REVERSE, colorpair, NULL);
 }
 
 void draw_line_totals(int y, host_pair_line* line, option_linedisplay_t linedisplay) {
@@ -221,17 +225,17 @@ void draw_line_totals(int y, host_pair_line* line, option_linedisplay_t linedisp
     if(options.showbars) {
       switch(linedisplay) {
         case OPTION_LINEDISPLAY_TWO_LINE:
-          draw_bar(line->sent[options.bar_interval],y);
-          draw_bar(line->recv[options.bar_interval],y+1);
+          draw_bar(line->sent[options.bar_interval],y,  COLOR_SENT);
+          draw_bar(line->recv[options.bar_interval],y+1, COLOR_RECV);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_SENT:
-          draw_bar(line->sent[options.bar_interval],y);
+          draw_bar(line->sent[options.bar_interval],y,COLOR_SENT);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_RECV:
-          draw_bar(line->recv[options.bar_interval],y);
+          draw_bar(line->recv[options.bar_interval],y,COLOR_RECV);
           break;
         case OPTION_LINEDISPLAY_ONE_LINE_BOTH:
-          draw_bar(line->recv[options.bar_interval] + line->sent[options.bar_interval],y);
+          draw_bar(line->recv[options.bar_interval] + line->sent[options.bar_interval],y, COLOR_BOTH);
           break;
       }
     }
@@ -437,6 +441,13 @@ void ui_tick(int print) {
 
 void ui_curses_init() {
     (void) initscr();      /* initialize the curses library */
+    if (has_colors()) {
+    start_color();
+    use_default_colors();
+    init_pair(COLOR_RECV, COLOR_GREEN, -1);
+    init_pair(COLOR_SENT, COLOR_BLUE, -1);
+    init_pair(COLOR_BOTH, COLOR_MAGENTA, -1);
+    }
     keypad(stdscr, TRUE);  /* enable keyboard mapping */
     (void) nonl();         /* tell curses not to do NL->CR/NL on output */
     (void) cbreak();       /* take input chars one at a time, no wait for \n */
