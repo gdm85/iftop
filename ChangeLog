@@ -6,6 +6,9 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 
 1.0
 
+* Fix handling of short packets
+    Frédéric Perrin <fperrin@brocade.com>
+
 * Fix MAC address display
     Kevin Darbyshire-Bryant <kevin@darbyshire-bryant.me.uk>
 

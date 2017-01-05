@@ -249,16 +249,16 @@ void assign_addr_pair(addr_pair* ap, struct ip* iptr, int flip) {
   }
 }
 
-static void handle_ip_packet(struct ip* iptr, int hw_dir)
+static void handle_ip_packet(struct ip* iptr, int hw_dir, int pld_len)
 {
     int direction = 0; /* incoming */
+    int len;
     history_type* ht;
     union {
       history_type **ht_pp;
       void **void_pp;
     } u_ht = { &ht };
     addr_pair ap;
-    unsigned int len = 0;
     struct in6_addr scribdst;   /* Scratch pad. */
     struct in6_addr scribsrc;   /* Scratch pad. */
     /* Reinterpret packet type. */
@@ -268,7 +268,21 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
 
     tick(0);
 
-    if( (IP_V(iptr) ==4 && options.netfilter == 0)
+    /*
+     * Sanity check: drop obviously short packets.
+     * pld_len comes from pcaphdr->len - sizeof(struct l2_header).
+     *
+     * It is assumed that the snaplen (currently hard-coded to 1000) is
+     * big enough to always capture the IP header past the L2 encap, and
+     * that pcap never truncates the packet to less than snaplen; in
+     * other words, that pcaphdr->caplen = MIN(pcaphdr->len, snaplen).
+     */
+    if (pld_len < sizeof (struct ip))
+	return;
+    if (IP_V(iptr) == 6 && pld_len < sizeof (struct ip6_hdr))
+	return;
+
+    if( (IP_V(iptr) == 4 && options.netfilter == 0)
             || (IP_V(iptr) == 6 && options.netfilter6 == 0) ) { 
         /*
          * Net filter is off, so assign direction based on MAC address
@@ -424,7 +438,6 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
           break;
     }
 
-
     if(hash_find(history, &ap, u_ht.void_pp) == HASH_STATUS_KEY_NOT_FOUND) {
         ht = history_create();
         hash_insert(history, &ap, ht);
@@ -434,19 +447,13 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
     switch (options.bandwidth_unit) {
       case OPTION_BW_BITS:
       case OPTION_BW_BYTES:
-	  switch (IP_V(iptr)) {
-	    case 4:
-		len = ntohs(iptr->ip_len);
-		break;
-	    case 6:
-		len = ntohs(ip6tr->ip6_plen) + 40;
-	    default:
-		break;
-	  }
+	  len = pld_len;
 	  break;
       case OPTION_BW_PKTS:
 	  len = 1;
 	  break;
+      default:
+	  return;
     }
 
     /* Update record */
@@ -476,7 +483,7 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
 
 static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
-    handle_ip_packet((struct ip*)packet, -1);
+    handle_ip_packet((struct ip*)packet, -1, pkthdr->len);
 }
 
 #ifdef DLT_PFLOG
@@ -490,18 +497,19 @@ static void handle_pflog_packet(unsigned char* args, const struct pcap_pkthdr* p
 	hdrlen = BPF_WORDALIGN(hdr->length);
 	length -= hdrlen;
 	packet += hdrlen;
-	handle_ip_packet((struct ip*)packet, -1);
+	handle_ip_packet((struct ip*)packet, -1, length);
 }
 #endif
 
 static void handle_null_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
-    handle_ip_packet((struct ip*)(packet + 4), -1);
+    handle_ip_packet((struct ip*)(packet + 4), -1, pkthdr->len);
 }
 
-static void handle_llc_packet(const struct llc* llc, int dir) {
-
-    struct ip* ip = (struct ip*)((void*)llc + sizeof(struct llc));
+static void handle_llc_packet(const struct llc* llc, int dir, int llclen) {
+    int hdrlen = sizeof(struct llc);
+    int pldlen = llclen - hdrlen;
+    struct ip* ip = (struct ip*)((void*)llc + hdrlen);
 
     /* Taken from tcpdump/print-llc.c */
     if(llc->ssap == LLCSAP_SNAP && llc->dsap == LLCSAP_SNAP
@@ -513,11 +521,11 @@ static void handle_llc_packet(const struct llc* llc, int dir) {
         switch(orgcode) {
           case OUI_ENCAP_ETHER:
           case OUI_CISCO_90:
-            handle_ip_packet(ip, dir);
+	      handle_ip_packet(ip, dir, pldlen);
             break;
           case OUI_APPLETALK:
             if(et == ETHERTYPE_ATALK) {
-              handle_ip_packet(ip, dir);
+		handle_ip_packet(ip, dir, pldlen);
             }
             break;
           default:;
@@ -529,33 +537,36 @@ static void handle_llc_packet(const struct llc* llc, int dir) {
 static void handle_tokenring_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     struct token_header *trp;
+    int hdrlen = 0;
     int dir = -1;
     trp = (struct token_header *)packet;
 
     if(IS_SOURCE_ROUTED(trp)) {
-      packet += RIF_LENGTH(trp);
+      hdrlen += RIF_LENGTH(trp);
     }
-    packet += TOKEN_HDRLEN;
+    hdrlen += TOKEN_HDRLEN;
+    packet += hdrlen;
 
     if(memcmp(trp->token_shost, if_hw_addr, 6) == 0 ) {
       /* packet leaving this i/f */
       dir = 1;
-    } 
-        else if(memcmp(trp->token_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", trp->token_dhost, 6) == 0) {
+    }
+    else if(memcmp(trp->token_dhost, if_hw_addr, 6) == 0 || memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", trp->token_dhost, 6) == 0) {
       /* packet entering this i/f */
       dir = 0;
     }
 
     /* Only know how to deal with LLC encapsulated packets */
     if(FRAME_TYPE(trp) == TOKEN_FC_LLC) {
-      handle_llc_packet((struct llc*)packet, dir);
+        handle_llc_packet((struct llc*)packet, dir, pkthdr->len - hdrlen);
     }
 }
 
 static void handle_ppp_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
-	register u_int caplen = pkthdr->caplen;
-	u_int proto;
+    register u_int length = pkthdr->len;
+    register u_int caplen = pkthdr->caplen;
+    u_int proto;
 
 	if (caplen < 2) 
         return;
@@ -565,12 +576,14 @@ static void handle_ppp_packet(unsigned char* args, const struct pcap_pkthdr* pkt
             return;
 
 		packet += 2;
+        length -= 2;
 
 		proto = EXTRACT_16BITS(packet);
 		packet += 2;
+		length -= 2;
 
         if(proto == PPP_IP || proto == ETHERTYPE_IP || proto == ETHERTYPE_IPV6) {
-            handle_ip_packet((struct ip*)packet, -1);
+            handle_ip_packet((struct ip*)packet, -1, length);
         }
     }
 }
@@ -593,24 +606,25 @@ static void handle_cooked_packet(unsigned char *args, const struct pcap_pkthdr *
 	dir=1;
 	break;
     }
-    handle_ip_packet((struct ip*)(packet+SLL_HDR_LEN), dir);
+    handle_ip_packet((struct ip*)(packet+SLL_HDR_LEN), dir,
+		     thdr->len - SLL_HDR_LEN);
 }
 #endif /* DLT_LINUX_SLL */
 
 static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
 {
     struct ether_header *eptr;
-    int ether_type;
-    const unsigned char *payload;
+    int ether_type, hdrlen;
+
     eptr = (struct ether_header*)packet;
     ether_type = ntohs(eptr->ether_type);
-    payload = packet + sizeof(struct ether_header);
+    hdrlen = sizeof(struct ether_header);
 
     if(ether_type == ETHERTYPE_8021Q) {
         struct vlan_8021q_header* vptr;
-        vptr = (struct vlan_8021q_header*)payload;
+        vptr = (struct vlan_8021q_header*) (packet + hdrlen);
         ether_type = ntohs(vptr->ether_type);
-        payload += sizeof(struct vlan_8021q_header);
+        hdrlen += sizeof(struct vlan_8021q_header);
     }
 
     if(ether_type == ETHERTYPE_IP || ether_type == ETHERTYPE_IPV6) {
@@ -634,8 +648,8 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
         }
 
         /* Distinguishing ip_hdr and ip6_hdr will be done later. */
-        iptr = (struct ip*)(payload); /* alignment? */
-        handle_ip_packet(iptr, dir);
+        iptr = (struct ip*) (packet + hdrlen); /* alignment? */
+        handle_ip_packet(iptr, dir, pkthdr->len - hdrlen);
     }
 }
 
@@ -648,7 +662,8 @@ static void handle_radiotap_packet(unsigned char* args, const struct pcap_pkthdr
 {
     /* 802.11 MAC header is = 34 bytes (not sure if that's universally true) */
     /* We could try harder to figure out hardware direction from the MAC header */
-    handle_ip_packet((struct ip*)(packet + ((struct radiotap_header *)packet)->it_len + 34),-1);
+    int hdrlen = ((struct radiotap_header *)packet)->it_len + 34;
+    handle_ip_packet((struct ip*)(packet + hdrlen), -1, pkthdr->len - hdrlen);
 }
 
 
