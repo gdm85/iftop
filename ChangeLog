@@ -6,6 +6,9 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 
 1.0
 
+* Support for unlimited number of lines of output for text mode
+    Roman Hoog Antink <rha@open.ch>
+
 * Fix handling of short packets
     Frédéric Perrin <fperrin@brocade.com>
 

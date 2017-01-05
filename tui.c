@@ -73,7 +73,7 @@ void tui_print() {
   printf("\n");
 
   /* Traverse the list of all connections */
-  while((nn = sorted_list_next_item(&screen_list, nn)) != NULL && l < options.num_lines) {
+  while((nn = sorted_list_next_item(&screen_list, nn)) != NULL && (!options.num_lines || l < options.num_lines)) {
     /* Increment the line counter */
     l++;
 
