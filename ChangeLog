@@ -6,6 +6,9 @@ Unattributed items are by Paul Warren and Chris Lightfoot.
 
 1.0
 
+* Choose first running interface, rather than first "up" interface (Redhat #1403025)
+    Robert Scheck <robert@fedoraproject.org>
+
 * Support for unlimited number of lines of output for text mode
     Roman Hoog Antink <rha@open.ch>
 

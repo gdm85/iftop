@@ -110,7 +110,7 @@ static char *get_first_interface(void) {
     while(nameindex[j].if_index != 0) {
         if (strcmp(nameindex[j].if_name, "lo") != 0 && !is_bad_interface_name(nameindex[j].if_name)) {
             strncpy(ifr.ifr_name, nameindex[j].if_name, sizeof(ifr.ifr_name));
-            if ((s == -1) || (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) || (ifr.ifr_flags & IFF_UP)) {
+            if ((s == -1) || (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) || (ifr.ifr_flags & IFF_RUNNING)) {
                 i = xstrdup(nameindex[j].if_name);
                 break;
             }
