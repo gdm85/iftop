@@ -22,7 +22,6 @@
 #include "addr_hash.h"
 #include "serv_hash.h"
 #include "iftop.h"
-#include "resolver.h"
 #include "sorted_list.h"
 #include "options.h"
 #include "screenfilter.h"
@@ -114,16 +113,8 @@ int screen_line_host_compare(struct in_addr* a, struct in_addr* b, host_pair_lin
     char hosta[HOSTNAME_LENGTH], hostb[HOSTNAME_LENGTH];
     int r;
 
-    /* This isn't overly efficient because we resolve again before
-       display. */
-    if (options.dnsresolution) {
-        resolve(a, hosta, HOSTNAME_LENGTH);
-        resolve(b, hostb, HOSTNAME_LENGTH);
-    }
-    else {
-        strcpy(hosta, inet_ntoa(*a));
-        strcpy(hostb, inet_ntoa(*b));
-    }
+    strcpy(hosta, inet_ntoa(*a));
+    strcpy(hostb, inet_ntoa(*b));
 
     r = strcmp(hosta, hostb);
 
@@ -407,22 +398,14 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
         sprintf(hostname, " * ");
     }
     else {
-        if (options.dnsresolution)
-            resolve(addr, hostname, L);
-        else
-            strcpy(hostname, inet_ntoa(*addr));
+       strcpy(hostname, inet_ntoa(*addr));
     }
     left = strlen(hostname);
 
     if(port != 0) {
       skey.port = port;
       skey.protocol = protocol;
-      if(options.portresolution && hash_find(service_hash, &skey, u_s_name.void_pp) == HASH_STATUS_OK) {
-        snprintf(service, HOSTNAME_LENGTH, ":%s", s_name);
-      }
-      else {
-        snprintf(service, HOSTNAME_LENGTH, ":%d", port);
-      }
+      snprintf(service, HOSTNAME_LENGTH, ":%d", port);
     }
     else {
       service[0] = '\0';

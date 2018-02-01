@@ -100,14 +100,14 @@ install_sh = @install_sh@
 sbin_PROGRAMS = iftop
 
 iftop_SOURCES = addr_hash.c hash.c iftop.c ns_hash.c \
-                 options.c resolver.c screenfilter.c serv_hash.c \
+                 options.c screenfilter.c serv_hash.c \
                  sorted_list.c threadprof.c ui.c util.c \
 		 addrs_ioctl.c addrs_dlpi.c dlcommon.c \
 		 stringmap.c cfgfile.c vector.c
 
 
 noinst_HEADERS = addr_hash.h ether.h ethertype.h extract.h hash.h iftop.h \
-                 integers.h ip.h llc.h ns_hash.h options.h resolver.h \
+                 integers.h ip.h llc.h ns_hash.h options.h \
                  screenfilter.h serv_hash.h sll.h sorted_list.h tcp.h \
                  threadprof.h token.h ui.h dlcommon.h stringmap.h \
 		 vector.h cfgfile.h ppp.h
@@ -134,7 +134,7 @@ PROGRAMS = $(sbin_PROGRAMS)
 
 am_iftop_OBJECTS = addr_hash.$(OBJEXT) hash.$(OBJEXT) \
 	iftop.$(OBJEXT) ns_hash.$(OBJEXT) options.$(OBJEXT) \
-	resolver.$(OBJEXT) screenfilter.$(OBJEXT) serv_hash.$(OBJEXT) \
+	screenfilter.$(OBJEXT) serv_hash.$(OBJEXT) \
 	sorted_list.$(OBJEXT) threadprof.$(OBJEXT) ui.$(OBJEXT) \
 	util.$(OBJEXT) addrs_ioctl.$(OBJEXT) addrs_dlpi.$(OBJEXT) \
 	dlcommon.$(OBJEXT) stringmap.$(OBJEXT) cfgfile.$(OBJEXT) \
@@ -157,7 +157,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/dlcommon.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/hash.Po ./$(DEPDIR)/iftop.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ns_hash.Po ./$(DEPDIR)/options.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/resolver.Po ./$(DEPDIR)/screenfilter.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/screenfilter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/serv_hash.Po ./$(DEPDIR)/sorted_list.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/stringmap.Po ./$(DEPDIR)/threadprof.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui.Po ./$(DEPDIR)/util.Po \
@@ -265,7 +265,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iftop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ns_hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resolver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screenfilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/serv_hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sorted_list.Po@am__quote@

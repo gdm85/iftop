@@ -118,8 +118,7 @@ void options_set_defaults() {
     options.netfilter = 0;
     inet_aton("10.0.1.0", &options.netfilternet);
     inet_aton("255.255.255.0", &options.netfiltermask);
-    options.dnsresolution = 1;
-    options.portresolution = 1;
+
 #ifdef NEED_PROMISCUOUS_FOR_OUTGOING
     options.promiscuous = 1;
     options.promiscuous_but_choosy = 1;
@@ -483,8 +482,6 @@ int options_config_get_net_filter() {
 
 void options_make() {
     options_config_get_string("interface", &options.interface);
-    options_config_get_bool("dns-resolution", &options.dnsresolution);
-    options_config_get_bool("port-resolution", &options.portresolution);
     options_config_get_string("filter-code", &options.filtercode);
     options_config_get_bool("show-bars", &options.showbars);
     options_config_get_promiscuous();

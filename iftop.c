@@ -28,7 +28,6 @@
 
 #include "iftop.h"
 #include "addr_hash.h"
-#include "resolver.h"
 #include "ui.h"
 #include "options.h"
 #ifdef DLT_LINUX_SLL
@@ -266,9 +265,9 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
 
     ap.protocol = iptr->ip_p;
 
-    /* Add the addresses to be resolved */
+    /* Add the addresses to be resolved 
     resolve(&iptr->ip_dst, NULL, 0);
-    resolve(&iptr->ip_src, NULL, 0);
+    resolve(&iptr->ip_src, NULL, 0); */
 
     if(hash_find(history, &ap, u_ht.void_pp) == HASH_STATUS_KEY_NOT_FOUND) {
         ht = history_create();
@@ -489,6 +488,7 @@ void packet_init() {
 #ifdef HAVE_DLPI
     result = get_addrs_dlpi(options.interface, if_hw_addr, &if_ip_addr);
 #else
+	int get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr);
     result = get_addrs_ioctl(options.interface, if_hw_addr, &if_ip_addr);
 #endif
 
@@ -511,7 +511,6 @@ void packet_init() {
     }
 
     //    exit(0);
-    resolver_initialise();
 
     pd = pcap_open_live(options.interface, CAPTURE_LENGTH, options.promiscuous, 1000, errbuf);
     // DEBUG: pd = pcap_open_offline("tcpdump.out", errbuf);
