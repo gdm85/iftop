@@ -20,7 +20,8 @@ int config_get_bool(const char *directive);
 int config_get_int(const char *directive, int *value);
 int config_get_float(const char *directive, float *value);
 int config_init();
-
+void config_set_string(const char *directive, const char* s);
+int config_get_enum(const char *directive, config_enumeration_type *enumeration, int *value);
 
 
 #endif /* __CFGFILE_H_ */

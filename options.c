@@ -159,7 +159,7 @@ void options_set_defaults() {
 }
 
 static void die(char *msg) {
-    fprintf(stderr, msg);
+    fprintf(stderr, "%s", msg);
     exit(1);
 }
 

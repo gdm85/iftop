@@ -63,7 +63,7 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
 
 #ifdef SIOCGIFHWADDR
   if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
-    fprintf(stderr, "Error getting hardware address for interface: %s\n", interface); 
+    fprintf(stderr, "Error getting hardware address for interface: %s\n", interface);
     perror("ioctl(SIOCGIFHWADDR)");
   }
   else {
@@ -107,12 +107,12 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
   fprintf(stderr, "Cannot obtain hardware address on this platform\n");
 #endif
 #endif
-  
+
   /* Get the IP address of the interface */
 #ifdef SIOCGIFADDR
   (*(struct sockaddr_in *) &ifr.ifr_addr).sin_family = AF_INET;
   if (ioctl(s, SIOCGIFADDR, &ifr) < 0) {
-    fprintf(stderr, "Unable to get IP address for interface: %s\n", interface); 
+    fprintf(stderr, "Unable to get IP address for interface: %s\n", interface);
     perror("ioctl(SIOCGIFADDR)");
   }
   else {
@@ -122,7 +122,7 @@ get_addrs_ioctl(char *interface, char if_hw_addr[], struct in_addr *if_ip_addr)
 #else
   fprintf(stderr, "Cannot obtain IP address on this platform\n");
 #endif
-  
+
   close(s);
 
   return got_hw_addr + got_ip_addr;

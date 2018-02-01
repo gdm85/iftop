@@ -12,7 +12,7 @@
 
 sbin_PROGRAMS = iftop
 
-iftop_SOURCES = addr_hash.c edline.c hash.c iftop.c ns_hash.c \
+iftop_SOURCES = addr_hash.c hash.c iftop.c ns_hash.c \
                  options.c resolver.c screenfilter.c serv_hash.c \
                  sorted_list.c threadprof.c ui.c util.c \
 		 addrs_ioctl.c addrs_dlpi.c dlcommon.c \
@@ -38,9 +38,8 @@ iftop.spec: iftop.spec.in configure.in
 
 EXTRA_DIST = bootstrap README ChangeLog AUTHORS COPYING INSTALL TODO \
 		Makefile.OLD $(man_MANS) iftop.cat iftop.spec
-             
+
 MAINTERCLEANFILES = Makefile.in aclocal.m4 configure configuration.h.in \
                     stamp-h.in iftop.spec
 
 ACLOCAL = aclocal -I @ac_aux_dir@
-

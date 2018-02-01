@@ -11,6 +11,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "cfgfile.h"
+
 
 typedef enum {
   OPTION_PORTS_OFF,
@@ -86,5 +88,8 @@ typedef struct {
 
 void options_set_defaults();
 void options_read(int argc, char **argv);
+void options_read_args(int argc, char **argv);
+int options_config_get_enum(char *name, config_enumeration_type* enumeration, int *result);
+void options_make();
 
 #endif /* __OPTIONS_H_ */

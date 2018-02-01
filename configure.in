@@ -42,7 +42,7 @@ dnl Options to configure.
 dnl
 
 AC_ARG_WITH(resolver,
-    [  --with-resolver=TYPE    Technique iftop should use for name resolution.  
+    [  --with-resolver=TYPE    Technique iftop should use for name resolution.
                           Valid options are:
 			  netdb          use gethostbyaddr_r in multiple
 			                 threads.
@@ -202,7 +202,7 @@ fi
 dnl We still might do gethostbyaddr_r.  Figure out whether we have
 dnl glibc-style or Solaris-style gethostbyaddr_r (or neither...).
 dnl Separate determining how to call gethostbyaddr_r from testing
-dnl whether it works so we can support cross-compilation.            
+dnl whether it works so we can support cross-compilation.
 if test x$resolver = xnetdb ; then
     AC_MSG_CHECKING([how to call gethostbyaddr_r])
     dnl Try 7 arguments returning a struct hostent*.
@@ -274,7 +274,7 @@ fi
 dnl Ugh. Both the single-threaded and the forking resolvers use gethostbyaddr.
 if test x$resolver = xnetdb_1thread || test x$resolver = xforking ; then
     AC_SEARCH_LIBS(gethostbyaddr, [nsl], , [
-        AC_MSG_ERROR([gethostbyaddr is not available.  You will have to 
+        AC_MSG_ERROR([gethostbyaddr is not available.  You will have to
   recompile with no name resolution at all.])])
 
     if test x$resolver = xnetdb_1thread ; then
@@ -344,37 +344,6 @@ if test $foundpcap = 0 ; then
 fi
 
 dnl
-dnl Curses. Really, we need ncurses or something similarly advanced, since
-dnl we use the (apparently obscure) mvchgat function. Unfortunately, there's
-dnl a solid chance that mvchgat is a macro, so we can't just use
-dnl AC_SEARCH_LIBS....
-dnl
-
-AC_MSG_CHECKING([for a curses library containing mvchgat])
-oldLIBS=$LIBS
-for curseslib in curses ncurses ; do
-    LIBS="$oldLIBS -l$curseslib"
-    AC_TRY_LINK([
-#include <curses.h>
-        ], [
-        mvchgat(0, 0, 1, A_REVERSE, 0, NULL)
-        ], [
-        foundcurseslib=$curseslib
-        break
-        ])
-done
-
-if test x$foundcurseslib = x ; then
-    AC_MSG_RESULT([none found])
-    AC_MSG_ERROR([Curses! Foiled again!
-  (Can't find a curses library supporting mvchgat.)
-  Consider installing ncurses.])
-else
-    AC_MSG_RESULT([-l$foundcurseslib])
-fi
-
-
-dnl
 dnl POSIX threads. Different systems like different combinations of flags,
 dnl libraries, etc. We use a test program to figure this stuff out.
 dnl
@@ -427,7 +396,7 @@ solaris*) enable_default_promiscuous="yes" ;;
 esac
 
 AC_ARG_ENABLE(default-promiscuous,
-	[  --enable-default-promiscuous If enabled, iftop will operate in promiscuous mode 
+	[  --enable-default-promiscuous If enabled, iftop will operate in promiscuous mode
                           to capture outgoing packets])
 
 AC_MSG_RESULT([$enable_default_promiscuous])
@@ -444,13 +413,13 @@ AC_SUBST(ac_aux_dir)
 
 AC_OUTPUT(Makefile config/Makefile)
 
-if echo $VERSION | grep 'pre' ; then 
+if echo $VERSION | grep 'pre' ; then
 	AC_MSG_WARN([
 ******************************************************************************
 
-This is a pre-release version.  Pre-releases are subject to limited 
+This is a pre-release version.  Pre-releases are subject to limited
 announcements, and therefore limited circulation, as a means of testing
-the more widely circulated final releases.  
+the more widely circulated final releases.
 
 Please do not be surprised if this release is utterly, utterly broken.  If you
 do find this release to be utterly, utterly broken, do not assume that someone
