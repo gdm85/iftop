@@ -58,10 +58,7 @@ typedef struct host_pair_line_tag {
 
 extern options_t options ;
 
-hash_type* screen_hash;
-hash_type* service_hash;
 sorted_list_type screen_list;
-host_pair_line totals;
 
 
 /* Barchart scales. */
@@ -98,15 +95,6 @@ static float get_max_bandwidth() {
 }
 
 extern history_type history_totals;
-
-void analyse_data() {
-    hash_node_type* n = NULL;
-
-    // Zero totals
-    memset(&totals, 0, sizeof totals);
-
-    hash_delete_all(screen_hash);
-}
 
 void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned int protocol, int L) {
     char hostname[HOSTNAME_LENGTH];
@@ -153,13 +141,13 @@ void main_print() {
 }
 
 void main_loop() {
-	while(1) {
+	extern sig_atomic_t foad;
+
+    while(foad == 0) {
 
 		printf("waiting 1 second...\n");
 		sleep(1);
 		
 		main_print();
-		
-		tick(0);
 	}
 }

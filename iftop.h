@@ -20,7 +20,7 @@ typedef struct {
     int last_write;
 } history_type;
 
-void tick(int print);
+void tick();
 
 void *xmalloc(size_t n);
 void *xcalloc(size_t n, size_t m);

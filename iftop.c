@@ -72,8 +72,6 @@ static void finish(int sig) {
 }
 
 
-
-
 /* Only need ethernet (plus optional 4 byte VLAN) and IP headers (48) + first 2 bytes of tcp/udp header */
 #define CAPTURE_LENGTH 72
 
@@ -119,7 +117,7 @@ void history_rotate() {
 }
 
 
-void tick(int print) {
+void tick() {
     time_t t;
 
     pthread_mutex_lock(&tick_mutex);
@@ -127,17 +125,9 @@ void tick(int print) {
     t = time(NULL);
     if(t - last_timestamp >= RESOLUTION) {
         printf("TICKING\n");
-        analyse_data();
-
-		main_print();
 
         history_rotate();
         last_timestamp = t;
-    }
-    else {
-	  if (print) {
-		main_print();
-	  }
     }
 
     pthread_mutex_unlock(&tick_mutex);
