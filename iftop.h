@@ -15,8 +15,8 @@
 typedef struct {
     long recv[HISTORY_LENGTH];
     long sent[HISTORY_LENGTH];
-    double long total_sent;
-    double long total_recv;
+    int64_t total_sent;
+    int64_t total_recv;
     int last_write;
 } history_type;
 

@@ -152,7 +152,7 @@ void main_print() {
 		sprint_host(host1, &(ap.src), ap.src_port, ap.protocol);
         sprint_host(host2, &(ap.dst), ap.dst_port, ap.protocol);
 
-        printf("%s -> %s: sent=%Lf recv=%Lf\n", host1, host2, d->total_sent, d->total_recv);
+        printf("%s -> %s: sent=%ld recv=%ld\n", host1, host2, d->total_sent, d->total_recv);
     }
 }
 
