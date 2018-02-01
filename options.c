@@ -127,20 +127,15 @@ void options_set_defaults() {
     options.promiscuous_but_choosy = 0;
 #endif
     options.showbars = 1;
-    options.showports = OPTION_PORTS_OFF;
-    options.aggregate_src = 0;
-    options.aggregate_dest = 0;
+
     options.paused = 0;
-    options.showhelp = 0;
     options.bandwidth_in_bytes = 0;
     options.sort = OPTION_SORT_DIV2;
     options.screenfilter = NULL;
     options.freezeorder = 0;
     options.linedisplay = OPTION_LINEDISPLAY_TWO_LINE;
-    options.screen_offset = 0;
     options.show_totals = 0;
     options.max_bandwidth = 0; /* auto */
-    options.log_scale = 0;
     options.bar_interval = 1;
 
     /* Figure out the name for the config file */
@@ -485,15 +480,11 @@ void options_make() {
     options_config_get_string("filter-code", &options.filtercode);
     options_config_get_bool("show-bars", &options.showbars);
     options_config_get_promiscuous();
-    options_config_get_bool("hide-source", &options.aggregate_src);
-    options_config_get_bool("hide-destination", &options.aggregate_dest);
     options_config_get_bool("use-bytes", &options.bandwidth_in_bytes);
     options_config_get_enum("sort", sort_enumeration, (int*)&options.sort);
     options_config_get_enum("line-display", linedisplay_enumeration, (int*)&options.linedisplay);
     options_config_get_bool("show-totals", &options.show_totals);
-    options_config_get_bool("log-scale", &options.log_scale);
     options_config_get_bw_rate("max-bandwidth", &options.max_bandwidth);
-    options_config_get_enum("port-display", showports_enumeration, (int*)&options.showports);
     options_config_get_string("screen-filter", &options.screenfilter);
     options_config_get_net_filter();
 };

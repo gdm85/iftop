@@ -48,14 +48,10 @@ typedef struct {
     char *filtercode;
 
     int showbars;
-    option_port_t showports;
 
     int promiscuous;
     int promiscuous_but_choosy;
-    int aggregate_src;
-    int aggregate_dest;
     int paused;
-    int showhelp;
     int bandwidth_in_bytes;
     option_sort_t sort;
 
@@ -64,14 +60,11 @@ typedef struct {
     char* screenfilter;
     int freezeorder;
 
-    int screen_offset;
-
     option_linedisplay_t linedisplay;
 
     int show_totals;
 
     long long max_bandwidth;
-    int log_scale;
 
     /* Cross network filter */
     int netfilter;

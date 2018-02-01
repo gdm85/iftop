@@ -23,21 +23,14 @@
 
 char * config_directives[] = {
 	"interface", 
-	"dns-resolution",
-	"port-resolution",
 	"filter-code",
-	"show-bars", 
 	"promiscuous",
-	"hide-source",
-	"hide-destination",
 	"use-bytes", 
 	"sort", 
 	"line-display", 
 	"show-totals", 
-	"log-scale", 
 	"max-bandwidth",
 	"net-filter", 
-	"port-display", 
 	NULL
 };
 

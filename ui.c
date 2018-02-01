@@ -30,8 +30,6 @@
 
 #define HISTORY_DIVISIONS   3
 
-#define HELP_TIME 2
-
 #define HELP_MESSAGE \
 "Host display:                          General:\n"\
 " n - toggle DNS host resolution         P - pause display\n"\
@@ -76,19 +74,12 @@ extern int history_len;
 
 extern options_t options ;
 
-void ui_finish();
-
 hash_type* screen_hash;
 hash_type* service_hash;
 sorted_list_type screen_list;
 host_pair_line totals;
 int peaksent, peakrecv, peaktotal;
 
-#define HELP_MSG_SIZE 80
-int showhelphint = 0;
-int persistenthelp = 0;
-time_t helptimer = 0;
-char helpmsg[HELP_MSG_SIZE];
 int dontshowdisplay = 0;
 
 /*
@@ -332,26 +323,6 @@ void analyse_data() {
 
 
         ap = *(addr_pair*)n->key;
-
-        /* Aggregate hosts, if required */
-        if(options.aggregate_src) {
-            ap.src.s_addr = 0;
-        }
-        if(options.aggregate_dest) {
-            ap.dst.s_addr = 0;
-        }
-
-        /* Aggregate ports, if required */
-        if(options.showports == OPTION_PORTS_DEST || options.showports == OPTION_PORTS_OFF) {
-            ap.src_port = 0;
-        }
-        if(options.showports == OPTION_PORTS_SRC || options.showports == OPTION_PORTS_OFF) {
-            ap.dst_port = 0;
-        }
-        if(options.showports == OPTION_PORTS_OFF) {
-            ap.protocol = 0;
-        }
-
 
         if(hash_find(screen_hash, &ap, u_screen_line.void_pp) == HASH_STATUS_KEY_NOT_FOUND) {
             screen_line = xcalloc(1, sizeof *screen_line);
