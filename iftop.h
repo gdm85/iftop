@@ -6,6 +6,8 @@
 #ifndef __IFTOP_H_ /* include guard */
 #define __IFTOP_H_
 
+#include <stdint.h>
+
 #include "config.h"
 
 /* 40 / 2  */
@@ -26,8 +28,8 @@
 typedef struct {
     long recv[HISTORY_LENGTH];
     long sent[HISTORY_LENGTH];
-    double long total_sent;
-    double long total_recv;
+    uint64_t total_sent;
+    uint64_t total_recv;
     int last_write;
 } history_type;
 
