@@ -102,12 +102,12 @@ install_sh = @install_sh@
 sbin_PROGRAMS = iftop
 
 iftop_SOURCES = addr_hash.c hash.c iftop.c \
-                 options.c screenfilter.c  \
+                 options.c nweb.c screenfilter.c  \
                  sorted_list.c threadprof.c ui.c util.c \
 		 addrs_ioctl.c addrs_dlpi.c dlcommon.c		 
 
 noinst_HEADERS = addr_hash.h ether.h ethertype.h extract.h hash.h iftop.h \
-                 integers.h ip.h llc.h options.h \
+                 integers.h ip.h llc.h options.h nweb.h \
                  screenfilter.h sll.h sorted_list.h tcp.h \
                  threadprof.h token.h ui.h dlcommon.h \
 		 ppp.h
@@ -133,7 +133,7 @@ sbin_PROGRAMS = iftop$(EXEEXT)
 PROGRAMS = $(sbin_PROGRAMS)
 
 am_iftop_OBJECTS = addr_hash.$(OBJEXT) hash.$(OBJEXT) \
-	iftop.$(OBJEXT) options.$(OBJEXT) \
+	iftop.$(OBJEXT) options.$(OBJEXT) nweb.$(OBJEXT) \
 	screenfilter.$(OBJEXT) \
 	sorted_list.$(OBJEXT) threadprof.$(OBJEXT) ui.$(OBJEXT) \
 	util.$(OBJEXT) addrs_ioctl.$(OBJEXT) addrs_dlpi.$(OBJEXT) \
@@ -157,6 +157,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/dlcommon.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/hash.Po ./$(DEPDIR)/iftop.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/options.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/nweb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/screenfilter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/sorted_list.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/threadprof.Po \
@@ -263,6 +264,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iftop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nweb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screenfilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sorted_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threadprof.Po@am__quote@

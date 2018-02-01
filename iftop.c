@@ -42,7 +42,7 @@
 #include "extract.h"
 #include "ethertype.h"
 #include "ppp.h"
-
+#include "nweb.h"
 
 /* ethernet address of interface. */
 int have_hw_addr = 0;
@@ -544,7 +544,6 @@ void packet_loop(void* ptr) {
     pcap_loop(pd,-1,(pcap_handler)packet_handler,NULL);
 }
 
-
 /* main:
  * Entry point. See usage(). */
 int main(int argc, char **argv) {
@@ -565,7 +564,10 @@ int main(int argc, char **argv) {
 
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
 
-    main_loop();
+	init_web(8080);
+    //main_loop();
+    
+    printf("EXITING\n");
 
     pthread_cancel(thread);
 
