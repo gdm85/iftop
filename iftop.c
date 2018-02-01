@@ -41,7 +41,6 @@
 #include "llc.h"
 #include "extract.h"
 #include "ethertype.h"
-#include "cfgfile.h"
 #include "ppp.h"
 
 
@@ -566,14 +565,10 @@ int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {};
 
-    /* TODO: tidy this up */
-    /* read command line options and config file */
-    config_init();
+    /* read command line options */
     options_set_defaults();
-    options_read_args(argc, argv);
-    /* If a config was explicitly specified, whinge if it can't be found */
-    read_config(options.config_file, options.config_file_specified);
-    options_make();
+    //options_read_args(argc, argv);
+    //options_make();
 
     sa.sa_handler = finish;
     sigaction(SIGINT, &sa, NULL);
@@ -584,17 +579,11 @@ int main(int argc, char **argv) {
 
     init_history();
 
-    //ui_init();
-
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
-
-    //ui_loop();
 
     main_loop();
 
     pthread_cancel(thread);
-
-    //ui_finish();
 
     return 0;
 }
