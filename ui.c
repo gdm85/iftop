@@ -98,9 +98,7 @@ static float get_max_bandwidth() {
     return max;
 }
 
-extern history_type history_totals;
-
-void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned int protocol, int L) {
+void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned int protocol) {
     char hostname[HOSTNAME_LENGTH];
     char service[HOSTNAME_LENGTH];
     char* s_name;
@@ -115,7 +113,7 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
         sprintf(hostname, " * ");
     }
     else {
-       strcpy(hostname, inet_ntoa(*addr));
+        strcpy(hostname, inet_ntoa(*addr));
     }
     left = strlen(hostname);
 
@@ -129,19 +127,33 @@ void sprint_host(char * line, struct in_addr* addr, unsigned int port, unsigned 
     }
 
 
-    sprintf(line, "%-*s", L, hostname);
-    if(left > (L - strlen(service))) {
-        left = L - strlen(service);
+    sprintf(line, "%s", hostname);
+    if(left > (HOSTNAME_LENGTH - strlen(service))) {
+        left = HOSTNAME_LENGTH - strlen(service);
         if(left < 0) {
            left = 0;
         }
     }
-    sprintf(line + left, "%-*s", L-left, service);
+    sprintf(line + left, "%s", service);
 }
 
+extern hash_type* history;
+
 void main_print() {
-	//TODO: print some stats
-	printf("here stats would be printed\n");
+    hash_node_type* n = NULL;
+    char host1[HOSTNAME_LENGTH], host2[HOSTNAME_LENGTH];
+
+    while(hash_next_item(history, &n) == HASH_STATUS_OK) {
+        history_type* d = (history_type*)n->rec;
+        addr_pair ap;
+
+        ap = *(addr_pair*)n->key;
+
+		sprint_host(host1, &(ap.src), ap.src_port, ap.protocol);
+        sprint_host(host2, &(ap.dst), ap.dst_port, ap.protocol);
+
+        printf("%s -> %s: sent=%Lf recv=%Lf\n", host1, host2, d->total_sent, d->total_recv);
+    }
 }
 
 void main_loop() {

@@ -55,7 +55,7 @@ struct in_addr if_ip_addr;
 extern options_t options;
 
 hash_type* history;
-history_type history_totals;
+
 time_t last_timestamp;
 int history_pos = 0;
 int history_len = 1;
@@ -78,7 +78,6 @@ static void finish(int sig) {
 void init_history() {
     history = addr_hash_create();
     last_timestamp = time(NULL);
-    memset(&history_totals, 0, sizeof history_totals);
 }
 
 history_type* history_create() {
@@ -108,8 +107,8 @@ void history_rotate() {
         n = next;
     }
 
-    history_totals.sent[history_pos] = 0;
-    history_totals.recv[history_pos] = 0;
+//    history_totals.sent[history_pos] = 0;
+//    history_totals.recv[history_pos] = 0;
 
     if(history_len < HISTORY_LENGTH) {
         history_len++;
@@ -276,16 +275,15 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir)
         ht->total_recv += len;
     }
 
-    if(direction == 0) {
-        /* incoming */
+/*    if(direction == 0) {
+        // incoming
         history_totals.recv[history_pos] += len;
         history_totals.total_recv += len;
     }
     else {
         history_totals.sent[history_pos] += len;
         history_totals.total_sent += len;
-    }
-
+    }*/
 }
 
 static void handle_raw_packet(unsigned char* args, const struct pcap_pkthdr* pkthdr, const unsigned char* packet)
@@ -406,10 +404,10 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
     tick(0);
 
     if(ether_type == ETHERTYPE_8021Q) {
-	struct vlan_8021q_header* vptr;
-	vptr = (struct vlan_8021q_header*)payload;
-	ether_type = ntohs(vptr->ether_type);
-        payload += sizeof(struct vlan_8021q_header);
+		struct vlan_8021q_header* vptr;
+		vptr = (struct vlan_8021q_header*)payload;
+		ether_type = ntohs(vptr->ether_type);
+			payload += sizeof(struct vlan_8021q_header);
     }
 
     if(ether_type == ETHERTYPE_IP) {
@@ -424,12 +422,12 @@ static void handle_eth_packet(unsigned char* args, const struct pcap_pkthdr* pkt
             dir = 1;
         }
         else if(have_hw_addr && memcmp(eptr->ether_dhost, if_hw_addr, 6) == 0 ) {
-	    /* packet entering this i/f */
-	    dir = 0;
-	}
-	else if (memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
-	  /* broadcast packet, count as incoming */
-            dir = 0;
+			/* packet entering this i/f */
+			dir = 0;
+		}
+		else if (memcmp("\xFF\xFF\xFF\xFF\xFF\xFF", eptr->ether_dhost, 6) == 0) {
+			/* broadcast packet, count as incoming */
+			dir = 0;
         }
 
         iptr = (struct ip*)(payload); /* alignment? */
@@ -529,9 +527,7 @@ void packet_init() {
     }
 #endif
     else {
-        fprintf(stderr, "Unsupported datalink type: %d\n"
-                "Please email pdw@ex-parrot.com, quoting the datalink type and what you were\n"
-                "trying to do at the time\n.", dlt);
+        fprintf(stderr, "Unsupported datalink type: %d\n", dlt);
         exit(1);
     }
 
@@ -555,11 +551,9 @@ int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {};
 
-    /* read command line options */
     options_set_defaults();
-    //options_read_args(argc, argv);
-    //options_make();
 
+	/* install signals handler */
     sa.sa_handler = finish;
     sigaction(SIGINT, &sa, NULL);
 
