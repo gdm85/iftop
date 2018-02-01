@@ -20,11 +20,15 @@
 #include <sys/wait.h>
 
 #include "addr_hash.h"
-#include "serv_hash.h"
 #include "iftop.h"
 #include "sorted_list.h"
 #include "options.h"
 #include "screenfilter.h"
+
+typedef struct {
+    int port;
+    int protocol;
+} ip_service;
 
 #define HOSTNAME_LENGTH 256
 

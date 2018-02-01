@@ -102,7 +102,7 @@ install_sh = @install_sh@
 sbin_PROGRAMS = iftop
 
 iftop_SOURCES = addr_hash.c hash.c iftop.c \
-                 options.c screenfilter.c serv_hash.c \
+                 options.c screenfilter.c  \
                  sorted_list.c threadprof.c ui.c util.c \
 		 addrs_ioctl.c addrs_dlpi.c dlcommon.c \
 		 stringmap.c vector.c
@@ -110,7 +110,7 @@ iftop_SOURCES = addr_hash.c hash.c iftop.c \
 
 noinst_HEADERS = addr_hash.h ether.h ethertype.h extract.h hash.h iftop.h \
                  integers.h ip.h llc.h options.h \
-                 screenfilter.h serv_hash.h sll.h sorted_list.h tcp.h \
+                 screenfilter.h sll.h sorted_list.h tcp.h \
                  threadprof.h token.h ui.h dlcommon.h stringmap.h \
 		 vector.h ppp.h
 
@@ -136,7 +136,7 @@ PROGRAMS = $(sbin_PROGRAMS)
 
 am_iftop_OBJECTS = addr_hash.$(OBJEXT) hash.$(OBJEXT) \
 	iftop.$(OBJEXT) options.$(OBJEXT) \
-	screenfilter.$(OBJEXT) serv_hash.$(OBJEXT) \
+	screenfilter.$(OBJEXT) \
 	sorted_list.$(OBJEXT) threadprof.$(OBJEXT) ui.$(OBJEXT) \
 	util.$(OBJEXT) addrs_ioctl.$(OBJEXT) addrs_dlpi.$(OBJEXT) \
 	dlcommon.$(OBJEXT) stringmap.$(OBJEXT) \
@@ -160,7 +160,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/hash.Po ./$(DEPDIR)/iftop.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/options.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/screenfilter.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/serv_hash.Po ./$(DEPDIR)/sorted_list.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/sorted_list.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/stringmap.Po ./$(DEPDIR)/threadprof.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui.Po ./$(DEPDIR)/util.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/vector.Po
@@ -266,7 +266,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iftop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/options.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screenfilter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/serv_hash.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sorted_list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stringmap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threadprof.Po@am__quote@
