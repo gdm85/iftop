@@ -50,6 +50,7 @@
 #include "cfgfile.h"
 #include "ppp.h"
 #include "addrs_ioctl.h"
+#include "nweb.h"
 
 #include <netinet/ip6.h>
 
@@ -145,27 +146,31 @@ void tick(int print) {
     t = time(NULL);
     if(t - last_timestamp >= RESOLUTION) {
         analyse_data();
-        if (options.no_curses) {
-          if (!options.timed_output || (t - first_timestamp >= options.timed_output)) {
-            tui_print();
-            if (options.timed_output) {
-              finish(SIGINT);
-            }
-          }
-        }
-        else {
-          ui_print();
-        }
+        if (!options.http_port) {
+			if (options.no_curses) {
+			  if (!options.timed_output || (t - first_timestamp >= options.timed_output)) {
+				tui_print();
+				if (options.timed_output) {
+				  finish(SIGINT);
+				}
+			  }
+			}
+			else {
+			  ui_print();
+			}
+		}
         history_rotate();
         last_timestamp = t;
     }
     else {
-      if (options.no_curses) {
-        tui_tick(print);
-      }
-      else {
-        ui_tick(print);
-      }
+	  if (!options.http_port) {
+		  if (options.no_curses) {
+			tui_tick(print);
+		  }
+		  else {
+			ui_tick(print);
+		  }
+	  }
     }
 
     pthread_mutex_unlock(&tick_mutex);
@@ -811,6 +816,7 @@ void packet_loop(void* ptr) {
 int main(int argc, char **argv) {
     pthread_t thread;
     struct sigaction sa = {};
+    int exit_code;
 
     setlocale(LC_ALL, "");
 
@@ -832,31 +838,39 @@ int main(int argc, char **argv) {
 
     init_history();
 
-    if (options.no_curses) {
-      tui_init();
-    }
-    else {
-      ui_init();
-    }
+	if (!options.http_port) {
+		if (options.no_curses) {
+		  tui_init();
+		}
+		else {
+		  ui_init();
+		}
+	}
 
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
+    
+    exit_code = 0;
+    if (options.http_port) {
+		/* this will block and handle incoming connections */
+		exit_code = init_web(options.http_port);
+	} else {
+		if (options.no_curses) {
+		  if (options.timed_output) {
+			/* Keep the starting time (used for timed termination) */
+			first_timestamp = time(NULL);
 
-    /* Keep the starting time (used for timed termination) */
-    first_timestamp = time(NULL);
-
-    if (options.no_curses) {
-      if (options.timed_output) {
-        while(!foad) {
-          sleep(1);
-        }
-      }
-      else {
-        tui_loop();
-      }
-    }
-    else {
-      ui_loop();
-    }
+			while(!foad) {
+			  sleep(1);
+			}
+		  }
+		  else {
+			tui_loop();
+		  }
+		}
+		else {
+		  ui_loop();
+		}
+	}
 
     pthread_cancel(thread);
     pthread_join(thread, NULL);
@@ -864,5 +878,5 @@ int main(int argc, char **argv) {
 
     ui_finish();
     
-    return 0;
+    return exit_code;
 }
