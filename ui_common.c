@@ -294,6 +294,7 @@ void analyse_data() {
         }
 
 	
+	if (screen_hash) {
         if(hash_find(screen_hash, &ap, u_screen_line.void_pp) == HASH_STATUS_KEY_NOT_FOUND) {
             screen_line = xcalloc(1, sizeof *screen_line);
             hash_insert(screen_hash, &ap, screen_line);
@@ -314,14 +315,15 @@ void analyse_data() {
                 }
             }
         }
+	}
 
     }
 
-    make_screen_list();
+	if (screen_hash) {
+		make_screen_list();
+	}
 
-    
     calculate_totals();
-
 }
 
 void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol, int L, int unspecified_as_star) {
