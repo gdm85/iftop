@@ -379,3 +379,16 @@ void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, 
     sprintf(line + left, "%-*s", L-left, service);
 }
 
+void sprint_host_raw(char *line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol) {
+    char hostname[HOSTNAME_LENGTH];
+
+    inet_ntop(af, addr, hostname, sizeof(hostname));
+
+    /* If we're showing IPv6 addresses with a port number, put them in square
+     * brackets. */
+    if (af == AF_INET) {
+      sprintf(line, "%s:%d", hostname, port);
+    } else {
+      sprintf(line, "[%s]:%d", hostname, port);
+    }
+}
