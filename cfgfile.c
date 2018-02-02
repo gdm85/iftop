@@ -44,6 +44,7 @@ char * config_directives[] = {
 	"timed-output",
 	"no-curses",
 	"num-lines",
+	"http-port",
 	NULL
 };
 

@@ -30,7 +30,7 @@
 
 options_t options;
 
-char optstr[] = "+i:f:nNF:G:lhpbBu:Pm:c:s:tL:o:";
+char optstr[] = "+i:f:nNF:G:lhpbBu:Pm:c:s:S:tL:o:";
 
 /* Global options. */
 
@@ -164,6 +164,7 @@ void options_set_defaults() {
     options.bar_interval = 1;
     options.timed_output = 0;
     options.no_curses = 0;
+    options.http_port = 0;
     options.num_lines = 10;
 
     /* Figure out the name for the config file */
@@ -207,6 +208,7 @@ static void usage(FILE *fp) {
 "   -m limit            sets the upper limit for the bandwidth scale\n"
 "   -c config file      specifies an alternative configuration file\n"
 "   -t                  use text interface without ncurses\n"
+"   -S 8080             provide a minimal HTTP REST service on specified port\n"
 "\n"
 "   Sorting orders:\n"
 "   -o 2s                Sort by first column (2s traffic average)\n"
@@ -260,6 +262,10 @@ void options_read_args(int argc, char **argv) {
 
             case 'P':
                 config_set_string("port-display", "on");
+                break;
+
+            case 'S':
+                config_set_string("http-port", optarg);
                 break;
 
             case 'F':
@@ -584,6 +590,7 @@ void options_make() {
     options_config_get_bool("link-local", &options.link_local);
     options_config_get_int("timed-output", &options.timed_output);
     options_config_get_bool("no-curses", &options.no_curses);
+    options_config_get_int("http-port", &options.http_port);
     options_config_get_int("num-lines", &options.num_lines);
     options_config_get_net_filter();
     options_config_get_net_filter6();

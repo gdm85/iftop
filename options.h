@@ -93,6 +93,8 @@ typedef struct {
 
     /* Account for link-local traffic. */
     int link_local;
+    
+    int http_port;
 
     char *config_file;
     int config_file_specified;
