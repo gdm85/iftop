@@ -5,6 +5,10 @@ Read the INSTALL file, manual page and source code for more information.
 
 iftop must be run as root.
 
+BUILDING
+
+Typically you would run `autoreconf -i', `./configure' and then `make'.
+
 KNOWN ISSUES
 
 Solaris:
