@@ -30,7 +30,6 @@ void xfree(void *v);
 extern hash_type* history;
 
 #define BUFSIZE 1024
-#define NOTFOUND  404
 
 #ifndef SIGCLD
 #   define SIGCLD SIGCHLD
@@ -136,7 +135,8 @@ static char *generate_payload(long int *len) {
 	return payload;
 }
 
-static int serve_request(int fd, int hit) {
+/* this is a child web server process, it will exit once the request has been served */
+static int handle_request(int fd) {
   int j, file_fd, buflen, written;
   long i, ret, len;
   const char * fstr;
@@ -173,9 +173,9 @@ static int serve_request(int fd, int hit) {
 	  
 	  xfree(payload);
 	  
-	  logger("\"%s\" 200 %d", buffer, written);
+	  logger("\"%s\" 200 %d", buffer, len);
   
-	  return (written == len);
+	  return (written != len);
   }
   
   if (!strncmp(buffer, "GET /iftop/version", 19) || !strncmp(buffer, "get /iftop/version", 19) ) {
@@ -187,28 +187,17 @@ static int serve_request(int fd, int hit) {
 	  
 	  written = write(fd, payload, len);
 	  
-	  logger("\"%s\" 200 %d", buffer, written);
+	  logger("\"%s\" 200 %d", buffer, len);
   
-	  return (written == len);
+	  return (written != len);
   }
 
   (void)sprintf(out_buffer, "HTTP/1.1 404 Not Found\nerver: iftop/%s\nContent-Length: 2\nConnection: close\nContent-Type: %s\n\n{}\n", PACKAGE_VERSION, "application/json");
   written = write(fd, out_buffer, strlen(out_buffer));
   
-  logger("\"%s\" 404 %d", buffer, written);
+  logger("\"%s\" 404 %d", buffer, 2);
 
   return 1;
-}
-
-/* this is a child web server process, it will exit once the request has been served */
-static void web(int fd, int hit) {
-  int exit_code;
-  
-  exit_code = serve_request(fd, hit);
-
-  sleep(1);  /* allow socket to drain before signalling the socket is closed */
-  close(fd);
-  exit(exit_code);
 }
 
 int drop_root(const char *run_as_user, const char *run_as_group) {
@@ -248,7 +237,7 @@ int drop_root(const char *run_as_user, const char *run_as_group) {
 }
 
 int init_web(int port) {
-  int pid, listenfd, socketfd, hit;
+  int pid, listenfd, socketfd, hit, exit_code;
   socklen_t length;
   static struct sockaddr_in cli_addr; /* static = initialised to zeros */
   static struct sockaddr_in serv_addr; /* static = initialised to zeros */
@@ -297,11 +286,21 @@ int init_web(int port) {
       logger("fork: %s", strerror(errno));
       return 6;
     }
+
     if (pid == 0) {   /* child */
       (void)close(listenfd);
-      web(socketfd, hit); /* never returns */
-    } else {   /* parent */
-      (void)close(socketfd);
+      exit_code = handle_request(socketfd);
+
+      sleep(1);  /* allow socket to drain before signalling the socket is closed */
+      close(socketfd);
+
+      return exit_code;
     }
+
+    /* parent */
+    (void)close(socketfd);
   }
+
+  /* never reached */
+  return 42;
 }
