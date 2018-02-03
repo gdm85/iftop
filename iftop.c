@@ -876,7 +876,9 @@ int main(int argc, char **argv) {
     pthread_join(thread, NULL);
     pcap_close(pd);
 
-    ui_finish();
+	if (!options.http_port && !options.no_curses) {
+		ui_finish();
+	}
     
     return exit_code;
 }
