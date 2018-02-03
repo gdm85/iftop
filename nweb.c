@@ -15,6 +15,8 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include <pwd.h>
+#include <grp.h>
 #include "config.h"
 #include "hash.h"
 #include "ui_common.h"
@@ -209,6 +211,42 @@ static void web(int fd, int hit) {
   exit(exit_code);
 }
 
+int drop_root(const char *run_as_user, const char *run_as_group) {
+    struct passwd *pwd;
+    struct group* g;
+
+    if (NULL == (pwd = getpwnam(run_as_user))) {
+		if (errno) {
+			logger("getpwnam: %s", strerror(errno));
+			return 1;
+		}
+        logger("drop_root: user '%s' not found", run_as_user);
+        return 2;
+    }
+
+    if (NULL == (g = getgrnam(run_as_group))) {
+		if (errno) {
+			logger("getgrnam: %s", strerror(errno));
+			return 3;
+		}
+        logger("drop_root: group '%s' not found", run_as_group);
+        return 4;
+    }
+
+	/*  Drop superuser privileges in correct order */
+	if (setgid(g->gr_gid) == -1) {
+		logger("setgid: %s", strerror(errno));
+		return 5;
+	}
+	if (setuid(pwd->pw_uid) == -1) {
+		logger("setuid: %s", strerror(errno));
+		return 6;
+	}
+
+	logger("dropped privileges to %s:%s", run_as_user, run_as_group);
+	return 0;
+}
+
 int init_web(int port) {
   int pid, listenfd, socketfd, hit;
   socklen_t length;
@@ -235,6 +273,14 @@ int init_web(int port) {
     logger("bind: %s", strerror(errno));
     return 3;
   }
+
+  if (strcmp(options.http_run_as_user, "")) {
+	  int result = drop_root(options.http_run_as_user, options.http_run_as_group);
+	  if (result) {
+		  return result;
+	  }
+  }
+
   if (listen(listenfd,64) <0) {
     logger("listen: %s", strerror(errno));
     return 4;

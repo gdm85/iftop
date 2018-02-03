@@ -165,6 +165,8 @@ void options_set_defaults() {
     options.timed_output = 0;
     options.no_curses = 0;
     options.http_port = 0;
+    options.http_run_as_user = "nobody";
+    options.http_run_as_group = "nogroup";
     options.num_lines = 10;
 
     /* Figure out the name for the config file */
@@ -591,6 +593,8 @@ void options_make() {
     options_config_get_int("timed-output", &options.timed_output);
     options_config_get_bool("no-curses", &options.no_curses);
     options_config_get_int("http-port", &options.http_port);
+    options_config_get_string("http-user", &options.http_run_as_user);
+    options_config_get_string("http-group", &options.http_run_as_group);
     options_config_get_int("num-lines", &options.num_lines);
     options_config_get_net_filter();
     options_config_get_net_filter6();

@@ -95,6 +95,7 @@ typedef struct {
     int link_local;
     
     int http_port;
+    char *http_run_as_user, *http_run_as_group;
 
     char *config_file;
     int config_file_specified;
