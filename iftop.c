@@ -145,8 +145,8 @@ void tick(int print) {
    
     t = time(NULL);
     if(t - last_timestamp >= RESOLUTION) {
-        analyse_data();
         if (!options.http_port) {
+            analyse_data();
 			if (options.no_curses) {
 			  if (!options.timed_output || (t - first_timestamp >= options.timed_output)) {
 				tui_print();
@@ -154,23 +154,21 @@ void tick(int print) {
 				  finish(SIGINT);
 				}
 			  }
-			}
-			else {
+			} else {
 			  ui_print();
 			}
-		}
-        history_rotate();
+            history_rotate();
+        }
+        calculate_totals();
         last_timestamp = t;
-    }
-    else {
-	  if (!options.http_port) {
-		  if (options.no_curses) {
-			tui_tick(print);
-		  }
-		  else {
-			ui_tick(print);
-		  }
-	  }
+    } else {
+        if (!options.http_port) {
+            if (options.no_curses) {
+                tui_tick(print);
+            } else {
+                ui_tick(print);
+	        }
+        }
     }
 
     pthread_mutex_unlock(&tick_mutex);
@@ -848,7 +846,10 @@ int main(int argc, char **argv) {
 	}
 
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
-    
+
+	/* Keep the starting time (used for timed termination or HTTP endpoint) */
+	first_timestamp = time(NULL);
+
     exit_code = 0;
     if (options.http_port) {
 		/* this will block and handle incoming connections */
@@ -856,9 +857,6 @@ int main(int argc, char **argv) {
 	} else {
 		if (options.no_curses) {
 		  if (options.timed_output) {
-			/* Keep the starting time (used for timed termination) */
-			first_timestamp = time(NULL);
-
 			while(!foad) {
 			  sleep(1);
 			}

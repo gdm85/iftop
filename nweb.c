@@ -35,6 +35,8 @@ extern hash_type* history;
 #   define SIGCLD SIGCHLD
 #endif
 
+extern time_t first_timestamp;
+
 static void logger(const char *fmt, ...) {
   int written, error;
   char time_buf[26];
@@ -63,8 +65,20 @@ static char *generate_payload(long int *len) {
 
 	*len = BUFSIZE;
 	payload = (char *)xmalloc(*len);
-	strcpy(payload, "{\"version\":\"" PACKAGE_VERSION "\",\"history\":[");
+	strcpy(payload, "{\"version\":\"" PACKAGE_VERSION "\",\"started\":\"");
 	p = strlen(payload);
+
+  // add timestamp for the 'started at' time
+  char time_buf[26];
+  ctime_r(&first_timestamp, time_buf);
+  time_buf[24] = 0;  time_buf[25] = 0;
+
+  strcpy(payload + p, time_buf);
+  p = strlen(payload);
+
+  // add history array begin
+  strcpy(payload + p, "\",\"history\":[");
+  p = strlen(payload);
 
     while(hash_next_item(history, &n) == HASH_STATUS_OK) {
         history_type* d = (history_type*)n->rec;

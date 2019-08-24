@@ -41,6 +41,7 @@ hash_type* screen_hash;
 hash_type* service_hash;
 
 void analyse_data(void);
+void calculate_totals(void);
 void screen_list_init(void);
 void sprint_host(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol, int L, int unspecified_as_star);
 void sprint_host_raw(char * line, int af, struct in6_addr* addr, unsigned int port, unsigned int protocol);

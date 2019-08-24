@@ -11,7 +11,7 @@
 #include "config.h"
 
 /* 40 / 2  */
-#define HISTORY_LENGTH  20
+#define HISTORY_LENGTH  65000
 #define RESOLUTION 2
 #define DUMP_RESOLUTION 300
 

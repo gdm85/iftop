@@ -12,6 +12,7 @@ void ui_loop(void);
 void ui_finish(void);
 void ui_tick(int);
 void analyse_data(void);
+void calculate_totals(void);
 void ui_init(void);
 
 #endif /* __UI_H_ */
