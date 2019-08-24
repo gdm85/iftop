@@ -81,6 +81,10 @@ pcap_handler packet_handler;
 sig_atomic_t foad;
 
 static void finish(int sig) {
+    fprintf(stderr, "signal %d received\n", sig);
+    if (options.http_port) {
+      exit(130);
+    }
     foad = sig;
 }
 
@@ -819,14 +823,14 @@ int main(int argc, char **argv) {
     setlocale(LC_ALL, "");
 
     /* TODO: tidy this up */
-    /* read command line options and config file */   
+    /* read command line options and config file */
     config_init();
     options_set_defaults();
     options_read_args(argc, argv);
     /* If a config was explicitly specified, whinge if it can't be found */
     read_config(options.config_file, options.config_file_specified);
     options_make();
-    
+
     sa.sa_handler = finish;
     sigaction(SIGINT, &sa, NULL);
 
@@ -847,14 +851,14 @@ int main(int argc, char **argv) {
 
     pthread_create(&thread, NULL, (void*)&packet_loop, NULL);
 
-	/* Keep the starting time (used for timed termination or HTTP endpoint) */
-	first_timestamp = time(NULL);
+    /* Keep the starting time (used for timed termination or HTTP endpoint) */
+    first_timestamp = time(NULL);
 
     exit_code = 0;
     if (options.http_port) {
 		/* this will block and handle incoming connections */
 		exit_code = init_web(options.http_port);
-	} else {
+    } else {
 		if (options.no_curses) {
 		  if (options.timed_output) {
 			while(!foad) {
@@ -874,9 +878,9 @@ int main(int argc, char **argv) {
     pthread_join(thread, NULL);
     pcap_close(pd);
 
-	if (!options.http_port && !options.no_curses) {
-		ui_finish();
-	}
-    
+    if (!options.http_port && !options.no_curses) {
+        ui_finish();
+    }
+
     return exit_code;
 }

@@ -111,13 +111,13 @@ static char *generate_payload(long int *len) {
         strcpy(payload + p, "\", \"received\":");
         p += strlen("\", \"received\":");
         
-        sprintf(payload + p, "%ld", d->total_recv);
+        sprintf(payload + p, "%lu", d->total_recv);
         p = strlen(payload);
 
         strcpy(payload + p, ", \"sent\":");
         p += strlen(", \"sent\":");
 
-        sprintf(payload + p, "%ld", d->total_sent);
+        sprintf(payload + p, "%lu", d->total_sent);
         p = strlen(payload);
 
         strcpy(payload + p, ", \"protocol\":");
@@ -266,7 +266,7 @@ int init_web(int port) {
     logger("socket: %s", strerror(errno));
     return 1;
   }
-  
+
   logger("REST webservice starting on port %d", port);
 
   serv_addr.sin_family = AF_INET;
@@ -278,10 +278,10 @@ int init_web(int port) {
   }
 
   if (strcmp(options.http_run_as_user, "")) {
-	  int result = drop_root(options.http_run_as_user, options.http_run_as_group);
-	  if (result) {
-		  return result;
-	  }
+    int result = drop_root(options.http_run_as_user, options.http_run_as_group);
+    if (result) {
+      return result;
+    }
   }
 
   if (listen(listenfd,64) <0) {
