@@ -68,10 +68,9 @@ static char *generate_payload(long int *len) {
 	strcpy(payload, "{\"version\":\"" PACKAGE_VERSION "\",\"started\":\"");
 	p = strlen(payload);
 
-  // add timestamp for the 'started at' time
-  char time_buf[26];
-  ctime_r(&first_timestamp, time_buf);
-  time_buf[24] = 0;  time_buf[25] = 0;
+  // add timestamp for the 'started at' time - ISO8601 format
+  char time_buf[sizeof "2011-10-08T07:07:09Z"];
+  strftime(time_buf, sizeof time_buf, "%FT%TZ", gmtime(&first_timestamp));
 
   strcpy(payload + p, time_buf);
   p = strlen(payload);
