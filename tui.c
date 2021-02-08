@@ -34,6 +34,7 @@
 
 /* Width of the host column in the output */
 #define PRINT_WIDTH 40
+#define PRINT_WIDTH_LONG 49
 
 
 /*
@@ -55,7 +56,7 @@ void tui_print() {
 
   if (!labellong) {
     xfree(labellong);
-    labellong = (char *)calloc(PRINT_WIDTH + 1 + 9, 1);
+    labellong = (char *)calloc(PRINT_WIDTH_LONG + 1, 1);
   }
 
   if (options.paused ) {
@@ -63,7 +64,7 @@ void tui_print() {
   }
 
   /* Headings */
-  snprintf(label, PRINT_WIDTH, "%-*s", PRINT_WIDTH, "Host name (port/service if enabled)");
+  snprintf(label, PRINT_WIDTH + 1, "%-*s", PRINT_WIDTH, "Host name (port/service if enabled)");
   printf("%s %s     %10s %10s %10s %10s\n", "   #", label, "last 2s", "last 10s", "last 40s", "cumulative");
 
   /* Divider line */
@@ -112,21 +113,21 @@ void tui_print() {
   printf("\n");
 
   /* Rate totals */
-  snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Total send rate:");
+  snprintf(labellong, PRINT_WIDTH_LONG + 1, "%-*s", PRINT_WIDTH_LONG, "Total send rate:");
   printf("%s ", labellong);
   for(j = 0; j < HISTORY_DIVISIONS; j++) {
     readable_size(((host_pair_line *)&totals)->sent[j], buf0_10, 10, 1024, options.bandwidth_unit);
     printf("%10s%c", buf0_10, j == HISTORY_DIVISIONS - 1 ? '\n' : ' ');
   }
 
-  snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Total receive rate:");
+  snprintf(labellong, PRINT_WIDTH_LONG + 1, "%-*s", PRINT_WIDTH_LONG, "Total receive rate:");
   printf("%s ", labellong);
   for(j = 0; j < HISTORY_DIVISIONS; j++) {
     readable_size(((host_pair_line *)&totals)->recv[j], buf0_10, 10, 1024, options.bandwidth_unit);
     printf("%10s%c", buf0_10, j == HISTORY_DIVISIONS - 1 ? '\n' : ' ');
   }
 
-  snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Total send and receive rate:");
+  snprintf(labellong, PRINT_WIDTH_LONG + 1, "%-*s", PRINT_WIDTH_LONG, "Total send and receive rate:");
   printf("%s ", labellong);
   for(j = 0; j < HISTORY_DIVISIONS; j++) {
     readable_size(((host_pair_line *)&totals)->sent[j] + ((host_pair_line *)&totals)->recv[j], buf0_10, 10, 1024, options.bandwidth_unit);
@@ -140,14 +141,14 @@ void tui_print() {
   printf("\n");
 
   /* Peak traffic */
-  snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Peak rate (sent/received/total):");
+  snprintf(labellong, PRINT_WIDTH_LONG + 1, "%-*s", PRINT_WIDTH_LONG, "Peak rate (sent/received/total):");
   readable_size(peaksent / RESOLUTION, buf0_10, 10, 1024, options.bandwidth_unit);
   readable_size(peakrecv / RESOLUTION, buf1_10, 10, 1024, options.bandwidth_unit);
   readable_size(peaktotal / RESOLUTION, buf2_10, 10, 1024, options.bandwidth_unit);
   printf("%s %10s %10s %10s\n", labellong, buf0_10, buf1_10, buf2_10);
 
   /* Cumulative totals */
-  snprintf(labellong, PRINT_WIDTH + 9, "%-*s", PRINT_WIDTH + 9, "Cumulative (sent/received/total):");
+  snprintf(labellong, PRINT_WIDTH_LONG + 1, "%-*s", PRINT_WIDTH_LONG, "Cumulative (sent/received/total):");
   readable_size(history_totals.total_sent, buf0_10, 10, 1024, 1);
   readable_size(history_totals.total_recv, buf1_10, 10, 1024, 1);
   readable_size(history_totals.total_recv + history_totals.total_sent, buf2_10, 10, 1024, 1);

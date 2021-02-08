@@ -352,6 +352,13 @@ static void handle_ip_packet(struct ip* iptr, int hw_dir, int pld_len)
             assign_addr_pair(&ap, iptr, 0);
             direction = 0;
         }
+        else if(IP_V(iptr) == 6 && memcmp(&ip6tr->ip6_src,
+                                          &ip6tr->ip6_dst,
+                                          sizeof(struct in6_addr)) < 0) {
+                assign_addr_pair(&ap, iptr, 1);
+        } else if(IP_V(iptr) == 6) {
+                assign_addr_pair(&ap, iptr, 0);
+        }
         /* Drop other uncertain packages. */
         else
             return;

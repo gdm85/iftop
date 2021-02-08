@@ -52,7 +52,6 @@ void serv_hash_initialise(hash_type* sh) {
   struct servent* ent;
   struct protoent* pent;
   ip_service* service;
-  setprotoent(1);
   while((ent = getservent()) != NULL) {
     pent = getprotobyname(ent->s_proto);
     if(pent != NULL) {
