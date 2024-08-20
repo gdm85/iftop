@@ -1,7 +1,6 @@
 /*
  * ui_common.c
  *
- *
  */
 
 #include <string.h>
@@ -16,6 +15,13 @@
 #include "options.h"
 
 #include "ui_common.h"
+
+/* Define global variables here */
+sorted_list_type screen_list;
+host_pair_line totals;
+int peaksent, peakrecv, peaktotal;
+hash_type* screen_hash;
+hash_type* service_hash;
 
 /* 2, 10 and 40 seconds */
 int history_divs[HISTORY_DIVISIONS] = {1, 5, 20};
